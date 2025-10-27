@@ -19,6 +19,12 @@ public class LoaiNguyenLieu {
         this.tenLoaiNL = tenLoaiNL;
         this.moTa = moTa;
     }
+
+    public LoaiNguyenLieu(Integer maLoaiNL, String tenLoaiNL, String moTa) {
+        this.maLoaiNL = maLoaiNL;
+        this.tenLoaiNL = tenLoaiNL;
+        this.moTa = moTa;
+    }
     
     // Getter và Setter
     public Integer getMaLoaiNL() {

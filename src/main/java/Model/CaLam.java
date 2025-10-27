@@ -45,6 +45,18 @@ public class CaLam {
         this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO;
     }
 
+    public CaLam(Integer maCa, Integer maNhanVien, LocalDate ngayLam, LocalTime gioBatDau, LocalTime gioKetThuc, BigDecimal soGioLam, BigDecimal soGioTangCa, Integer soLuongKhachPhucVu, BigDecimal tienTip) {
+        this.maCa = maCa;
+        this.maNhanVien = maNhanVien;
+        this.ngayLam = ngayLam;
+        this.gioBatDau = gioBatDau;
+        this.gioKetThuc = gioKetThuc;
+        this.soGioLam = soGioLam;
+        this.soGioTangCa = soGioTangCa;
+        this.soLuongKhachPhucVu = soLuongKhachPhucVu;
+        this.tienTip = tienTip;
+    }
+
     // Constructor không có giờ làm và tăng ca
     public CaLam(Integer maNhanVien, LocalDate ngayLam, LocalTime gioBatDau,
             LocalTime gioKetThuc, Integer soLuongKhachPhucVu, BigDecimal tienTip) {

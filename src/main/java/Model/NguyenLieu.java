@@ -38,6 +38,14 @@ public class NguyenLieu {
         this.donViTinh = donViTinh;
         this.maLoaiNL = maLoaiNL;
     }
+
+    public NguyenLieu(Integer maNguyenLieu, String tenNguyenLieu, Integer soLuongTon, String donViTinh, Integer maLoaiNL) {
+        this.maNguyenLieu = maNguyenLieu;
+        this.tenNguyenLieu = tenNguyenLieu;
+        this.soLuongTon = soLuongTon;
+        this.donViTinh = donViTinh;
+        this.maLoaiNL = maLoaiNL;
+    }
     
     // Getter và Setter
     public Integer getMaNguyenLieu() {
