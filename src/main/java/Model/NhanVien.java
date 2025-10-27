@@ -47,6 +47,16 @@ public class NhanVien {
         this.chucVu = chucVu;
         this.ngayVaoLam = LocalDate.now(); // Mặc định là ngày hiện tại
     }
+
+    public NhanVien(Integer maNhanVien, String hoTen, LocalDate ngaySinh, String soDienThoai, String diaChi, String chucVu, LocalDate ngayVaoLam) {
+        this.maNhanVien = maNhanVien;
+        this.hoTen = hoTen;
+        this.ngaySinh = ngaySinh;
+        this.soDienThoai = soDienThoai;
+        this.diaChi = diaChi;
+        this.chucVu = chucVu;
+        this.ngayVaoLam = ngayVaoLam;
+    }
     
     // Getter và Setter
     public Integer getMaNhanVien() {

@@ -45,6 +45,17 @@ public class NhapNguyenLieu {
         this.donGia = donGia;
         this.nguonNhap = nguonNhap;
     }
+
+    public NhapNguyenLieu(Integer maNhap, Integer maNguyenLieu, LocalDate ngayNhap, String tenNguyenLieu, String donViTinh, Integer soLuong, BigDecimal donGia, String nguonNhap) {
+        this.maNhap = maNhap;
+        this.maNguyenLieu = maNguyenLieu;
+        this.ngayNhap = ngayNhap;
+        this.tenNguyenLieu = tenNguyenLieu;
+        this.donViTinh = donViTinh;
+        this.soLuong = soLuong;
+        this.donGia = donGia;
+        this.nguonNhap = nguonNhap;
+    }
     
     // Constructor không có nguồn nhập
     public NhapNguyenLieu(Integer maNguyenLieu, LocalDate ngayNhap, String tenNguyenLieu, 
