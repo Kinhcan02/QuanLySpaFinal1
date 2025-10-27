@@ -4,8 +4,12 @@
 
 package com.mycompany.quanlyspafinal;
 
+import View.QuanLyDichVuView;
 import Controller.AuthController;
+import Controller.QuanLyDichVuController;
 import View.LoginView;
+import View.MainView;
+import View.QuanLyDichVuView;
 import javax.swing.SwingUtilities;
 
 /**
@@ -15,20 +19,23 @@ import javax.swing.SwingUtilities;
 public class QuanLySpaFinal {
 
     public static void main(String[] args) {
-        try {
-            // Set system look and feel
-            javax.swing.UIManager.setLookAndFeel(
-                javax.swing.UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            // Set system look and feel
+//            javax.swing.UIManager.setLookAndFeel(
+//                javax.swing.UIManager.getSystemLookAndFeelClassName());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        
+//        SwingUtilities.invokeLater(new Runnable() {
+//            @Override
+//            public void run() {
+//                AuthController authController = new AuthController();
+//                authController.khoiDong();
+//            }
+//        });
+        MainView view = new MainView();
+        view.setVisible(true);
         
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                AuthController authController = new AuthController();
-                authController.khoiDong();
-            }
-        });
     }
 }

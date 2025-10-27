@@ -1,5 +1,6 @@
 package Controller;
 
+import View.LoginView;
 import Service.AuthService;
 import View.LoginView;
 import ShareInfo.Auth;
