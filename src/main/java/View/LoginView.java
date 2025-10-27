@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.KeyEvent;
 
 public class LoginView extends JFrame {
 
@@ -23,7 +24,6 @@ public class LoginView extends JFrame {
         initComponents();
         setupUI();
         getRootPane().setDefaultButton(btnDangNhap);
-
     }
 
     private void setGlobalLookAndFeel() {
@@ -389,6 +389,23 @@ public class LoginView extends JFrame {
             }
         });
 
+        // THÊM SỰ KIỆN ENTER CHO NÚT OK
+        // Tạo Action cho phím Enter
+        Action enterAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Window window = SwingUtilities.getWindowAncestor(okButton);
+                if (window != null) {
+                    window.dispose();
+                }
+            }
+        };
+
+        // Đăng ký phím Enter cho nút OK
+        okButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterAction");
+        okButton.getActionMap().put("enterAction", enterAction);
+
         // Tạo panel chứa nội dung
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(0x8C, 0xC9, 0x80));
@@ -439,6 +456,9 @@ public class LoginView extends JFrame {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setResizable(false);
+
+        // QUAN TRỌNG: Đặt nút OK làm default button cho dialog
+        dialog.getRootPane().setDefaultButton(okButton);
 
         return dialog;
     }

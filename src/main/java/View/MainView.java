@@ -25,15 +25,7 @@ public class MainView extends JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                int confirm = JOptionPane.showConfirmDialog(
-                        MainView.this,
-                        "Bạn có chắc muốn thoát chương trình không?",
-                        "Xác nhận thoát",
-                        JOptionPane.YES_NO_OPTION
-                );
-                if (confirm == JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
+                xacNhanThoatChuongTrinh();
             }
         });
     }
@@ -206,51 +198,285 @@ public class MainView extends JFrame {
         btnThoat.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int confirm = JOptionPane.showConfirmDialog(
-                        MainView.this,
-                        "Bạn có chắc muốn thoát chương trình không?",
-                        "Xác nhận thoát",
-                        JOptionPane.YES_NO_OPTION
-                );
-                if (confirm == JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
+                xacNhanThoatChuongTrinh();
             }
         });
 
-        // Sự kiện cho các nút khác
+        // Sự kiện cho các nút khác - SỬA LẠI THÀNH CUSTOM DIALOG
         btnDatDichVu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(MainView.this, "Tính năng Đặt dịch vụ đang phát triển");
+                hienThiThongBao("Tính năng Đặt dịch vụ đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
         btnQuanLyNhanVien.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(MainView.this, "Tính năng Quản lý nhân viên đang phát triển");
+                hienThiThongBao("Tính năng Quản lý nhân viên đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
         btnQuanLyKhachHang.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(MainView.this, "Tính năng Quản lý khách hàng đang phát triển");
+                hienThiThongBao("Tính năng Quản lý khách hàng đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
         btnThongKe.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(MainView.this, "Tính năng Thống kê đang phát triển");
+                hienThiThongBao("Tính năng Thống kê đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
         btnCaiDat.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(MainView.this, "Tính năng Cài đặt đang phát triển");
+                hienThiThongBao("Tính năng Cài đặt đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+    }
+
+    // PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CUSTOM
+    private void hienThiThongBao(String message, String title, int messageType) {
+        JDialog dialog = createCustomDialog(message, title, messageType);
+        dialog.setVisible(true);
+    }
+
+    // PHƯƠNG THỨC XÁC NHẬN THOÁT CUSTOM
+    private void xacNhanThoatChuongTrinh() {
+        // Tạo custom buttons
+        JButton btnCo = new JButton("Có");
+        JButton btnKhong = new JButton("Không");
+        
+        // Style nút "Có" giống nút thoát (màu xám)
+        styleExitButton(btnCo);
+        // Style nút "Không" giống nút đăng nhập (màu xanh)
+        styleLoginButton(btnKhong);
+        
+        // Tạo panel chứa nội dung
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Tạo icon và message
+        JLabel messageLabel = new JLabel("Bạn có chắc muốn thoát chương trình không?");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Icon question
+        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+
+        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        contentPanel.setBackground(COLOR_BACKGROUND);
+        if (icon != null) {
+            JLabel iconLabel = new JLabel(icon);
+            contentPanel.add(iconLabel);
+        }
+        contentPanel.add(messageLabel);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Panel chứa nút
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        buttonPanel.setBackground(COLOR_BACKGROUND);
+        buttonPanel.add(btnCo);
+        buttonPanel.add(btnKhong);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Tạo JDialog
+        JDialog dialog = new JDialog(this, "Xác nhận thoát", true);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        // Biến để lưu kết quả
+        final boolean[] result = {false};
+
+        // Xử lý sự kiện cho nút
+        btnCo.addActionListener(e -> {
+            result[0] = true;
+            dialog.dispose();
+        });
+
+        btnKhong.addActionListener(e -> {
+            result[0] = false;
+            dialog.dispose();
+        });
+
+        // Xử lý khi đóng cửa sổ
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                result[0] = false;
+                dialog.dispose();
+            }
+        });
+
+        // Đặt nút "Không" làm default button
+        dialog.getRootPane().setDefaultButton(btnKhong);
+
+        dialog.setVisible(true);
+        
+        if (result[0]) {
+            System.exit(0);
+        }
+    }
+
+    // PHƯƠNG THỨC TẠO CUSTOM DIALOG
+    private JDialog createCustomDialog(String message, String title, int messageType) {
+        // Tạo custom button OK
+        JButton okButton = new JButton("OK");
+        styleLoginButton(okButton);
+        okButton.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(okButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
+
+        // Tạo panel chứa nội dung
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Tạo icon và message
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Icon tùy theo loại message
+        Icon icon = null;
+        switch (messageType) {
+            case JOptionPane.ERROR_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.errorIcon");
+                break;
+            case JOptionPane.INFORMATION_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.informationIcon");
+                break;
+            case JOptionPane.WARNING_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.warningIcon");
+                break;
+            case JOptionPane.QUESTION_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.questionIcon");
+                break;
+        }
+
+        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        contentPanel.setBackground(COLOR_BACKGROUND);
+        if (icon != null) {
+            JLabel iconLabel = new JLabel(icon);
+            contentPanel.add(iconLabel);
+        }
+        contentPanel.add(messageLabel);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Panel chứa nút OK
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(COLOR_BACKGROUND);
+        buttonPanel.add(okButton);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Tạo JDialog
+        JDialog dialog = new JDialog(this, title, true);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        // Đặt nút OK làm default button
+        dialog.getRootPane().setDefaultButton(okButton);
+
+        return dialog;
+    }
+
+    // PHƯƠNG THỨC STYLE BUTTON ĐĂNG NHẬP
+    private void styleLoginButton(JButton button) {
+        // Màu chính RGB(77, 138, 87)
+        Color mainColor = new Color(77, 138, 87);
+        Color hoverColor = new Color(67, 118, 77);
+        Color borderColor = new Color(57, 98, 67);
+        
+        // Thiết lập UI cho nút
+        button.setBackground(mainColor);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor, 1),
+                BorderFactory.createEmptyBorder(10, 25, 10, 25)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // QUAN TRỌNG: Đảm bảo nút hiển thị màu nền
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
+        
+        // Sử dụng BasicButtonUI để tránh bị ghi đè
+        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+
+        // Hiệu ứng hover
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(hoverColor);
+                }
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(mainColor);
+                }
+            }
+        });
+    }
+
+    // PHƯƠNG THỨC STYLE BUTTON THOÁT
+    private void styleExitButton(JButton button) {
+        // Màu cho nút thoát
+        Color mainColor = new Color(149, 165, 166);
+        Color hoverColor = new Color(127, 140, 141);
+        Color borderColor = new Color(107, 120, 121);
+        
+        // Thiết lập UI cho nút
+        button.setBackground(mainColor);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor, 1),
+                BorderFactory.createEmptyBorder(10, 25, 10, 25)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // QUAN TRỌNG: Đảm bảo nút hiển thị màu nền
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
+        
+        // Sử dụng BasicButtonUI để tránh bị ghi đè
+        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+
+        // Hiệu ứng hover
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(hoverColor);
+                }
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(mainColor);
+                }
             }
         });
     }
@@ -279,10 +505,7 @@ public class MainView extends JFrame {
 
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this,
-                    "Lỗi khi mở quản lý dịch vụ: " + e.getMessage(),
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi mở quản lý dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -332,7 +555,7 @@ public class MainView extends JFrame {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Lỗi khi hiển thị cửa sổ: " + e.getMessage());
+                hienThiThongBao("Lỗi khi hiển thị cửa sổ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
     }
@@ -387,13 +610,6 @@ public class MainView extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Set look and feel
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         // Khởi chạy ứng dụng
         SwingUtilities.invokeLater(new Runnable() {
             @Override

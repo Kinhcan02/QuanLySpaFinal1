@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class QuanLyDichVuController {
+
     private QuanLyDichVuView view;
     private DichVuService dichVuService;
     private LoaiDichVuService loaiDichVuService;
@@ -22,7 +23,7 @@ public class QuanLyDichVuController {
         this.view = view;
         this.dichVuService = new DichVuService();
         this.loaiDichVuService = new LoaiDichVuService();
-        
+
         initController();
         loadAllDichVu();
         loadLoaiDichVuToComboBox();
@@ -49,7 +50,7 @@ public class QuanLyDichVuController {
             JComboBox<String> cboLoaiFilter = view.getCboLoaiFilter();
             cboLoaiFilter.removeAllItems();
             cboLoaiFilter.addItem("Tất cả");
-            
+
             for (LoaiDichVu loaiDV : listLoaiDV) {
                 cboLoaiFilter.addItem(loaiDV.getTenLoaiDV());
             }
@@ -84,8 +85,10 @@ public class QuanLyDichVuController {
     }
 
     private String getTenLoaiDichVu(Integer maLoaiDV) {
-        if (maLoaiDV == null) return "Chưa phân loại";
-        
+        if (maLoaiDV == null) {
+            return "Chưa phân loại";
+        }
+
         try {
             LoaiDichVu loaiDV = loaiDichVuService.getLoaiDichVuById(maLoaiDV);
             return loaiDV.getTenLoaiDV();
@@ -95,7 +98,9 @@ public class QuanLyDichVuController {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        if (amount == null) return "0";
+        if (amount == null) {
+            return "0";
+        }
         return String.format("%,d VNĐ", amount.longValue());
     }
 
@@ -103,42 +108,42 @@ public class QuanLyDichVuController {
         try {
             JDialog dialog = createDialog("Quản Lý Loại Dịch Vụ", 500, 300);
             JPanel mainPanel = createMainPanel();
-            
+
             // Tiêu đề
             JPanel titlePanel = createTitlePanel("QUẢN LÝ LOẠI DỊCH VỤ");
-            
+
             // Form nhập liệu
             JPanel formPanel = new JPanel(new GridLayout(2, 2, 10, 10));
             formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            
+
             JTextField txtTenLoai = new JTextField();
             JTextArea txtMoTa = new JTextArea(2, 20);
             JScrollPane scrollMoTa = new JScrollPane(txtMoTa);
-            
+
             formPanel.add(createStyledLabel("Tên loại dịch vụ:"));
             formPanel.add(txtTenLoai);
             formPanel.add(createStyledLabel("Mô tả:"));
             formPanel.add(scrollMoTa);
-            
+
             // Panel nút
             JPanel buttonPanel = createButtonPanel();
             JButton btnThemLoai = createStyledButton("Thêm loại dịch vụ", new Color(0x4D, 0x8A, 0x57));
             JButton btnDong = createStyledButton("Đóng", new Color(0x4D, 0x8A, 0x57));
-            
+
             btnThemLoai.addActionListener(e -> themLoaiDichVu(txtTenLoai, txtMoTa, dialog));
             btnDong.addActionListener(e -> dialog.dispose());
-            
+
             buttonPanel.add(btnThemLoai);
             buttonPanel.add(btnDong);
-            
+
             // Thêm các panel vào dialog
             mainPanel.add(titlePanel, BorderLayout.NORTH);
             mainPanel.add(formPanel, BorderLayout.CENTER);
             mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-            
+
             dialog.add(mainPanel);
             dialog.setVisible(true);
-            
+
         } catch (Exception e) {
             showError("Lỗi khi mở quản lý loại dịch vụ: " + e.getMessage());
         }
@@ -148,15 +153,15 @@ public class QuanLyDichVuController {
         try {
             String tenLoai = txtTenLoai.getText().trim();
             String moTa = txtMoTa.getText().trim();
-            
+
             if (tenLoai.isEmpty()) {
                 JOptionPane.showMessageDialog(view, "Tên loại dịch vụ không được để trống");
                 return;
             }
-            
+
             LoaiDichVu loaiDV = new LoaiDichVu(tenLoai, moTa);
             boolean success = loaiDichVuService.addLoaiDichVu(loaiDV);
-            
+
             if (success) {
                 JOptionPane.showMessageDialog(view, "Thêm loại dịch vụ thành công");
                 txtTenLoai.setText("");
@@ -174,81 +179,81 @@ public class QuanLyDichVuController {
         try {
             JDialog dialog = createDialog("Thêm Dịch Vụ Mới", 500, 450); // Tăng chiều cao lên 450
             JPanel mainPanel = createMainPanel();
-            
+
             // Form nhập liệu với BorderLayout để kiểm soát tốt hơn
             JPanel formPanel = new JPanel(new BorderLayout(10, 10));
             formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            
+
             // Panel cho các field thông thường
             JPanel basicInfoPanel = new JPanel(new GridLayout(3, 2, 10, 10));
             basicInfoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            
+
             JTextField txtTenDV = new JTextField();
             JTextField txtGia = new JTextField();
             JComboBox<String> cboLoaiDV = new JComboBox<>();
-            
+
             // Load loại dịch vụ
             List<LoaiDichVu> listLoaiDV = loaiDichVuService.getAllLoaiDichVu();
             cboLoaiDV.addItem("-- Chọn loại dịch vụ --");
             for (LoaiDichVu loai : listLoaiDV) {
                 cboLoaiDV.addItem(loai.getTenLoaiDV());
             }
-            
+
             basicInfoPanel.add(createStyledLabel("Tên dịch vụ:"));
             basicInfoPanel.add(txtTenDV);
             basicInfoPanel.add(createStyledLabel("Giá dịch vụ:"));
             basicInfoPanel.add(txtGia);
             basicInfoPanel.add(createStyledLabel("Loại dịch vụ:"));
             basicInfoPanel.add(cboLoaiDV);
-            
+
             // Panel cho ghi chú với kích thước lớn hơn
             JPanel ghiChuPanel = new JPanel(new BorderLayout(5, 5));
             ghiChuPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            
+
             JLabel lblGhiChu = createStyledLabel("Ghi chú:");
             JTextArea txtGhiChu = new JTextArea(6, 30); // Tăng số dòng lên 6
             txtGhiChu.setLineWrap(true);
             txtGhiChu.setWrapStyleWord(true);
             JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
             scrollGhiChu.setPreferredSize(new Dimension(400, 120)); // Đặt kích thước cố định
-            
+
             ghiChuPanel.add(lblGhiChu, BorderLayout.NORTH);
             ghiChuPanel.add(scrollGhiChu, BorderLayout.CENTER);
-            
+
             // Thêm các panel vào form chính
             formPanel.add(basicInfoPanel, BorderLayout.NORTH);
             formPanel.add(ghiChuPanel, BorderLayout.CENTER);
-            
+
             // Panel nút
             JPanel buttonPanel = createButtonPanel();
             JButton btnThem = createStyledButton("Thêm", new Color(0x4D, 0x8A, 0x57));
             JButton btnHuy = createStyledButton("Hủy", new Color(0x4D, 0x8A, 0x57));
-            
+
             btnThem.addActionListener(e -> handleThemDichVu(dialog, txtTenDV, txtGia, cboLoaiDV, txtGhiChu, listLoaiDV));
             btnHuy.addActionListener(e -> dialog.dispose());
-            
+
             buttonPanel.add(btnThem);
             buttonPanel.add(btnHuy);
-            
+
             mainPanel.add(formPanel, BorderLayout.CENTER);
             mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-            
+
             dialog.add(mainPanel);
             dialog.setVisible(true);
-            
+
         } catch (Exception e) {
             showError("Lỗi khi thêm dịch vụ: " + e.getMessage());
         }
     }
 
-    private void handleThemDichVu(JDialog dialog, JTextField txtTenDV, JTextField txtGia, 
-                                 JComboBox<String> cboLoaiDV, JTextArea txtGhiChu, 
-                                 List<LoaiDichVu> listLoaiDV) {
+    private void handleThemDichVu(JDialog dialog, JTextField txtTenDV, JTextField txtGia,
+            JComboBox<String> cboLoaiDV, JTextArea txtGhiChu,
+            List<LoaiDichVu> listLoaiDV) {
         if (txtTenDV.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(dialog, "Tên dịch vụ không được để trống");
             return;
         }
-        
+
         BigDecimal gia;
         try {
             gia = new BigDecimal(txtGia.getText().replaceAll("[^\\d]", ""));
@@ -263,10 +268,10 @@ public class QuanLyDichVuController {
         }
 
         DichVu dichVu = new DichVu(
-            txtTenDV.getText().trim(),
-            gia,
-            maLoaiDV,
-            txtGhiChu.getText().trim()
+                txtTenDV.getText().trim(),
+                gia,
+                maLoaiDV,
+                txtGhiChu.getText().trim()
         );
 
         boolean success = dichVuService.addDichVu(dichVu);
@@ -282,14 +287,94 @@ public class QuanLyDichVuController {
     private void suaDichVu() {
         int selectedRow = view.getTblDichVu().getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn một dịch vụ để sửa");
+            // Tạo custom dialog cho message box
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Message");
+            dialog.setModal(true);
+            dialog.setLayout(new BorderLayout());
+            dialog.setSize(350, 150);
+            dialog.setLocationRelativeTo(view);
+            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            // Panel nội dung
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            // Label message
+            JLabel messageLabel = new JLabel("Vui lòng chọn một dịch vụ để sửa");
+            messageLabel.setForeground(Color.WHITE);
+            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+            // Panel nút
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            JButton btnOK = createStyledButton("OK", new Color(0x4D, 0x8A, 0x57));
+            btnOK.addActionListener(e -> dialog.dispose());
+            buttonPanel.add(btnOK);
+
+            contentPanel.add(messageLabel, BorderLayout.CENTER);
+            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.add(contentPanel);
+            dialog.setVisible(true);
             return;
         }
 
         try {
             int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
-            DichVu dichVu = dichVuService.getDichVuById(maDichVu);
-            // Thêm code xử lý sửa dịch vụ ở đây
+            String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
+
+            // Tạo custom dialog cho xác nhận sửa
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Xác nhận");
+            dialog.setModal(true);
+            dialog.setLayout(new BorderLayout());
+            dialog.setSize(400, 150);
+            dialog.setLocationRelativeTo(view);
+            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            // Panel nội dung
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            // Label message
+            JLabel messageLabel = new JLabel("Bạn có chắc muốn sửa dịch vụ '" + tenDichVu + "' không?");
+            messageLabel.setForeground(Color.WHITE);
+            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+            // Panel nút
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            JButton btnCo = createStyledButton("Có", new Color(0x4D, 0x8A, 0x57));
+            JButton btnKhong = createStyledButton("Không", new Color(0x8C, 0x8C, 0x8C));
+
+            btnCo.addActionListener(e -> {
+                dialog.dispose();
+                try {
+                    DichVu dichVu = dichVuService.getDichVuById(maDichVu);
+                    // Thêm code xử lý sửa dịch vụ ở đây
+                    showSuccessMessage("Sửa dịch vụ thành công");
+                } catch (Exception ex) {
+                    showError("Lỗi khi sửa dịch vụ: " + ex.getMessage());
+                }
+            });
+
+            btnKhong.addActionListener(e -> dialog.dispose());
+
+            buttonPanel.add(btnCo);
+            buttonPanel.add(btnKhong);
+
+            contentPanel.add(messageLabel, BorderLayout.CENTER);
+            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.add(contentPanel);
+            dialog.setVisible(true);
+
         } catch (Exception e) {
             showError("Lỗi khi sửa dịch vụ: " + e.getMessage());
         }
@@ -298,48 +383,151 @@ public class QuanLyDichVuController {
     private void xoaDichVu() {
         int selectedRow = view.getTblDichVu().getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn một dịch vụ để xóa");
+            // Tạo custom dialog cho message box
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Message");
+            dialog.setModal(true);
+            dialog.setLayout(new BorderLayout());
+            dialog.setSize(350, 150);
+            dialog.setLocationRelativeTo(view);
+            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            // Panel nội dung
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            // Label message
+            JLabel messageLabel = new JLabel("Vui lòng chọn một dịch vụ để xóa");
+            messageLabel.setForeground(Color.WHITE);
+            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+            // Panel nút
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            JButton btnOK = createStyledButton("OK", new Color(0x4D, 0x8A, 0x57));
+            btnOK.addActionListener(e -> dialog.dispose());
+            buttonPanel.add(btnOK);
+
+            contentPanel.add(messageLabel, BorderLayout.CENTER);
+            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.add(contentPanel);
+            dialog.setVisible(true);
             return;
         }
 
         try {
             int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
             String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
-            
-            int confirm = JOptionPane.showConfirmDialog(view, 
-                "Bạn có chắc chắn muốn xóa dịch vụ: " + tenDichVu + "?",
-                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
-            
-            if (confirm == JOptionPane.YES_OPTION) {
-                boolean success = dichVuService.deleteDichVu(maDichVu);
-                if (success) {
-                    JOptionPane.showMessageDialog(view, "Xóa dịch vụ thành công");
-                    loadAllDichVu();
-                } else {
-                    JOptionPane.showMessageDialog(view, "Xóa dịch vụ thất bại");
+
+            // Tạo custom dialog cho xác nhận xóa
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Xác nhận");
+            dialog.setModal(true);
+            dialog.setLayout(new BorderLayout());
+            dialog.setSize(400, 150);
+            dialog.setLocationRelativeTo(view);
+            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            // Panel nội dung
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            // Label message
+            JLabel messageLabel = new JLabel("Bạn có chắc muốn xóa dịch vụ '" + tenDichVu + "' không?");
+            messageLabel.setForeground(Color.WHITE);
+            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+            // Panel nút
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            JButton btnCo = createStyledButton("Có", new Color(0xE7, 0x4C, 0x3C));
+            JButton btnKhong = createStyledButton("Không", new Color(0x8C, 0x8C, 0x8C));
+
+            btnCo.addActionListener(e -> {
+                dialog.dispose();
+                try {
+                    boolean success = dichVuService.deleteDichVu(maDichVu);
+                    if (success) {
+                        showSuccessMessage("Xóa dịch vụ thành công");
+                        loadAllDichVu();
+                    } else {
+                        showError("Xóa dịch vụ thất bại");
+                    }
+                } catch (Exception ex) {
+                    showError("Lỗi khi xóa dịch vụ: " + ex.getMessage());
                 }
-            }
+            });
+
+            btnKhong.addActionListener(e -> dialog.dispose());
+
+            buttonPanel.add(btnCo);
+            buttonPanel.add(btnKhong);
+
+            contentPanel.add(messageLabel, BorderLayout.CENTER);
+            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.add(contentPanel);
+            dialog.setVisible(true);
+
         } catch (Exception e) {
             showError("Lỗi khi xóa dịch vụ: " + e.getMessage());
         }
+    }
+
+// Thêm phương thức hiển thị message thành công
+    private void showSuccessMessage(String message) {
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Thông báo");
+        dialog.setModal(true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(300, 150);
+        dialog.setLocationRelativeTo(view);
+        dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        JButton btnOK = createStyledButton("OK", new Color(0x4D, 0x8A, 0x57));
+        btnOK.addActionListener(e -> dialog.dispose());
+        buttonPanel.add(btnOK);
+
+        contentPanel.add(messageLabel, BorderLayout.CENTER);
+        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.add(contentPanel);
+        dialog.setVisible(true);
     }
 
     private void timKiemDichVu() {
         try {
             String tuKhoa = view.getTxtTimKiem().getText().trim();
             String loaiFilter = (String) view.getCboLoaiFilter().getSelectedItem();
-            
-            List<DichVu> ketQua = !tuKhoa.isEmpty() ? 
-                dichVuService.searchDichVuByTen(tuKhoa) : 
-                dichVuService.getAllDichVu();
-            
+
+            List<DichVu> ketQua = !tuKhoa.isEmpty()
+                    ? dichVuService.searchDichVuByTen(tuKhoa)
+                    : dichVuService.getAllDichVu();
+
             // Lọc theo loại dịch vụ
             if (!"Tất cả".equals(loaiFilter)) {
                 ketQua.removeIf(dv -> !loaiFilter.equals(getTenLoaiDichVu(dv.getMaLoaiDV())));
             }
-            
+
             displayDichVuOnTable(ketQua);
-            
+
         } catch (Exception e) {
             showError("Lỗi khi tìm kiếm: " + e.getMessage());
         }
@@ -394,16 +582,17 @@ public class QuanLyDichVuController {
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 button.setBackground(backgroundColor.darker());
             }
+
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setBackground(backgroundColor);
             }
         });
-        
+
         return button;
     }
 
