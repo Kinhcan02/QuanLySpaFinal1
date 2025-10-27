@@ -17,9 +17,37 @@ public class LoginView extends JFrame {
     private AuthController authController;
 
     public LoginView(AuthController authController) {
+        // Set global Look and Feel trước khi khởi tạo components
+        setGlobalLookAndFeel();
         this.authController = authController;
         initComponents();
         setupUI();
+        getRootPane().setDefaultButton(btnDangNhap);
+
+    }
+
+    private void setGlobalLookAndFeel() {
+        try {
+            // Sử dụng CrossPlatform Look and Feel cho toàn bộ ứng dụng
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+
+            // QUAN TRỌNG: Override các setting để buttons hiển thị đúng màu
+            UIManager.put("Button.background", new Color(77, 138, 87));
+            UIManager.put("Button.foreground", Color.WHITE);
+            UIManager.put("Button.opaque", true);
+            UIManager.put("Button.contentAreaFilled", true);
+            UIManager.put("Button.borderPainted", false);
+            UIManager.put("Button.focusPainted", false);
+
+            // Fix cho các component khác
+            UIManager.put("Panel.background", new Color(0x8C, 0xC9, 0x80));
+            UIManager.put("Label.foreground", Color.WHITE);
+            UIManager.put("TextField.background", Color.WHITE);
+            UIManager.put("TextField.foreground", Color.BLACK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void initComponents() {
@@ -139,6 +167,7 @@ public class LoginView extends JFrame {
                 BorderFactory.createEmptyBorder(8, 10, 8, 10)
         ));
         textField.setBackground(Color.WHITE);
+        textField.setForeground(Color.BLACK);
     }
 
     private void styleLoginButton(JButton button) {
@@ -146,7 +175,7 @@ public class LoginView extends JFrame {
         Color mainColor = new Color(77, 138, 87);
         Color hoverColor = new Color(67, 118, 77);
         Color borderColor = new Color(57, 98, 67);
-        
+
         // Thiết lập UI cho nút
         button.setBackground(mainColor);
         button.setForeground(Color.WHITE);
@@ -157,22 +186,27 @@ public class LoginView extends JFrame {
                 BorderFactory.createEmptyBorder(10, 25, 10, 25)
         ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         // QUAN TRỌNG: Đảm bảo nút hiển thị màu nền
         button.setOpaque(true);
         button.setContentAreaFilled(true);
-        
-        // Loại bỏ任何可能的重置颜色的UI
+        button.setBorderPainted(false);
+
+        // Sử dụng BasicButtonUI để tránh bị ghi đè
         button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
 
         // Hiệu ứng hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(hoverColor);
+                if (button.isEnabled()) {
+                    button.setBackground(hoverColor);
+                }
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(mainColor);
+                if (button.isEnabled()) {
+                    button.setBackground(mainColor);
+                }
             }
         });
     }
@@ -182,7 +216,7 @@ public class LoginView extends JFrame {
         Color mainColor = new Color(149, 165, 166);
         Color hoverColor = new Color(127, 140, 141);
         Color borderColor = new Color(107, 120, 121);
-        
+
         // Thiết lập UI cho nút
         button.setBackground(mainColor);
         button.setForeground(Color.WHITE);
@@ -193,22 +227,27 @@ public class LoginView extends JFrame {
                 BorderFactory.createEmptyBorder(10, 25, 10, 25)
         ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         // QUAN TRỌNG: Đảm bảo nút hiển thị màu nền
         button.setOpaque(true);
         button.setContentAreaFilled(true);
-        
-        // Loại bỏ任何可能的重置颜色的UI
+        button.setBorderPainted(false);
+
+        // Sử dụng BasicButtonUI để tránh bị ghi đè
         button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
 
         // Hiệu ứng hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(hoverColor);
+                if (button.isEnabled()) {
+                    button.setBackground(hoverColor);
+                }
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(mainColor);
+                if (button.isEnabled()) {
+                    button.setBackground(mainColor);
+                }
             }
         });
     }
@@ -239,21 +278,21 @@ public class LoginView extends JFrame {
     // Các phương thức hiển thị thông báo với nút tùy chỉnh
     public void hienThiThongBaoDangNhapThanhCong() {
         JDialog dialog = createCustomDialog(
-            "Đăng nhập thành công! Chào mừng " + txtTenDangNhap.getText(),
-            "Thành công",
-            JOptionPane.INFORMATION_MESSAGE
+                "Đăng nhập thành công! Chào mừng " + txtTenDangNhap.getText(),
+                "Thành công",
+                JOptionPane.INFORMATION_MESSAGE
         );
         dialog.setVisible(true);
     }
 
     public void hienThiThongBaoDangNhapThatBai() {
         JDialog dialog = createCustomDialog(
-            "Tên đăng nhập hoặc mật khẩu không đúng!",
-            "Lỗi đăng nhập",
-            JOptionPane.ERROR_MESSAGE
+                "Tên đăng nhập hoặc mật khẩu không đúng!",
+                "Lỗi đăng nhập",
+                JOptionPane.ERROR_MESSAGE
         );
         dialog.setVisible(true);
-        
+
         txtMatKhau.setText("");
         txtTenDangNhap.requestFocus();
     }
@@ -267,12 +306,12 @@ public class LoginView extends JFrame {
         // Tạo custom buttons
         JButton btnCo = new JButton("Có");
         JButton btnKhong = new JButton("Không");
-        
+
         // Style nút "Có" giống nút thoát (màu xám)
         styleExitButton(btnCo);
         // Style nút "Không" giống nút đăng nhập (màu xanh)
         styleLoginButton(btnKhong);
-        
+
         // Tạo panel chứa nội dung
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(new Color(0x8C, 0xC9, 0x80));
@@ -416,14 +455,7 @@ public class LoginView extends JFrame {
     }
 
     public static void main(String[] args) {
-        try {
-            // Sử dụng Basic Look and Feel để tránh màu bị ghi đè
-            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        // Khởi chạy ứng dụng
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

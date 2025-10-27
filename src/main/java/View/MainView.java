@@ -370,6 +370,22 @@ public class MainView extends JFrame {
         return desktopPane;
     }
 
+    public void capNhatThongTinNguoiDung(String tenDangNhap, String vaiTro) {
+        String vaiTroText = "";
+
+        if ("ADMIN".equalsIgnoreCase(vaiTro)) {
+            vaiTroText = "Quản trị viên";
+        } else if ("THUNGAN".equalsIgnoreCase(vaiTro)) {
+            vaiTroText = "Thu ngân";
+        } else if ("NHANVIEN".equalsIgnoreCase(vaiTro)) {
+            vaiTroText = "Nhân viên";
+        } else {
+            vaiTroText = vaiTro;
+        }
+
+        lblUserInfo.setText("Xin chào: " + tenDangNhap + " | " + vaiTroText);
+    }
+
     public static void main(String[] args) {
         // Set look and feel
         try {
