@@ -284,102 +284,233 @@ public class QuanLyDichVuController {
         }
     }
 
-    private void suaDichVu() {
-        int selectedRow = view.getTblDichVu().getSelectedRow();
-        if (selectedRow == -1) {
-            // Tạo custom dialog cho message box
-            JDialog dialog = new JDialog();
-            dialog.setTitle("Message");
-            dialog.setModal(true);
-            dialog.setLayout(new BorderLayout());
-            dialog.setSize(350, 150);
-            dialog.setLocationRelativeTo(view);
-            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+private void suaDichVu() {
+    int selectedRow = view.getTblDichVu().getSelectedRow();
+    if (selectedRow == -1) {
+        // Tạo custom dialog cho message box
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Message");
+        dialog.setModal(true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(350, 150);
+        dialog.setLocationRelativeTo(view);
+        dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
 
-            // Panel nội dung
-            JPanel contentPanel = new JPanel(new BorderLayout());
-            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Panel nội dung
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-            // Label message
-            JLabel messageLabel = new JLabel("Vui lòng chọn một dịch vụ để sửa");
-            messageLabel.setForeground(Color.WHITE);
-            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        // Label message
+        JLabel messageLabel = new JLabel("Vui lòng chọn một dịch vụ để sửa");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-            // Panel nút
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            JButton btnOK = createStyledButton("OK", new Color(0x4D, 0x8A, 0x57));
-            btnOK.addActionListener(e -> dialog.dispose());
-            buttonPanel.add(btnOK);
+        // Panel nút
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        JButton btnOK = createStyledButton("OK", new Color(0x4D, 0x8A, 0x57));
+        btnOK.addActionListener(e -> dialog.dispose());
+        buttonPanel.add(btnOK);
 
-            contentPanel.add(messageLabel, BorderLayout.CENTER);
-            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+        contentPanel.add(messageLabel, BorderLayout.CENTER);
+        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-            dialog.add(contentPanel);
-            dialog.setVisible(true);
-            return;
-        }
-
-        try {
-            int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
-            String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
-
-            // Tạo custom dialog cho xác nhận sửa
-            JDialog dialog = new JDialog();
-            dialog.setTitle("Xác nhận");
-            dialog.setModal(true);
-            dialog.setLayout(new BorderLayout());
-            dialog.setSize(400, 150);
-            dialog.setLocationRelativeTo(view);
-            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
-
-            // Panel nội dung
-            JPanel contentPanel = new JPanel(new BorderLayout());
-            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-            // Label message
-            JLabel messageLabel = new JLabel("Bạn có chắc muốn sửa dịch vụ '" + tenDichVu + "' không?");
-            messageLabel.setForeground(Color.WHITE);
-            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-            // Panel nút
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-
-            JButton btnCo = createStyledButton("Có", new Color(0x4D, 0x8A, 0x57));
-            JButton btnKhong = createStyledButton("Không", new Color(0x8C, 0x8C, 0x8C));
-
-            btnCo.addActionListener(e -> {
-                dialog.dispose();
-                try {
-                    DichVu dichVu = dichVuService.getDichVuById(maDichVu);
-                    // Thêm code xử lý sửa dịch vụ ở đây
-                    showSuccessMessage("Sửa dịch vụ thành công");
-                } catch (Exception ex) {
-                    showError("Lỗi khi sửa dịch vụ: " + ex.getMessage());
-                }
-            });
-
-            btnKhong.addActionListener(e -> dialog.dispose());
-
-            buttonPanel.add(btnCo);
-            buttonPanel.add(btnKhong);
-
-            contentPanel.add(messageLabel, BorderLayout.CENTER);
-            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-            dialog.add(contentPanel);
-            dialog.setVisible(true);
-
-        } catch (Exception e) {
-            showError("Lỗi khi sửa dịch vụ: " + e.getMessage());
-        }
+        dialog.add(contentPanel);
+        dialog.setVisible(true);
+        return;
     }
 
+    try {
+        int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
+        String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
+
+        // Tạo custom dialog cho xác nhận sửa
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Xác nhận");
+        dialog.setModal(true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(400, 150);
+        dialog.setLocationRelativeTo(view);
+        dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+
+        // Panel nội dung
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Label message
+        JLabel messageLabel = new JLabel("Bạn có chắc muốn sửa dịch vụ '" + tenDichVu + "' không?");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // Panel nút
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+        JButton btnCo = createStyledButton("Có", new Color(0x4D, 0x8A, 0x57));
+        JButton btnKhong = createStyledButton("Không", new Color(0x8C, 0x8C, 0x8C));
+
+        btnCo.addActionListener(e -> {
+            dialog.dispose();
+            try {
+                // Lấy thông tin dịch vụ từ database
+                DichVu dichVu = dichVuService.getDichVuById(maDichVu);
+                
+                if (dichVu == null) {
+                    showError("Không tìm thấy dịch vụ cần sửa");
+                    return;
+                }
+                
+                // Hiển thị form sửa dịch vụ
+                showEditDichVuForm(dichVu);
+            } catch (Exception ex) {
+                showError("Lỗi khi sửa dịch vụ: " + ex.getMessage());
+            }
+        });
+
+        btnKhong.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(btnCo);
+        buttonPanel.add(btnKhong);
+
+        contentPanel.add(messageLabel, BorderLayout.CENTER);
+        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.add(contentPanel);
+        dialog.setVisible(true);
+
+    } catch (Exception e) {
+        showError("Lỗi khi sửa dịch vụ: " + e.getMessage());
+    }
+}
+
+private void showEditDichVuForm(DichVu dichVu) {
+    try {
+        JDialog dialog = createDialog("Sửa Dịch Vụ", 500, 450);
+        JPanel mainPanel = createMainPanel();
+
+        // Form nhập liệu với BorderLayout để kiểm soát tốt hơn
+        JPanel formPanel = new JPanel(new BorderLayout(10, 10));
+        formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+        // Panel cho các field thông thường
+        JPanel basicInfoPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+        basicInfoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+        JTextField txtTenDV = new JTextField(dichVu.getTenDichVu());
+        JTextField txtGia = new JTextField(dichVu.getGia().toString());
+        JComboBox<String> cboLoaiDV = new JComboBox<>();
+
+        // Load loại dịch vụ
+        List<LoaiDichVu> listLoaiDV = loaiDichVuService.getAllLoaiDichVu();
+        cboLoaiDV.addItem("-- Chọn loại dịch vụ --");
+        
+        int selectedIndex = 0;
+        for (int i = 0; i < listLoaiDV.size(); i++) {
+            LoaiDichVu loai = listLoaiDV.get(i);
+            cboLoaiDV.addItem(loai.getTenLoaiDV());
+            
+            // Chọn loại dịch vụ hiện tại của dịch vụ
+            if (dichVu.getMaLoaiDV() != null && dichVu.getMaLoaiDV().equals(loai.getMaLoaiDV())) {
+                selectedIndex = i + 1;
+            }
+        }
+        cboLoaiDV.setSelectedIndex(selectedIndex);
+
+        basicInfoPanel.add(createStyledLabel("Tên dịch vụ:"));
+        basicInfoPanel.add(txtTenDV);
+        basicInfoPanel.add(createStyledLabel("Giá dịch vụ:"));
+        basicInfoPanel.add(txtGia);
+        basicInfoPanel.add(createStyledLabel("Loại dịch vụ:"));
+        basicInfoPanel.add(cboLoaiDV);
+
+        // Panel cho ghi chú với kích thước lớn hơn
+        JPanel ghiChuPanel = new JPanel(new BorderLayout(5, 5));
+        ghiChuPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+        JLabel lblGhiChu = createStyledLabel("Ghi chú:");
+        JTextArea txtGhiChu = new JTextArea(6, 30);
+        txtGhiChu.setText(dichVu.getGhiChu() != null ? dichVu.getGhiChu() : "");
+        txtGhiChu.setLineWrap(true);
+        txtGhiChu.setWrapStyleWord(true);
+        JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
+        scrollGhiChu.setPreferredSize(new Dimension(400, 120));
+
+        ghiChuPanel.add(lblGhiChu, BorderLayout.NORTH);
+        ghiChuPanel.add(scrollGhiChu, BorderLayout.CENTER);
+
+        // Thêm các panel vào form chính
+        formPanel.add(basicInfoPanel, BorderLayout.NORTH);
+        formPanel.add(ghiChuPanel, BorderLayout.CENTER);
+
+        // Panel nút
+        JPanel buttonPanel = createButtonPanel();
+        JButton btnCapNhat = createStyledButton("Cập nhật", new Color(0x4D, 0x8A, 0x57));
+        JButton btnHuy = createStyledButton("Hủy", new Color(0x4D, 0x8A, 0x57));
+
+        btnCapNhat.addActionListener(e -> handleCapNhatDichVu(dialog, dichVu, txtTenDV, txtGia, cboLoaiDV, txtGhiChu, listLoaiDV));
+        btnHuy.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(btnCapNhat);
+        buttonPanel.add(btnHuy);
+
+        mainPanel.add(formPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.add(mainPanel);
+        dialog.setVisible(true);
+
+    } catch (Exception e) {
+        showError("Lỗi khi hiển thị form sửa dịch vụ: " + e.getMessage());
+    }
+}
+
+private void handleCapNhatDichVu(JDialog dialog, DichVu dichVu, JTextField txtTenDV, 
+        JTextField txtGia, JComboBox<String> cboLoaiDV, JTextArea txtGhiChu,
+        List<LoaiDichVu> listLoaiDV) {
+    
+    // Validate dữ liệu
+    if (txtTenDV.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(dialog, "Tên dịch vụ không được để trống");
+        return;
+    }
+
+    BigDecimal gia;
+    try {
+        gia = new BigDecimal(txtGia.getText().replaceAll("[^\\d]", ""));
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(dialog, "Giá dịch vụ không hợp lệ");
+        return;
+    }
+
+    // Cập nhật thông tin dịch vụ
+    dichVu.setTenDichVu(txtTenDV.getText().trim());
+    dichVu.setGia(gia);
+    dichVu.setGhiChu(txtGhiChu.getText().trim());
+    
+    // Cập nhật loại dịch vụ
+    if (cboLoaiDV.getSelectedIndex() > 0) {
+        dichVu.setMaLoaiDV(listLoaiDV.get(cboLoaiDV.getSelectedIndex() - 1).getMaLoaiDV());
+    } else {
+        dichVu.setMaLoaiDV(null);
+    }
+
+    try {
+        boolean success = dichVuService.updateDichVu(dichVu);
+        if (success) {
+            showSuccessMessage("Cập nhật dịch vụ thành công");
+            loadAllDichVu(); // Đồng bộ lại bảng
+            dialog.dispose();
+        } else {
+            showError("Cập nhật dịch vụ thất bại");
+        }
+    } catch (Exception e) {
+        showError("Lỗi khi cập nhật dịch vụ: " + e.getMessage());
+    }
+}
     private void xoaDichVu() {
         int selectedRow = view.getTblDichVu().getSelectedRow();
         if (selectedRow == -1) {
