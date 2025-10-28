@@ -19,29 +19,23 @@ public class MainViewController implements ActionListener {
 
         if (source == mainView.getBtnThongBao()) {
             hienThiThongBao("Tính năng Thông báo đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } 
-        else if (source == mainView.getBtnQuanLyNguyenLieu()) {
+        } else if (source == mainView.getBtnQuanLyNguyenLieu()) {
             hienThiThongBao("Tính năng Quản lý nguyên liệu đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } 
-        else if (source == mainView.getBtnDatDichVu()) {
+        } else if (source == mainView.getBtnDatDichVu()) {
             hienThiThongBao("Tính năng Đặt dịch vụ đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } 
-        else if (source == mainView.getBtnQuanLyNhanVien()) {
+        } else if (source == mainView.getBtnQuanLyNhanVien()) {
             mainView.showQuanLyNhanVien();
-        } 
-        else if (source == mainView.getBtnQuanLyKhachHang()) {
+        } else if (source == mainView.getBtnQuanLyCaLam()) {
+            mainView.showQuanLyCaLam();
+        } else if (source == mainView.getBtnQuanLyKhachHang()) {
             mainView.showQuanLyKhachHang();
-        } 
-        else if (source == mainView.getBtnQuanLyDichVu()) {
+        } else if (source == mainView.getBtnQuanLyDichVu()) {
             mainView.showQuanLyDichVu();
-        } 
-        else if (source == mainView.getBtnThongKe()) {
+        } else if (source == mainView.getBtnThongKe()) {
             hienThiThongBao("Tính năng Thống kê đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } 
-        else if (source == mainView.getBtnCaiDat()) {
+        } else if (source == mainView.getBtnCaiDat()) {
             hienThiThongBao("Tính năng Cài đặt đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } 
-        else if (source == mainView.getBtnThoat()) {
+        } else if (source == mainView.getBtnThoat()) {
             mainView.xacNhanThoatChuongTrinh();
         }
     }
