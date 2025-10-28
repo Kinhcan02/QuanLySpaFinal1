@@ -103,10 +103,10 @@ public class MainView extends JFrame {
         logoPanel.add(lblMainTitle);
         logoPanel.add(lblSubTitle);
 
-        // Navigation buttons
+        // Navigation buttons với ScrollPane
         JPanel navPanel = new JPanel();
         navPanel.setBackground(COLOR_MENU.darker()); // Màu menu đậm hơn
-        navPanel.setLayout(new GridLayout(9, 1, 0, 2));
+        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
         navPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
         // Tạo các nút menu
@@ -117,22 +117,44 @@ public class MainView extends JFrame {
         btnThongKe = createNavButton("THỐNG KÊ", "Báo cáo và thống kê");
         btnCaiDat = createNavButton("CÀI ĐẶT", "Cài đặt hệ thống");
 
+        // Thêm các nút vào panel với khoảng cách
+        navPanel.add(btnDatDichVu);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnQuanLyNhanVien);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnQuanLyKhachHang);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnQuanLyDichVu);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnThongKe);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnCaiDat);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Khoảng cách trước separator
+
         // Separator
-        JPanel separator = new JPanel();
-        separator.setBackground(COLOR_MENU); // Màu menu #4d8a57
-        separator.setPreferredSize(new Dimension(270, 2));
+        JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+        separator.setBackground(COLOR_MENU.brighter());
+        separator.setForeground(COLOR_MENU.brighter());
+        separator.setMaximumSize(new Dimension(270, 2));
+        navPanel.add(separator);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Khoảng cách sau separator
 
         btnThoat = createNavButton("THOÁT", "Đóng hệ thống");
-
-        // Thêm các nút vào panel
-        navPanel.add(btnDatDichVu);
-        navPanel.add(btnQuanLyNhanVien);
-        navPanel.add(btnQuanLyKhachHang);
-        navPanel.add(btnQuanLyDichVu);
-        navPanel.add(btnThongKe);
-        navPanel.add(btnCaiDat);
-        navPanel.add(separator);
         navPanel.add(btnThoat);
+
+        // Tạo JScrollPane cho navigation panel
+        JScrollPane scrollPane = new JScrollPane(navPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setBackground(COLOR_MENU.darker());
+        scrollPane.getViewport().setBackground(COLOR_MENU.darker());
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        
+        // Customize scroll bar
+        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+        verticalScrollBar.setUnitIncrement(16); // Tốc độ cuộn
+        verticalScrollBar.setBackground(COLOR_MENU);
+        verticalScrollBar.setForeground(COLOR_TEXT);
 
         // Version info
         JPanel versionPanel = new JPanel();
@@ -144,7 +166,7 @@ public class MainView extends JFrame {
         versionPanel.add(lblVersion);
 
         sidebarPanel.add(logoPanel, BorderLayout.NORTH);
-        sidebarPanel.add(navPanel, BorderLayout.CENTER);
+        sidebarPanel.add(scrollPane, BorderLayout.CENTER); // Sử dụng scrollPane thay vì navPanel trực tiếp
         sidebarPanel.add(versionPanel, BorderLayout.SOUTH);
 
         add(sidebarPanel, BorderLayout.WEST);
@@ -159,6 +181,8 @@ public class MainView extends JFrame {
         button.setBorder(BorderFactory.createEmptyBorder(15, 25, 15, 25));
         button.setFocusPainted(false);
         button.setToolTipText(tooltip);
+        button.setMaximumSize(new Dimension(270, 50)); // Fixed width for scroll consistency
+        button.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // Hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
