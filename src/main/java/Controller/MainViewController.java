@@ -21,14 +21,16 @@ public class MainViewController implements ActionListener {
             hienThiThongBao("Tính năng Thông báo đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } 
         else if (source == mainView.getBtnQuanLyNguyenLieu()) {
-            // THAY ĐỔI: Hiển thị menu thay vì mở trực tiếp
-            mainView.showQuanLyNguyenLieuMenu();    
+            mainView.showQuanLyNguyenLieuMenu(); // Sử dụng menu popup cho nguyên liệu
         } 
         else if (source == mainView.getBtnDatDichVu()) {
             hienThiThongBao("Tính năng Đặt dịch vụ đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } 
         else if (source == mainView.getBtnQuanLyNhanVien()) {
             mainView.showQuanLyNhanVien();
+        } 
+        else if (source == mainView.getBtnQuanLyCaLam()) {
+            mainView.showQuanLyCaLam();
         } 
         else if (source == mainView.getBtnQuanLyKhachHang()) {
             mainView.showQuanLyKhachHang();
