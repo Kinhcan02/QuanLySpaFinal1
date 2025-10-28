@@ -10,6 +10,7 @@ public class DichVu {
     private Integer maDichVu;
     private String tenDichVu;
     private BigDecimal gia;
+    private Integer thoiGian; // Thêm trường thời gian
     private Integer maLoaiDV;
     private String ghiChu;
     
@@ -21,26 +22,29 @@ public class DichVu {
     }
 
     // Constructor với tất cả tham số
-    public DichVu(Integer maDichVu, String tenDichVu, BigDecimal gia, Integer maLoaiDV, String ghiChu) {
+    public DichVu(Integer maDichVu, String tenDichVu, BigDecimal gia, Integer thoiGian, Integer maLoaiDV, String ghiChu) {
         this.maDichVu = maDichVu;
         this.tenDichVu = tenDichVu;
         this.gia = gia;
+        this.thoiGian = thoiGian;
         this.maLoaiDV = maLoaiDV;
         this.ghiChu = ghiChu;
     }
 
     // Constructor không có ID (dùng khi insert)
-    public DichVu(String tenDichVu, BigDecimal gia, Integer maLoaiDV, String ghiChu) {
+    public DichVu(String tenDichVu, BigDecimal gia, Integer thoiGian, Integer maLoaiDV, String ghiChu) {
         this.tenDichVu = tenDichVu;
         this.gia = gia;
+        this.thoiGian = thoiGian;
         this.maLoaiDV = maLoaiDV;
         this.ghiChu = ghiChu;
     }
 
     // Constructor đơn giản
-    public DichVu(String tenDichVu, BigDecimal gia, Integer maLoaiDV) {
+    public DichVu(String tenDichVu, BigDecimal gia, Integer thoiGian, Integer maLoaiDV) {
         this.tenDichVu = tenDichVu;
         this.gia = gia;
+        this.thoiGian = thoiGian;
         this.maLoaiDV = maLoaiDV;
     }
 
@@ -67,6 +71,14 @@ public class DichVu {
 
     public void setGia(BigDecimal gia) {
         this.gia = gia;
+    }
+
+    public Integer getThoiGian() {
+        return thoiGian;
+    }
+
+    public void setThoiGian(Integer thoiGian) {
+        this.thoiGian = thoiGian;
     }
 
     public Integer getMaLoaiDV() {
@@ -108,13 +120,14 @@ public class DichVu {
         return Objects.equals(maDichVu, dichVu.maDichVu) &&
                Objects.equals(tenDichVu, dichVu.tenDichVu) &&
                Objects.equals(gia, dichVu.gia) &&
+               Objects.equals(thoiGian, dichVu.thoiGian) &&
                Objects.equals(maLoaiDV, dichVu.maLoaiDV) &&
                Objects.equals(ghiChu, dichVu.ghiChu);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maDichVu, tenDichVu, gia, maLoaiDV, ghiChu);
+        return Objects.hash(maDichVu, tenDichVu, gia, thoiGian, maLoaiDV, ghiChu);
     }
 
     // toString
@@ -124,6 +137,7 @@ public class DichVu {
                 "maDichVu=" + maDichVu +
                 ", tenDichVu='" + tenDichVu + '\'' +
                 ", gia=" + gia +
+                ", thoiGian=" + thoiGian +
                 ", maLoaiDV=" + maLoaiDV +
                 ", ghiChu='" + ghiChu + '\'' +
                 '}';

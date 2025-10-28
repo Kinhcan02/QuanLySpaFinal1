@@ -103,6 +103,6 @@ public class DichVuService {
         if (dichVu.getGia() == null || dichVu.getGia().doubleValue() <= 0) {
             throw new IllegalArgumentException("Giá dịch vụ phải lớn hơn 0");
         }
-        // MaLoaiDV có thể null nếu dịch vụ chưa được phân loại
+        // ThoiGian và MaLoaiDV có thể null
     }
 }

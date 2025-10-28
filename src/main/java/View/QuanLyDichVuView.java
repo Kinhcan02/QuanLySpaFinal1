@@ -95,52 +95,52 @@ public class QuanLyDichVuView extends JPanel {
         return pnSearch;
     }
 
-    private void createTable() {
-        String[] cols = {"Mã DV", "Tên dịch vụ", "Đơn giá", "Thời gian", "Loại DV", "Mô tả"};
-        model = new DefaultTableModel(cols, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+ private void createTable() {
+    String[] cols = {"Mã DV", "Tên dịch vụ", "Đơn giá", "Thời gian (phút)", "Loại DV", "Mô tả"}; // Sửa tên cột
+    model = new DefaultTableModel(cols, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
+
+    tblDichVu = new JTable(model) {
+        @Override
+        public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+            Component c = super.prepareRenderer(renderer, row, column);
+
+            if (!isRowSelected(row)) {
+                c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(240, 240, 240));
             }
-        };
 
-        tblDichVu = new JTable(model) {
-            @Override
-            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
-                Component c = super.prepareRenderer(renderer, row, column);
-
-                if (!isRowSelected(row)) {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(240, 240, 240));
-                }
-
-                // Đặt màu chữ cho tất cả các ô
-                if (c instanceof JComponent) {
-                    ((JComponent) c).setForeground(Color.BLACK);
-                }
-
-                return c;
+            // Đặt màu chữ cho tất cả các ô
+            if (c instanceof JComponent) {
+                ((JComponent) c).setForeground(Color.BLACK);
             }
-        };
 
-        // Cấu hình bảng
-        tblDichVu.setRowHeight(35);
-        tblDichVu.setSelectionBackground(COLOR_BUTTON);
-        tblDichVu.setSelectionForeground(COLOR_TEXT);
-        tblDichVu.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tblDichVu.setFont(new Font("Arial", Font.PLAIN, 12));
-        tblDichVu.setForeground(Color.BLACK);
-        tblDichVu.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        tblDichVu.getTableHeader().setBackground(COLOR_BUTTON);
-        tblDichVu.getTableHeader().setForeground(COLOR_TEXT);
+            return c;
+        }
+    };
 
-        // Đặt độ rộng cột
-        tblDichVu.getColumnModel().getColumn(0).setPreferredWidth(80);  // Mã DV
-        tblDichVu.getColumnModel().getColumn(1).setPreferredWidth(200); // Tên dịch vụ
-        tblDichVu.getColumnModel().getColumn(2).setPreferredWidth(120); // Đơn giá
-        tblDichVu.getColumnModel().getColumn(3).setPreferredWidth(100); // Thời gian
-        tblDichVu.getColumnModel().getColumn(4).setPreferredWidth(120); // Loại DV
-        tblDichVu.getColumnModel().getColumn(5).setPreferredWidth(300); // Mô tả
-    }
+    // Cấu hình bảng
+    tblDichVu.setRowHeight(35);
+    tblDichVu.setSelectionBackground(COLOR_BUTTON);
+    tblDichVu.setSelectionForeground(COLOR_TEXT);
+    tblDichVu.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    tblDichVu.setFont(new Font("Arial", Font.PLAIN, 12));
+    tblDichVu.setForeground(Color.BLACK);
+    tblDichVu.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+    tblDichVu.getTableHeader().setBackground(COLOR_BUTTON);
+    tblDichVu.getTableHeader().setForeground(COLOR_TEXT);
+
+    // Đặt độ rộng cột
+    tblDichVu.getColumnModel().getColumn(0).setPreferredWidth(80);  // Mã DV
+    tblDichVu.getColumnModel().getColumn(1).setPreferredWidth(200); // Tên dịch vụ
+    tblDichVu.getColumnModel().getColumn(2).setPreferredWidth(120); // Đơn giá
+    tblDichVu.getColumnModel().getColumn(3).setPreferredWidth(120); // Thời gian (phút)
+    tblDichVu.getColumnModel().getColumn(4).setPreferredWidth(120); // Loại DV
+    tblDichVu.getColumnModel().getColumn(5).setPreferredWidth(300); // Mô tả
+}
 
     private JPanel createButtonPanel() {
         JPanel pnButton = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));

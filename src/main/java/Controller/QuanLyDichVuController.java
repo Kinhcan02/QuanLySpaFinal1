@@ -77,11 +77,18 @@ public class QuanLyDichVuController {
                 dv.getMaDichVu(),
                 dv.getTenDichVu(),
                 formatCurrency(dv.getGia()),
-                "60 phút",
+                formatThoiGian(dv.getThoiGian()),
                 getTenLoaiDichVu(dv.getMaLoaiDV()),
                 dv.getGhiChu()
             });
         }
+    }
+
+    private String formatThoiGian(Integer thoiGian) {
+        if (thoiGian == null) {
+            return "Không xác định";
+        }
+        return thoiGian + " phút";
     }
 
     private String getTenLoaiDichVu(Integer maLoaiDV) {
@@ -177,7 +184,7 @@ public class QuanLyDichVuController {
 
     private void themDichVu() {
         try {
-            JDialog dialog = createDialog("Thêm Dịch Vụ Mới", 500, 450); // Tăng chiều cao lên 450
+            JDialog dialog = createDialog("Thêm Dịch Vụ Mới", 500, 500); // Tăng chiều cao lên 500
             JPanel mainPanel = createMainPanel();
 
             // Form nhập liệu với BorderLayout để kiểm soát tốt hơn
@@ -185,11 +192,12 @@ public class QuanLyDichVuController {
             formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
 
             // Panel cho các field thông thường
-            JPanel basicInfoPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+            JPanel basicInfoPanel = new JPanel(new GridLayout(4, 2, 10, 10)); // Tăng lên 4 dòng
             basicInfoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
 
             JTextField txtTenDV = new JTextField();
             JTextField txtGia = new JTextField();
+            JTextField txtThoiGian = new JTextField(); // Thêm field thời gian
             JComboBox<String> cboLoaiDV = new JComboBox<>();
 
             // Load loại dịch vụ
@@ -203,6 +211,8 @@ public class QuanLyDichVuController {
             basicInfoPanel.add(txtTenDV);
             basicInfoPanel.add(createStyledLabel("Giá dịch vụ:"));
             basicInfoPanel.add(txtGia);
+            basicInfoPanel.add(createStyledLabel("Thời gian (phút):")); // Thêm label thời gian
+            basicInfoPanel.add(txtThoiGian);
             basicInfoPanel.add(createStyledLabel("Loại dịch vụ:"));
             basicInfoPanel.add(cboLoaiDV);
 
@@ -211,11 +221,11 @@ public class QuanLyDichVuController {
             ghiChuPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
 
             JLabel lblGhiChu = createStyledLabel("Ghi chú:");
-            JTextArea txtGhiChu = new JTextArea(6, 30); // Tăng số dòng lên 6
+            JTextArea txtGhiChu = new JTextArea(6, 30);
             txtGhiChu.setLineWrap(true);
             txtGhiChu.setWrapStyleWord(true);
             JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
-            scrollGhiChu.setPreferredSize(new Dimension(400, 120)); // Đặt kích thước cố định
+            scrollGhiChu.setPreferredSize(new Dimension(400, 120));
 
             ghiChuPanel.add(lblGhiChu, BorderLayout.NORTH);
             ghiChuPanel.add(scrollGhiChu, BorderLayout.CENTER);
@@ -229,7 +239,7 @@ public class QuanLyDichVuController {
             JButton btnThem = createStyledButton("Thêm", new Color(0x4D, 0x8A, 0x57));
             JButton btnHuy = createStyledButton("Hủy", new Color(0x4D, 0x8A, 0x57));
 
-            btnThem.addActionListener(e -> handleThemDichVu(dialog, txtTenDV, txtGia, cboLoaiDV, txtGhiChu, listLoaiDV));
+            btnThem.addActionListener(e -> handleThemDichVu(dialog, txtTenDV, txtGia, txtThoiGian, cboLoaiDV, txtGhiChu, listLoaiDV));
             btnHuy.addActionListener(e -> dialog.dispose());
 
             buttonPanel.add(btnThem);
@@ -247,8 +257,10 @@ public class QuanLyDichVuController {
     }
 
     private void handleThemDichVu(JDialog dialog, JTextField txtTenDV, JTextField txtGia,
-            JComboBox<String> cboLoaiDV, JTextArea txtGhiChu,
+            JTextField txtThoiGian, JComboBox<String> cboLoaiDV, JTextArea txtGhiChu,
             List<LoaiDichVu> listLoaiDV) {
+        
+        // Validate dữ liệu
         if (txtTenDV.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(dialog, "Tên dịch vụ không được để trống");
             return;
@@ -262,6 +274,20 @@ public class QuanLyDichVuController {
             return;
         }
 
+        Integer thoiGian = null;
+        if (!txtThoiGian.getText().trim().isEmpty()) {
+            try {
+                thoiGian = Integer.parseInt(txtThoiGian.getText().trim());
+                if (thoiGian <= 0) {
+                    JOptionPane.showMessageDialog(dialog, "Thời gian phải lớn hơn 0");
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Thời gian không hợp lệ");
+                return;
+            }
+        }
+
         Integer maLoaiDV = null;
         if (cboLoaiDV.getSelectedIndex() > 0) {
             maLoaiDV = listLoaiDV.get(cboLoaiDV.getSelectedIndex() - 1).getMaLoaiDV();
@@ -270,6 +296,7 @@ public class QuanLyDichVuController {
         DichVu dichVu = new DichVu(
                 txtTenDV.getText().trim(),
                 gia,
+                thoiGian,
                 maLoaiDV,
                 txtGhiChu.getText().trim()
         );
@@ -284,233 +311,252 @@ public class QuanLyDichVuController {
         }
     }
 
-private void suaDichVu() {
-    int selectedRow = view.getTblDichVu().getSelectedRow();
-    if (selectedRow == -1) {
-        // Tạo custom dialog cho message box
-        JDialog dialog = new JDialog();
-        dialog.setTitle("Message");
-        dialog.setModal(true);
-        dialog.setLayout(new BorderLayout());
-        dialog.setSize(350, 150);
-        dialog.setLocationRelativeTo(view);
-        dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+    private void suaDichVu() {
+        int selectedRow = view.getTblDichVu().getSelectedRow();
+        if (selectedRow == -1) {
+            // Tạo custom dialog cho message box
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Message");
+            dialog.setModal(true);
+            dialog.setLayout(new BorderLayout());
+            dialog.setSize(350, 150);
+            dialog.setLocationRelativeTo(view);
+            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
 
-        // Panel nội dung
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            // Panel nội dung
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Label message
-        JLabel messageLabel = new JLabel("Vui lòng chọn một dịch vụ để sửa");
-        messageLabel.setForeground(Color.WHITE);
-        messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            // Label message
+            JLabel messageLabel = new JLabel("Vui lòng chọn một dịch vụ để sửa");
+            messageLabel.setForeground(Color.WHITE);
+            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Panel nút
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-        JButton btnOK = createStyledButton("OK", new Color(0x4D, 0x8A, 0x57));
-        btnOK.addActionListener(e -> dialog.dispose());
-        buttonPanel.add(btnOK);
+            // Panel nút
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            JButton btnOK = createStyledButton("OK", new Color(0x4D, 0x8A, 0x57));
+            btnOK.addActionListener(e -> dialog.dispose());
+            buttonPanel.add(btnOK);
 
-        contentPanel.add(messageLabel, BorderLayout.CENTER);
-        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+            contentPanel.add(messageLabel, BorderLayout.CENTER);
+            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        dialog.add(contentPanel);
-        dialog.setVisible(true);
-        return;
+            dialog.add(contentPanel);
+            dialog.setVisible(true);
+            return;
+        }
+
+        try {
+            int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
+            String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
+
+            // Tạo custom dialog cho xác nhận sửa
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Xác nhận");
+            dialog.setModal(true);
+            dialog.setLayout(new BorderLayout());
+            dialog.setSize(400, 150);
+            dialog.setLocationRelativeTo(view);
+            dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            // Panel nội dung
+            JPanel contentPanel = new JPanel(new BorderLayout());
+            contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            // Label message
+            JLabel messageLabel = new JLabel("Bạn có chắc muốn sửa dịch vụ '" + tenDichVu + "' không?");
+            messageLabel.setForeground(Color.WHITE);
+            messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+            // Panel nút
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+            buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            JButton btnCo = createStyledButton("Có", new Color(0x4D, 0x8A, 0x57));
+            JButton btnKhong = createStyledButton("Không", new Color(0x8C, 0x8C, 0x8C));
+
+            btnCo.addActionListener(e -> {
+                dialog.dispose();
+                try {
+                    // Lấy thông tin dịch vụ từ database
+                    DichVu dichVu = dichVuService.getDichVuById(maDichVu);
+                    
+                    if (dichVu == null) {
+                        showError("Không tìm thấy dịch vụ cần sửa");
+                        return;
+                    }
+                    
+                    // Hiển thị form sửa dịch vụ
+                    showEditDichVuForm(dichVu);
+                } catch (Exception ex) {
+                    showError("Lỗi khi sửa dịch vụ: " + ex.getMessage());
+                }
+            });
+
+            btnKhong.addActionListener(e -> dialog.dispose());
+
+            buttonPanel.add(btnCo);
+            buttonPanel.add(btnKhong);
+
+            contentPanel.add(messageLabel, BorderLayout.CENTER);
+            contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.add(contentPanel);
+            dialog.setVisible(true);
+
+        } catch (Exception e) {
+            showError("Lỗi khi sửa dịch vụ: " + e.getMessage());
+        }
     }
 
-    try {
-        int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
-        String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
+    private void showEditDichVuForm(DichVu dichVu) {
+        try {
+            JDialog dialog = createDialog("Sửa Dịch Vụ", 500, 500);
+            JPanel mainPanel = createMainPanel();
 
-        // Tạo custom dialog cho xác nhận sửa
-        JDialog dialog = new JDialog();
-        dialog.setTitle("Xác nhận");
-        dialog.setModal(true);
-        dialog.setLayout(new BorderLayout());
-        dialog.setSize(400, 150);
-        dialog.setLocationRelativeTo(view);
-        dialog.getContentPane().setBackground(new Color(0x8C, 0xC9, 0x80));
+            // Form nhập liệu với BorderLayout để kiểm soát tốt hơn
+            JPanel formPanel = new JPanel(new BorderLayout(10, 10));
+            formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
 
-        // Panel nội dung
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            // Panel cho các field thông thường
+            JPanel basicInfoPanel = new JPanel(new GridLayout(4, 2, 10, 10)); // Tăng lên 4 dòng
+            basicInfoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
 
-        // Label message
-        JLabel messageLabel = new JLabel("Bạn có chắc muốn sửa dịch vụ '" + tenDichVu + "' không?");
-        messageLabel.setForeground(Color.WHITE);
-        messageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            JTextField txtTenDV = new JTextField(dichVu.getTenDichVu());
+            JTextField txtGia = new JTextField(dichVu.getGia().toString());
+            JTextField txtThoiGian = new JTextField(dichVu.getThoiGian() != null ? dichVu.getThoiGian().toString() : ""); // Thêm field thời gian
+            JComboBox<String> cboLoaiDV = new JComboBox<>();
 
-        // Panel nút
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-
-        JButton btnCo = createStyledButton("Có", new Color(0x4D, 0x8A, 0x57));
-        JButton btnKhong = createStyledButton("Không", new Color(0x8C, 0x8C, 0x8C));
-
-        btnCo.addActionListener(e -> {
-            dialog.dispose();
-            try {
-                // Lấy thông tin dịch vụ từ database
-                DichVu dichVu = dichVuService.getDichVuById(maDichVu);
+            // Load loại dịch vụ
+            List<LoaiDichVu> listLoaiDV = loaiDichVuService.getAllLoaiDichVu();
+            cboLoaiDV.addItem("-- Chọn loại dịch vụ --");
+            
+            int selectedIndex = 0;
+            for (int i = 0; i < listLoaiDV.size(); i++) {
+                LoaiDichVu loai = listLoaiDV.get(i);
+                cboLoaiDV.addItem(loai.getTenLoaiDV());
                 
-                if (dichVu == null) {
-                    showError("Không tìm thấy dịch vụ cần sửa");
+                // Chọn loại dịch vụ hiện tại của dịch vụ
+                if (dichVu.getMaLoaiDV() != null && dichVu.getMaLoaiDV().equals(loai.getMaLoaiDV())) {
+                    selectedIndex = i + 1;
+                }
+            }
+            cboLoaiDV.setSelectedIndex(selectedIndex);
+
+            basicInfoPanel.add(createStyledLabel("Tên dịch vụ:"));
+            basicInfoPanel.add(txtTenDV);
+            basicInfoPanel.add(createStyledLabel("Giá dịch vụ:"));
+            basicInfoPanel.add(txtGia);
+            basicInfoPanel.add(createStyledLabel("Thời gian (phút):")); // Thêm label thời gian
+            basicInfoPanel.add(txtThoiGian);
+            basicInfoPanel.add(createStyledLabel("Loại dịch vụ:"));
+            basicInfoPanel.add(cboLoaiDV);
+
+            // Panel cho ghi chú với kích thước lớn hơn
+            JPanel ghiChuPanel = new JPanel(new BorderLayout(5, 5));
+            ghiChuPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+            JLabel lblGhiChu = createStyledLabel("Ghi chú:");
+            JTextArea txtGhiChu = new JTextArea(6, 30);
+            txtGhiChu.setText(dichVu.getGhiChu() != null ? dichVu.getGhiChu() : "");
+            txtGhiChu.setLineWrap(true);
+            txtGhiChu.setWrapStyleWord(true);
+            JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
+            scrollGhiChu.setPreferredSize(new Dimension(400, 120));
+
+            ghiChuPanel.add(lblGhiChu, BorderLayout.NORTH);
+            ghiChuPanel.add(scrollGhiChu, BorderLayout.CENTER);
+
+            // Thêm các panel vào form chính
+            formPanel.add(basicInfoPanel, BorderLayout.NORTH);
+            formPanel.add(ghiChuPanel, BorderLayout.CENTER);
+
+            // Panel nút
+            JPanel buttonPanel = createButtonPanel();
+            JButton btnCapNhat = createStyledButton("Cập nhật", new Color(0x4D, 0x8A, 0x57));
+            JButton btnHuy = createStyledButton("Hủy", new Color(0x4D, 0x8A, 0x57));
+
+            btnCapNhat.addActionListener(e -> handleCapNhatDichVu(dialog, dichVu, txtTenDV, txtGia, txtThoiGian, cboLoaiDV, txtGhiChu, listLoaiDV));
+            btnHuy.addActionListener(e -> dialog.dispose());
+
+            buttonPanel.add(btnCapNhat);
+            buttonPanel.add(btnHuy);
+
+            mainPanel.add(formPanel, BorderLayout.CENTER);
+            mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.add(mainPanel);
+            dialog.setVisible(true);
+
+        } catch (Exception e) {
+            showError("Lỗi khi hiển thị form sửa dịch vụ: " + e.getMessage());
+        }
+    }
+
+    private void handleCapNhatDichVu(JDialog dialog, DichVu dichVu, JTextField txtTenDV, 
+            JTextField txtGia, JTextField txtThoiGian, JComboBox<String> cboLoaiDV, JTextArea txtGhiChu,
+            List<LoaiDichVu> listLoaiDV) {
+        
+        // Validate dữ liệu
+        if (txtTenDV.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(dialog, "Tên dịch vụ không được để trống");
+            return;
+        }
+
+        BigDecimal gia;
+        try {
+            gia = new BigDecimal(txtGia.getText().replaceAll("[^\\d]", ""));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(dialog, "Giá dịch vụ không hợp lệ");
+            return;
+        }
+
+        Integer thoiGian = null;
+        if (!txtThoiGian.getText().trim().isEmpty()) {
+            try {
+                thoiGian = Integer.parseInt(txtThoiGian.getText().trim());
+                if (thoiGian <= 0) {
+                    JOptionPane.showMessageDialog(dialog, "Thời gian phải lớn hơn 0");
                     return;
                 }
-                
-                // Hiển thị form sửa dịch vụ
-                showEditDichVuForm(dichVu);
-            } catch (Exception ex) {
-                showError("Lỗi khi sửa dịch vụ: " + ex.getMessage());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Thời gian không hợp lệ");
+                return;
             }
-        });
+        }
 
-        btnKhong.addActionListener(e -> dialog.dispose());
-
-        buttonPanel.add(btnCo);
-        buttonPanel.add(btnKhong);
-
-        contentPanel.add(messageLabel, BorderLayout.CENTER);
-        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        dialog.add(contentPanel);
-        dialog.setVisible(true);
-
-    } catch (Exception e) {
-        showError("Lỗi khi sửa dịch vụ: " + e.getMessage());
-    }
-}
-
-private void showEditDichVuForm(DichVu dichVu) {
-    try {
-        JDialog dialog = createDialog("Sửa Dịch Vụ", 500, 450);
-        JPanel mainPanel = createMainPanel();
-
-        // Form nhập liệu với BorderLayout để kiểm soát tốt hơn
-        JPanel formPanel = new JPanel(new BorderLayout(10, 10));
-        formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-
-        // Panel cho các field thông thường
-        JPanel basicInfoPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-        basicInfoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-
-        JTextField txtTenDV = new JTextField(dichVu.getTenDichVu());
-        JTextField txtGia = new JTextField(dichVu.getGia().toString());
-        JComboBox<String> cboLoaiDV = new JComboBox<>();
-
-        // Load loại dịch vụ
-        List<LoaiDichVu> listLoaiDV = loaiDichVuService.getAllLoaiDichVu();
-        cboLoaiDV.addItem("-- Chọn loại dịch vụ --");
+        // Cập nhật thông tin dịch vụ
+        dichVu.setTenDichVu(txtTenDV.getText().trim());
+        dichVu.setGia(gia);
+        dichVu.setThoiGian(thoiGian);
+        dichVu.setGhiChu(txtGhiChu.getText().trim());
         
-        int selectedIndex = 0;
-        for (int i = 0; i < listLoaiDV.size(); i++) {
-            LoaiDichVu loai = listLoaiDV.get(i);
-            cboLoaiDV.addItem(loai.getTenLoaiDV());
-            
-            // Chọn loại dịch vụ hiện tại của dịch vụ
-            if (dichVu.getMaLoaiDV() != null && dichVu.getMaLoaiDV().equals(loai.getMaLoaiDV())) {
-                selectedIndex = i + 1;
-            }
-        }
-        cboLoaiDV.setSelectedIndex(selectedIndex);
-
-        basicInfoPanel.add(createStyledLabel("Tên dịch vụ:"));
-        basicInfoPanel.add(txtTenDV);
-        basicInfoPanel.add(createStyledLabel("Giá dịch vụ:"));
-        basicInfoPanel.add(txtGia);
-        basicInfoPanel.add(createStyledLabel("Loại dịch vụ:"));
-        basicInfoPanel.add(cboLoaiDV);
-
-        // Panel cho ghi chú với kích thước lớn hơn
-        JPanel ghiChuPanel = new JPanel(new BorderLayout(5, 5));
-        ghiChuPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-
-        JLabel lblGhiChu = createStyledLabel("Ghi chú:");
-        JTextArea txtGhiChu = new JTextArea(6, 30);
-        txtGhiChu.setText(dichVu.getGhiChu() != null ? dichVu.getGhiChu() : "");
-        txtGhiChu.setLineWrap(true);
-        txtGhiChu.setWrapStyleWord(true);
-        JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
-        scrollGhiChu.setPreferredSize(new Dimension(400, 120));
-
-        ghiChuPanel.add(lblGhiChu, BorderLayout.NORTH);
-        ghiChuPanel.add(scrollGhiChu, BorderLayout.CENTER);
-
-        // Thêm các panel vào form chính
-        formPanel.add(basicInfoPanel, BorderLayout.NORTH);
-        formPanel.add(ghiChuPanel, BorderLayout.CENTER);
-
-        // Panel nút
-        JPanel buttonPanel = createButtonPanel();
-        JButton btnCapNhat = createStyledButton("Cập nhật", new Color(0x4D, 0x8A, 0x57));
-        JButton btnHuy = createStyledButton("Hủy", new Color(0x4D, 0x8A, 0x57));
-
-        btnCapNhat.addActionListener(e -> handleCapNhatDichVu(dialog, dichVu, txtTenDV, txtGia, cboLoaiDV, txtGhiChu, listLoaiDV));
-        btnHuy.addActionListener(e -> dialog.dispose());
-
-        buttonPanel.add(btnCapNhat);
-        buttonPanel.add(btnHuy);
-
-        mainPanel.add(formPanel, BorderLayout.CENTER);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        dialog.add(mainPanel);
-        dialog.setVisible(true);
-
-    } catch (Exception e) {
-        showError("Lỗi khi hiển thị form sửa dịch vụ: " + e.getMessage());
-    }
-}
-
-private void handleCapNhatDichVu(JDialog dialog, DichVu dichVu, JTextField txtTenDV, 
-        JTextField txtGia, JComboBox<String> cboLoaiDV, JTextArea txtGhiChu,
-        List<LoaiDichVu> listLoaiDV) {
-    
-    // Validate dữ liệu
-    if (txtTenDV.getText().trim().isEmpty()) {
-        JOptionPane.showMessageDialog(dialog, "Tên dịch vụ không được để trống");
-        return;
-    }
-
-    BigDecimal gia;
-    try {
-        gia = new BigDecimal(txtGia.getText().replaceAll("[^\\d]", ""));
-    } catch (NumberFormatException ex) {
-        JOptionPane.showMessageDialog(dialog, "Giá dịch vụ không hợp lệ");
-        return;
-    }
-
-    // Cập nhật thông tin dịch vụ
-    dichVu.setTenDichVu(txtTenDV.getText().trim());
-    dichVu.setGia(gia);
-    dichVu.setGhiChu(txtGhiChu.getText().trim());
-    
-    // Cập nhật loại dịch vụ
-    if (cboLoaiDV.getSelectedIndex() > 0) {
-        dichVu.setMaLoaiDV(listLoaiDV.get(cboLoaiDV.getSelectedIndex() - 1).getMaLoaiDV());
-    } else {
-        dichVu.setMaLoaiDV(null);
-    }
-
-    try {
-        boolean success = dichVuService.updateDichVu(dichVu);
-        if (success) {
-            showSuccessMessage("Cập nhật dịch vụ thành công");
-            loadAllDichVu(); // Đồng bộ lại bảng
-            dialog.dispose();
+        // Cập nhật loại dịch vụ
+        if (cboLoaiDV.getSelectedIndex() > 0) {
+            dichVu.setMaLoaiDV(listLoaiDV.get(cboLoaiDV.getSelectedIndex() - 1).getMaLoaiDV());
         } else {
-            showError("Cập nhật dịch vụ thất bại");
+            dichVu.setMaLoaiDV(null);
         }
-    } catch (Exception e) {
-        showError("Lỗi khi cập nhật dịch vụ: " + e.getMessage());
+
+        try {
+            boolean success = dichVuService.updateDichVu(dichVu);
+            if (success) {
+                showSuccessMessage("Cập nhật dịch vụ thành công");
+                loadAllDichVu(); // Đồng bộ lại bảng
+                dialog.dispose();
+            } else {
+                showError("Cập nhật dịch vụ thất bại");
+            }
+        } catch (Exception e) {
+            showError("Lỗi khi cập nhật dịch vụ: " + e.getMessage());
+        }
     }
-}
+
     private void xoaDichVu() {
         int selectedRow = view.getTblDichVu().getSelectedRow();
         if (selectedRow == -1) {
@@ -611,7 +657,7 @@ private void handleCapNhatDichVu(JDialog dialog, DichVu dichVu, JTextField txtTe
         }
     }
 
-// Thêm phương thức hiển thị message thành công
+    // Thêm phương thức hiển thị message thành công
     private void showSuccessMessage(String message) {
         JDialog dialog = new JDialog();
         dialog.setTitle("Thông báo");

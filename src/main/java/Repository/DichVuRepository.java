@@ -1,4 +1,3 @@
-// DichVuRepository.java
 package Repository;
 
 import Data.DataConnection;
@@ -75,7 +74,7 @@ public class DichVuRepository {
     }
     
     public boolean insert(DichVu dichVu) throws SQLException {
-        String sql = "INSERT INTO DichVu (TenDichVu, Gia, MaLoaiDV, GhiChu) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO DichVu (TenDichVu, Gia, ThoiGian, MaLoaiDV, GhiChu) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -96,13 +95,13 @@ public class DichVuRepository {
     }
     
     public boolean update(DichVu dichVu) throws SQLException {
-        String sql = "UPDATE DichVu SET TenDichVu=?, Gia=?, MaLoaiDV=?, GhiChu=? WHERE MaDichVu=?";
+        String sql = "UPDATE DichVu SET TenDichVu=?, Gia=?, ThoiGian=?, MaLoaiDV=?, GhiChu=? WHERE MaDichVu=?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             setDichVuParameters(stmt, dichVu);
-            stmt.setInt(5, dichVu.getMaDichVu());
+            stmt.setInt(6, dichVu.getMaDichVu());
             
             return stmt.executeUpdate() > 0;
         }
@@ -123,13 +122,19 @@ public class DichVuRepository {
         stmt.setString(1, dichVu.getTenDichVu());
         stmt.setBigDecimal(2, dichVu.getGia());
         
-        if (dichVu.getMaLoaiDV() != null) {
-            stmt.setInt(3, dichVu.getMaLoaiDV());
+        if (dichVu.getThoiGian() != null) {
+            stmt.setInt(3, dichVu.getThoiGian());
         } else {
             stmt.setNull(3, Types.INTEGER);
         }
         
-        stmt.setString(4, dichVu.getGhiChu());
+        if (dichVu.getMaLoaiDV() != null) {
+            stmt.setInt(4, dichVu.getMaLoaiDV());
+        } else {
+            stmt.setNull(4, Types.INTEGER);
+        }
+        
+        stmt.setString(5, dichVu.getGhiChu());
     }
     
     private DichVu mapResultSetToDichVu(ResultSet rs) throws SQLException {
@@ -137,6 +142,7 @@ public class DichVuRepository {
             rs.getInt("MaDichVu"),
             rs.getString("TenDichVu"),
             rs.getBigDecimal("Gia"),
+            rs.getInt("ThoiGian"),
             rs.getInt("MaLoaiDV"),
             rs.getString("GhiChu")
         );
