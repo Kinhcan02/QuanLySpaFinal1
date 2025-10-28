@@ -167,7 +167,7 @@ public class MainView extends JFrame {
         // Customize scroll bar
         JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
         verticalScrollBar.setUnitIncrement(16); // Tốc độ cuộn
-// SỬA MÀU SCROLLBAR CHO ĐỒNG BỘ
+        // SỬA MÀU SCROLLBAR CHO ĐỒNG BỘ
         verticalScrollBar.setBackground(COLOR_MENU.darker());
         verticalScrollBar.setForeground(COLOR_MENU.brighter());
         verticalScrollBar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
