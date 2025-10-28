@@ -23,6 +23,9 @@ public class MainViewController implements ActionListener {
         else if (source == mainView.getBtnQuanLyNguyenLieu()) {
             mainView.showQuanLyNguyenLieuMenu(); // Sử dụng menu popup cho nguyên liệu
         } 
+                else if (source == mainView.getBtnDatLich()) {
+            mainView.hienThiThongBao("Tính năng đang phát triển", "Thông báo", 1);
+        }
         else if (source == mainView.getBtnDatDichVu()) {
             hienThiThongBao("Tính năng Đặt dịch vụ đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } 

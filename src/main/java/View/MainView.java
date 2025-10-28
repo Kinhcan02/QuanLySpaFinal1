@@ -21,7 +21,10 @@ import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 public class MainView extends JFrame {
 
     private JDesktopPane desktopPane;
-    private JButton btnThongBao, btnQuanLyNguyenLieu, btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam, btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe, btnCaiDat, btnThoat;
+    private JButton btnThongBao, btnDatLich, btnQuanLyNguyenLieu,
+            btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam,
+            btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe,
+            btnCaiDat, btnThoat;
     private JLabel lblUserInfo, lblVersion;
     private QuanLyDichVuView quanLyDichVuView;
     private QuanLyDichVuController quanLyDichVuController;
@@ -30,7 +33,7 @@ public class MainView extends JFrame {
     private QuanLyNguyenLieuView quanLyNguyenLieuView;
     private QuanLyNhapNguyenLieuController quanLyNhapNguyenLieuController;
     private QuanLyNhapNguyenLieuView quanLyNhapNguyenLieuView;
-    
+
     // Màu sắc mới
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80); // Màu nền #8cc980
     private final Color COLOR_MENU = new Color(0x4D, 0x8A, 0x57);      // Màu menu #4d8a57
@@ -130,6 +133,7 @@ public class MainView extends JFrame {
         // Tạo các nút menu
         btnThongBao = createNavButton("THÔNG BÁO", "Xem thông báo và cảnh báo hệ thống");
         btnQuanLyNguyenLieu = createNavButton("QUẢN LÝ NGUYÊN LIỆU", "Quản lý kho nguyên liệu");
+        btnDatLich = createNavButton("ĐẶT LỊCH", "Đặt lịch hẹn cho khách hàng");
         btnDatDichVu = createNavButton("ĐẶT DỊCH VỤ", "Đặt lịch và quản lý dịch vụ");
         btnQuanLyNhanVien = createNavButton("QUẢN LÝ NHÂN VIÊN", "Quản lý thông tin nhân viên");
         btnQuanLyCaLam = createNavButton("QUẢN LÝ CA LÀM", "Quản lý ca làm của nhân viên");
@@ -140,6 +144,8 @@ public class MainView extends JFrame {
 
         // Thêm các nút vào panel với khoảng cách
         navPanel.add(btnThongBao);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnDatLich);  // THÊM DÒNG NÀY
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnQuanLyNguyenLieu);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -267,6 +273,7 @@ public class MainView extends JFrame {
     private void setupMenuEvents() {
         btnThongBao.addActionListener(mainViewController);
         btnQuanLyNguyenLieu.addActionListener(mainViewController);
+        btnDatLich.addActionListener(mainViewController);
         btnDatDichVu.addActionListener(mainViewController);
         btnQuanLyNhanVien.addActionListener(mainViewController);
         btnQuanLyCaLam.addActionListener(mainViewController);
@@ -284,30 +291,30 @@ public class MainView extends JFrame {
             JPopupMenu menu = new JPopupMenu();
             menu.setBackground(COLOR_MENU.darker());
             menu.setBorder(BorderFactory.createLineBorder(COLOR_MENU.brighter(), 1));
-            
+
             // Tạo các menu item
             JMenuItem menuNguyenLieu = createMenuItem("Nguyên Liệu");
             JMenuItem menuNhapNguyenLieu = createMenuItem("Nhập Nguyên Liệu");
-            
+
             // Thêm sự kiện cho menu item Nguyên Liệu
             menuNguyenLieu.addActionListener(e -> {
                 showQuanLyNguyenLieu();
             });
-            
+
             // Thêm sự kiện cho menu item Nhập Nguyên Liệu
             menuNhapNguyenLieu.addActionListener(e -> {
                 showQuanLyNhapNguyenLieu();
             });
-            
+
             // Thêm các item vào menu
             menu.add(menuNguyenLieu);
             menu.add(menuNhapNguyenLieu);
-            
+
             // Hiển thị menu tại vị trí nút Quản lý Nguyên liệu
-            menu.show(btnQuanLyNguyenLieu, 
-                     btnQuanLyNguyenLieu.getWidth() - menu.getPreferredSize().width, 
-                     btnQuanLyNguyenLieu.getHeight());
-            
+            menu.show(btnQuanLyNguyenLieu,
+                    btnQuanLyNguyenLieu.getWidth() - menu.getPreferredSize().width,
+                    btnQuanLyNguyenLieu.getHeight());
+
         } catch (Exception e) {
             e.printStackTrace();
             hienThiThongBao("Lỗi khi hiển thị menu nguyên liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -322,18 +329,18 @@ public class MainView extends JFrame {
         menuItem.setFont(new Font("Arial", Font.PLAIN, 14));
         menuItem.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         menuItem.setFocusPainted(false);
-        
+
         // Hiệu ứng hover
         menuItem.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 menuItem.setBackground(COLOR_MENU.brighter());
             }
-            
+
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 menuItem.setBackground(COLOR_MENU.darker());
             }
         });
-        
+
         return menuItem;
     }
 
@@ -718,17 +725,53 @@ public class MainView extends JFrame {
     }
 
     // GETTER METHODS
-    public JButton getBtnThongBao() { return btnThongBao; }
-    public JButton getBtnQuanLyNguyenLieu() { return btnQuanLyNguyenLieu; }
-    public JButton getBtnDatDichVu() { return btnDatDichVu; }
-    public JButton getBtnQuanLyNhanVien() { return btnQuanLyNhanVien; }
-    public JButton getBtnQuanLyCaLam() { return btnQuanLyCaLam; }
-    public JButton getBtnQuanLyKhachHang() { return btnQuanLyKhachHang; }
-    public JButton getBtnQuanLyDichVu() { return btnQuanLyDichVu; }
-    public JButton getBtnThongKe() { return btnThongKe; }
-    public JButton getBtnCaiDat() { return btnCaiDat; }
-    public JButton getBtnThoat() { return btnThoat; }
-    public JDesktopPane getDesktopPane() { return desktopPane; }
+    public JButton getBtnThongBao() {
+        return btnThongBao;
+    }
+
+    public JButton getBtnQuanLyNguyenLieu() {
+        return btnQuanLyNguyenLieu;
+    }
+
+    public JButton getBtnDatDichVu() {
+        return btnDatDichVu;
+    }
+
+    public JButton getBtnQuanLyNhanVien() {
+        return btnQuanLyNhanVien;
+    }
+
+    public JButton getBtnQuanLyCaLam() {
+        return btnQuanLyCaLam;
+    }
+
+    public JButton getBtnQuanLyKhachHang() {
+        return btnQuanLyKhachHang;
+    }
+
+    public JButton getBtnQuanLyDichVu() {
+        return btnQuanLyDichVu;
+    }
+
+    public JButton getBtnThongKe() {
+        return btnThongKe;
+    }
+
+    public JButton getBtnCaiDat() {
+        return btnCaiDat;
+    }
+
+    public JButton getBtnThoat() {
+        return btnThoat;
+    }
+
+    public JDesktopPane getDesktopPane() {
+        return desktopPane;
+    }
+
+    public JButton getBtnDatLich() {
+        return btnDatLich;
+    }
 
     public void capNhatThongTinNguoiDung(String tenDangNhap, String vaiTro) {
         String vaiTroText = "";
