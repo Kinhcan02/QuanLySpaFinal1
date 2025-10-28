@@ -1,6 +1,8 @@
 package View;
 
 import Controller.QuanLyDichVuController;
+import Controller.QuanLyKhachHangController;
+import Service.KhachHangService;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -149,7 +151,7 @@ public class MainView extends JFrame {
         scrollPane.getViewport().setBackground(COLOR_MENU.darker());
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        
+
         // Customize scroll bar
         JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
         verticalScrollBar.setUnitIncrement(16); // Tốc độ cuộn
@@ -225,7 +227,12 @@ public class MainView extends JFrame {
                 xacNhanThoatChuongTrinh();
             }
         });
-
+        btnQuanLyKhachHang.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showQuanLyKhachHang();
+            }
+        });
         // Sự kiện cho các nút khác - SỬA LẠI THÀNH CUSTOM DIALOG
         btnDatDichVu.addActionListener(new ActionListener() {
             @Override
@@ -238,13 +245,6 @@ public class MainView extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 hienThiThongBao("Tính năng Quản lý nhân viên đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-
-        btnQuanLyKhachHang.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hienThiThongBao("Tính năng Quản lý khách hàng đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             }
         });
 
@@ -274,12 +274,12 @@ public class MainView extends JFrame {
         // Tạo custom buttons
         JButton btnCo = new JButton("Có");
         JButton btnKhong = new JButton("Không");
-        
+
         // Style nút "Có" giống nút thoát (màu xám)
         styleExitButton(btnCo);
         // Style nút "Không" giống nút đăng nhập (màu xanh)
         styleLoginButton(btnKhong);
-        
+
         // Tạo panel chứa nội dung
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(COLOR_BACKGROUND);
@@ -346,7 +346,7 @@ public class MainView extends JFrame {
         dialog.getRootPane().setDefaultButton(btnKhong);
 
         dialog.setVisible(true);
-        
+
         if (result[0]) {
             System.exit(0);
         }
@@ -427,7 +427,7 @@ public class MainView extends JFrame {
         Color mainColor = new Color(77, 138, 87);
         Color hoverColor = new Color(67, 118, 77);
         Color borderColor = new Color(57, 98, 67);
-        
+
         // Thiết lập UI cho nút
         button.setBackground(mainColor);
         button.setForeground(Color.WHITE);
@@ -438,12 +438,12 @@ public class MainView extends JFrame {
                 BorderFactory.createEmptyBorder(10, 25, 10, 25)
         ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         // QUAN TRỌNG: Đảm bảo nút hiển thị màu nền
         button.setOpaque(true);
         button.setContentAreaFilled(true);
         button.setBorderPainted(false);
-        
+
         // Sử dụng BasicButtonUI để tránh bị ghi đè
         button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
 
@@ -469,7 +469,7 @@ public class MainView extends JFrame {
         Color mainColor = new Color(149, 165, 166);
         Color hoverColor = new Color(127, 140, 141);
         Color borderColor = new Color(107, 120, 121);
-        
+
         // Thiết lập UI cho nút
         button.setBackground(mainColor);
         button.setForeground(Color.WHITE);
@@ -480,12 +480,12 @@ public class MainView extends JFrame {
                 BorderFactory.createEmptyBorder(10, 25, 10, 25)
         ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         // QUAN TRỌNG: Đảm bảo nút hiển thị màu nền
         button.setOpaque(true);
         button.setContentAreaFilled(true);
         button.setBorderPainted(false);
-        
+
         // Sử dụng BasicButtonUI để tránh bị ghi đè
         button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
 
@@ -503,6 +503,35 @@ public class MainView extends JFrame {
                 }
             }
         });
+    }
+
+    private void showQuanLyKhachHang() {
+        try {
+            // Tạo JInternalFrame để chứa QuanLyKhachHangView
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Quản Lý Khách Hàng",
+                    true, // resizable
+                    true, // closable
+                    true, // maximizable
+                    true // iconifiable
+            );
+
+            // Tạo QuanLyKhachHangView và controller
+            QuanLyKhachHangView quanLyKhachHangView = new QuanLyKhachHangView();
+            KhachHangService khachHangService = new KhachHangService();
+            QuanLyKhachHangController quanLyKhachHangController = new QuanLyKhachHangController(quanLyKhachHangView, khachHangService);
+
+            // Thiết lập internal frame
+            internalFrame.setContentPane(quanLyKhachHangView);
+            internalFrame.pack();
+
+            // Hiển thị internal frame trong desktop pane
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở quản lý khách hàng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void showQuanLyDichVu() {
