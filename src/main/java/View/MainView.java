@@ -3,6 +3,7 @@ package View;
 import Controller.QuanLyDichVuController;
 import Controller.QuanLyKhachHangController;
 import Controller.QuanLyNhanVienController;
+import Controller.MainViewController;
 import Service.KhachHangService;
 import Service.NhanVienService;
 import javax.swing.*;
@@ -13,10 +14,11 @@ import java.awt.event.ActionListener;
 public class MainView extends JFrame {
 
     private JDesktopPane desktopPane;
-    private JButton btnDatDichVu, btnQuanLyNhanVien, btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe, btnCaiDat, btnThoat;
+    private JButton btnThongBao, btnQuanLyNguyenLieu, btnDatDichVu, btnQuanLyNhanVien, btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe, btnCaiDat, btnThoat;
     private JLabel lblUserInfo, lblVersion;
     private QuanLyDichVuView quanLyDichVuView;
     private QuanLyDichVuController quanLyDichVuController;
+    private MainViewController mainViewController;
 
     // Màu sắc mới
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80); // Màu nền #8cc980
@@ -24,6 +26,7 @@ public class MainView extends JFrame {
     private final Color COLOR_TEXT = Color.WHITE;                      // Màu chữ #ffffff
 
     public MainView() {
+        mainViewController = new MainViewController(this);
         initUI();
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -32,6 +35,7 @@ public class MainView extends JFrame {
                 xacNhanThoatChuongTrinh();
             }
         });
+
     }
 
     private void initUI() {
@@ -113,7 +117,9 @@ public class MainView extends JFrame {
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
         navPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
-        // Tạo các nút menu
+        // Tạo các nút menu - THÊM 2 NÚT MỚI Ở ĐẦU
+        btnThongBao = createNavButton("THÔNG BÁO", "Xem thông báo và cảnh báo hệ thống");
+        btnQuanLyNguyenLieu = createNavButton("QUẢN LÝ NGUYÊN LIỆU", "Quản lý kho nguyên liệu");
         btnDatDichVu = createNavButton("ĐẶT DỊCH VỤ", "Đặt lịch và quản lý dịch vụ");
         btnQuanLyNhanVien = createNavButton("QUẢN LÝ NHÂN VIÊN", "Quản lý thông tin nhân viên");
         btnQuanLyKhachHang = createNavButton("QUẢN LÝ KHÁCH HÀNG", "Quản lý thông tin khách hàng");
@@ -121,7 +127,11 @@ public class MainView extends JFrame {
         btnThongKe = createNavButton("THỐNG KÊ", "Báo cáo và thống kê");
         btnCaiDat = createNavButton("CÀI ĐẶT", "Cài đặt hệ thống");
 
-        // Thêm các nút vào panel với khoảng cách
+        // Thêm các nút vào panel với khoảng cách - THÊM 2 NÚT MỚI Ở ĐẦU
+        navPanel.add(btnThongBao);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnQuanLyNguyenLieu);
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnDatDichVu);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnQuanLyNhanVien);
@@ -157,9 +167,37 @@ public class MainView extends JFrame {
         // Customize scroll bar
         JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
         verticalScrollBar.setUnitIncrement(16); // Tốc độ cuộn
-        verticalScrollBar.setBackground(COLOR_MENU);
-        verticalScrollBar.setForeground(COLOR_TEXT);
+// SỬA MÀU SCROLLBAR CHO ĐỒNG BỘ
+        verticalScrollBar.setBackground(COLOR_MENU.darker());
+        verticalScrollBar.setForeground(COLOR_MENU.brighter());
+        verticalScrollBar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = COLOR_MENU.brighter();    // Màu phần di chuyển
+                this.trackColor = COLOR_MENU.darker();      // Màu đường ray
+                this.thumbDarkShadowColor = COLOR_MENU.brighter();
+                this.thumbHighlightColor = COLOR_MENU.brighter();
+                this.thumbLightShadowColor = COLOR_MENU.brighter();
+            }
 
+            @Override
+            protected JButton createDecreaseButton(int orientation) {
+                return createZeroButton();
+            }
+
+            @Override
+            protected JButton createIncreaseButton(int orientation) {
+                return createZeroButton();
+            }
+
+            private JButton createZeroButton() {
+                JButton button = new JButton();
+                button.setPreferredSize(new Dimension(0, 0));
+                button.setMinimumSize(new Dimension(0, 0));
+                button.setMaximumSize(new Dimension(0, 0));
+                return button;
+            }
+        });
         // Version info
         JPanel versionPanel = new JPanel();
         versionPanel.setBackground(COLOR_MENU); // Màu menu #4d8a57
@@ -214,65 +252,26 @@ public class MainView extends JFrame {
     }
 
     private void setupMenuEvents() {
-        // Sự kiện cho nút Quản lý dịch vụ
-        btnQuanLyDichVu.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showQuanLyDichVu();
-            }
-        });
-
-        // Sự kiện cho nút Thoát
-        btnThoat.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                xacNhanThoatChuongTrinh();
-            }
-        });
-        btnQuanLyKhachHang.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showQuanLyKhachHang();
-            }
-        });
-        // Sự kiện cho các nút khác - SỬA LẠI THÀNH CUSTOM DIALOG
-        btnDatDichVu.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hienThiThongBao("Tính năng Đặt dịch vụ đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-
-        btnQuanLyNhanVien.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                showQuanLyNhanVien();
-            }
-        });
-
-        btnThongKe.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hienThiThongBao("Tính năng Thống kê đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-
-        btnCaiDat.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                hienThiThongBao("Tính năng Cài đặt đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+        // Sử dụng controller để xử lý sự kiện
+        btnThongBao.addActionListener(mainViewController);
+        btnQuanLyNguyenLieu.addActionListener(mainViewController);
+        btnDatDichVu.addActionListener(mainViewController);
+        btnQuanLyNhanVien.addActionListener(mainViewController);
+        btnQuanLyKhachHang.addActionListener(mainViewController);
+        btnQuanLyDichVu.addActionListener(mainViewController);
+        btnThongKe.addActionListener(mainViewController);
+        btnCaiDat.addActionListener(mainViewController);
+        btnThoat.addActionListener(mainViewController);
     }
 
     // PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CUSTOM
-    private void hienThiThongBao(String message, String title, int messageType) {
+    public void hienThiThongBao(String message, String title, int messageType) {
         JDialog dialog = createCustomDialog(message, title, messageType);
         dialog.setVisible(true);
     }
 
     // PHƯƠNG THỨC XÁC NHẬN THOÁT CUSTOM
-    private void xacNhanThoatChuongTrinh() {
+    public void xacNhanThoatChuongTrinh() {
         // Tạo custom buttons
         JButton btnCo = new JButton("Có");
         JButton btnKhong = new JButton("Không");
@@ -507,7 +506,7 @@ public class MainView extends JFrame {
         });
     }
 
-    private void showQuanLyKhachHang() {
+    public void showQuanLyKhachHang() {
         try {
             // Tạo JInternalFrame để chứa QuanLyKhachHangView
             JInternalFrame internalFrame = new JInternalFrame(
@@ -532,11 +531,11 @@ public class MainView extends JFrame {
 
         } catch (Exception e) {
             e.printStackTrace();
-            hienThiThongBao("Lỗi khi mở quản lý khách hàng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi mở quản lý khách       hàng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void showQuanLyNhanVien() {
+    public void showQuanLyNhanVien() {
         try {
             JInternalFrame internalFrame = new JInternalFrame(
                     "Quản Lý Nhân Viên",
@@ -557,7 +556,7 @@ public class MainView extends JFrame {
         }
     }
 
-    private void showQuanLyDichVu() {
+    public void showQuanLyDichVu() {
         try {
             // Tạo JInternalFrame để chứa QuanLyDichVuView
             JInternalFrame internalFrame = new JInternalFrame(
@@ -637,6 +636,14 @@ public class MainView extends JFrame {
     }
 
     // Getter methods
+    public JButton getBtnThongBao() {
+        return btnThongBao;
+    }
+
+    public JButton getBtnQuanLyNguyenLieu() {
+        return btnQuanLyNguyenLieu;
+    }
+
     public JButton getBtnDatDichVu() {
         return btnDatDichVu;
     }
@@ -685,14 +692,21 @@ public class MainView extends JFrame {
         lblUserInfo.setText("Xin chào: " + tenDangNhap + " | " + vaiTroText);
     }
 
-    public static void main(String[] args) {
+    // Phương thức hỗ trợ tách login
+    public static void khoiChayUngDung() {
         // Khởi chạy ứng dụng
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new MainView();
+                new MainView().setVisible(true);
                 System.out.println("Ứng dụng Quản Lý SPA đã khởi chạy thành công!");
             }
         });
+    }
+
+    // Phương thức main mới không tự động chạy
+    public static void main(String[] args) {
+        // Không tự động chạy nữa, chỉ để tham khảo
+        System.out.println("Vui lòng sử dụng phương thức khoiChayUngDung() từ lớp Login");
     }
 }

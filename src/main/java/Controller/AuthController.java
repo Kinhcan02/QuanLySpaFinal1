@@ -47,9 +47,8 @@ public class AuthController {
         loginView.dongManHinh();
 
         // Tạo và hiển thị MainView với thông tin người dùng
-        mainView = new MainView();
+        this.mainView = new MainView(); // <-- GÁN CHO BIẾN INSTANCE
         mainView.setVisible(true);
-
         // Thiết lập quyền truy cập dựa trên vai trò
         phanQuyenChoMainView();
     }
