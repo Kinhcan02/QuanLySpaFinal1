@@ -2,7 +2,9 @@ package View;
 
 import Controller.QuanLyDichVuController;
 import Controller.QuanLyKhachHangController;
+import Controller.QuanLyNhanVienController;
 import Service.KhachHangService;
+import Service.NhanVienService;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -244,7 +246,7 @@ public class MainView extends JFrame {
         btnQuanLyNhanVien.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                hienThiThongBao("Tính năng Quản lý nhân viên đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                showQuanLyNhanVien();
             }
         });
 
@@ -531,6 +533,27 @@ public class MainView extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
             hienThiThongBao("Lỗi khi mở quản lý khách hàng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showQuanLyNhanVien() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Quản Lý Nhân Viên",
+                    true, true, true, true
+            );
+
+            QuanLyNhanVienView quanLyNhanVienView = new QuanLyNhanVienView();
+            NhanVienService nhanVienService = new NhanVienService();
+            QuanLyNhanVienController quanLyNhanVienController = new QuanLyNhanVienController(quanLyNhanVienView, nhanVienService);
+
+            internalFrame.setContentPane(quanLyNhanVienView);
+            internalFrame.pack();
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở quản lý nhân viên: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
