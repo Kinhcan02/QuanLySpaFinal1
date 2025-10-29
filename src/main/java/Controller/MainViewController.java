@@ -32,6 +32,9 @@ public class MainViewController implements ActionListener {
         else if (source == mainView.getBtnQuanLyDichVu()) {
             mainView.showQuanLyDichVu();
         } 
+        else if (source == mainView.getBtnQuanLyNhanVien()) {
+            mainView.showQuanLyNhanVien();
+        } 
         else if (source == mainView.getBtnQuanLyKhachHang()) {
             mainView.showQuanLyKhachHang();
         } 

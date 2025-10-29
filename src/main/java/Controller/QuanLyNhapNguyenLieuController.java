@@ -25,6 +25,14 @@ public class QuanLyNhapNguyenLieuController {
     private LoaiNguyenLieuService loaiNguyenLieuService;
     private DefaultTableModel model;
 
+    // Màu sắc
+    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80); // Màu nền #8cc980
+    private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);     // Màu nút #4d8a57
+    private final Color COLOR_TEXT = Color.WHITE;                       // Màu chữ #ffffff
+
+    // Biến để lưu kết quả từ dialog
+    private boolean dialogResult;
+
     public QuanLyNhapNguyenLieuController(QuanLyNhapNguyenLieuView view) {
         this.view = view;
         this.nhapNguyenLieuService = new NhapNguyenLieuService();
@@ -99,7 +107,7 @@ public class QuanLyNhapNguyenLieuController {
                 });
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi tải dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi tải dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -113,7 +121,7 @@ public class QuanLyNhapNguyenLieuController {
                 view.getCboLoaiFilter().addItem(loaiNL.getTenLoaiNL());
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi tải loại nguyên liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi tải loại nguyên liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -132,23 +140,21 @@ public class QuanLyNhapNguyenLieuController {
             panel.add(rbDaCo);
             panel.add(rbChuaCo);
             
-            int option = JOptionPane.showConfirmDialog(view, panel, "Chọn loại nguyên liệu", 
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            Object[] message = {"Chọn loại nguyên liệu:", panel};
+            boolean confirmed = showCustomInputDialog(message, "Chọn loại nguyên liệu");
                 
-            if (option != JOptionPane.OK_OPTION) {
-                return;
-            }
-            
-            if (rbDaCo.isSelected()) {
-                themNguyenLieuDaCo();
-            } else if (rbChuaCo.isSelected()) {
-                themNguyenLieuChuaCo();
-            } else {
-                JOptionPane.showMessageDialog(view, "Vui lòng chọn một loại nguyên liệu!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            if (confirmed) {
+                if (rbDaCo.isSelected()) {
+                    themNguyenLieuDaCo();
+                } else if (rbChuaCo.isSelected()) {
+                    themNguyenLieuChuaCo();
+                } else {
+                    hienThiThongBao("Vui lòng chọn một loại nguyên liệu!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                }
             }
             
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi thêm phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi thêm phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -165,7 +171,7 @@ public class QuanLyNhapNguyenLieuController {
             // Load danh sách nguyên liệu hiện có
             List<NguyenLieu> listNL = nguyenLieuService.getAllNguyenLieu();
             if (listNL.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Chưa có nguyên liệu nào. Vui lòng thêm nguyên liệu mới trước!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                hienThiThongBao("Chưa có nguyên liệu nào. Vui lòng thêm nguyên liệu mới trước!", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             
@@ -182,17 +188,17 @@ public class QuanLyNhapNguyenLieuController {
             panel.add(new JLabel("Nguồn nhập:"));
             panel.add(txtNguonNhap);
             
-            int option = JOptionPane.showConfirmDialog(view, panel, "Nhập nguyên liệu đã có", 
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            Object[] message = {"Nhập nguyên liệu đã có:", panel};
+            boolean confirmed = showCustomInputDialog(message, "Nhập nguyên liệu đã có");
                 
-            if (option == JOptionPane.OK_OPTION) {
+            if (confirmed) {
                 String selectedNL = (String) cboNguyenLieu.getSelectedItem();
                 String soLuongStr = txtSoLuong.getText().trim();
                 String donGiaStr = txtDonGia.getText().trim();
                 String nguonNhap = txtNguonNhap.getText().trim();
                 
                 if (selectedNL == null) {
-                    JOptionPane.showMessageDialog(view, "Vui lòng chọn nguyên liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Vui lòng chọn nguyên liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -204,11 +210,11 @@ public class QuanLyNhapNguyenLieuController {
                 try {
                     soLuong = Integer.parseInt(soLuongStr);
                     if (soLuong <= 0) {
-                        JOptionPane.showMessageDialog(view, "Số lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Số lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(view, "Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -216,11 +222,11 @@ public class QuanLyNhapNguyenLieuController {
                 try {
                     donGia = new BigDecimal(donGiaStr.replaceAll("[^\\d.]", ""));
                     if (donGia.compareTo(BigDecimal.ZERO) <= 0) {
-                        JOptionPane.showMessageDialog(view, "Đơn giá phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Đơn giá phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(view, "Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -235,32 +241,31 @@ public class QuanLyNhapNguyenLieuController {
                     nguonNhap.isEmpty() ? null : nguonNhap
                 );
                 
-                int confirm = JOptionPane.showConfirmDialog(view, 
+                boolean xacNhan = hienThiXacNhan(
                     "Bạn có chắc chắn muốn thêm phiếu nhập này?\n" +
                     "Nguyên liệu: " + nguyenLieu.getTenNguyenLieu() + "\n" +
                     "Số lượng nhập: " + soLuong + " " + nguyenLieu.getDonViTinh() + "\n" +
                     "Số lượng tồn mới: " + (nguyenLieu.getSoLuongTon() + soLuong) + " " + nguyenLieu.getDonViTinh() + "\n" +
                     "Đơn giá: " + String.format("%,.0f VND", donGia) + "\n" +
-                    "Thành tiền: " + String.format("%,.0f VND", nhapNL.getThanhTien()), 
-                    "Xác nhận", 
-                    JOptionPane.YES_NO_OPTION);
+                    "Thành tiền: " + String.format("%,.0f VND", nhapNL.getThanhTien())
+                );
                 
-                if (confirm == JOptionPane.YES_OPTION) {
+                if (xacNhan) {
                     boolean success = nhapNguyenLieuService.addNhapNguyenLieu(nhapNL);
                     if (success) {
                         // Cập nhật số lượng tồn kho
                         nguyenLieuService.updateSoLuongTon(maNguyenLieu, nguyenLieu.getSoLuongTon() + soLuong);
                         
-                        JOptionPane.showMessageDialog(view, "Thêm phiếu nhập thành công!");
+                        hienThiThongBao("Thêm phiếu nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         loadData();
                     } else {
-                        JOptionPane.showMessageDialog(view, "Thêm phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Thêm phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
             
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi thêm nguyên liệu đã có: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi thêm nguyên liệu đã có: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -295,10 +300,10 @@ public class QuanLyNhapNguyenLieuController {
             panel.add(new JLabel("Nguồn nhập:"));
             panel.add(txtNguonNhap);
             
-            int option = JOptionPane.showConfirmDialog(view, panel, "Thêm nguyên liệu mới và nhập", 
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            Object[] message = {"Thêm nguyên liệu mới và nhập:", panel};
+            boolean confirmed = showCustomInputDialog(message, "Thêm nguyên liệu mới và nhập");
                 
-            if (option == JOptionPane.OK_OPTION) {
+            if (confirmed) {
                 String tenNguyenLieu = txtTenNguyenLieu.getText().trim();
                 String donViTinh = txtDonViTinh.getText().trim();
                 String tenLoai = (String) cboLoaiNL.getSelectedItem();
@@ -308,12 +313,12 @@ public class QuanLyNhapNguyenLieuController {
                 
                 // Validate dữ liệu
                 if (tenNguyenLieu.isEmpty()) {
-                    JOptionPane.showMessageDialog(view, "Tên nguyên liệu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Tên nguyên liệu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
                 if (donViTinh.isEmpty()) {
-                    JOptionPane.showMessageDialog(view, "Đơn vị tính không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Đơn vị tính không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -321,12 +326,11 @@ public class QuanLyNhapNguyenLieuController {
                 try {
                     NguyenLieu nlExist = nguyenLieuService.getNguyenLieuByTen(tenNguyenLieu);
                     if (nlExist != null) {
-                        int choice = JOptionPane.showConfirmDialog(view, 
-                            "Nguyên liệu '" + tenNguyenLieu + "' đã tồn tại!\nBạn có muốn chuyển sang nhập nguyên liệu đã có không?", 
-                            "Nguyên liệu đã tồn tại", 
-                            JOptionPane.YES_NO_OPTION);
+                        boolean choice = hienThiXacNhan(
+                            "Nguyên liệu '" + tenNguyenLieu + "' đã tồn tại!\nBạn có muốn chuyển sang nhập nguyên liệu đã có không?"
+                        );
                         
-                        if (choice == JOptionPane.YES_OPTION) {
+                        if (choice) {
                             themNguyenLieuDaCo();
                             return;
                         } else {
@@ -342,11 +346,11 @@ public class QuanLyNhapNguyenLieuController {
                 try {
                     soLuong = Integer.parseInt(soLuongStr);
                     if (soLuong <= 0) {
-                        JOptionPane.showMessageDialog(view, "Số lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Số lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(view, "Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -354,11 +358,11 @@ public class QuanLyNhapNguyenLieuController {
                 try {
                     donGia = new BigDecimal(donGiaStr.replaceAll("[^\\d.]", ""));
                     if (donGia.compareTo(BigDecimal.ZERO) <= 0) {
-                        JOptionPane.showMessageDialog(view, "Đơn giá phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Đơn giá phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(view, "Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -376,7 +380,7 @@ public class QuanLyNhapNguyenLieuController {
                 // Thêm nguyên liệu mới vào database
                 boolean successNL = nguyenLieuService.addNguyenLieu(nlMoi);
                 if (!successNL) {
-                    JOptionPane.showMessageDialog(view, "Thêm nguyên liệu mới thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Thêm nguyên liệu mới thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -396,7 +400,7 @@ public class QuanLyNhapNguyenLieuController {
                 }
                 
                 if (nlVuaTao == null) {
-                    JOptionPane.showMessageDialog(view, "Không thể lấy thông tin nguyên liệu vừa tạo!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Không thể lấy thông tin nguyên liệu vừa tạo!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 
@@ -413,22 +417,22 @@ public class QuanLyNhapNguyenLieuController {
                 
                 boolean successNhap = nhapNguyenLieuService.addNhapNguyenLieu(nhapNL);
                 if (successNhap) {
-                    JOptionPane.showMessageDialog(view, "Thêm nguyên liệu mới và phiếu nhập thành công!");
+                    hienThiThongBao("Thêm nguyên liệu mới và phiếu nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     loadData();
                 } else {
-                    JOptionPane.showMessageDialog(view, "Thêm phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Thêm phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
             
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi thêm nguyên liệu mới: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi thêm nguyên liệu mới: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void suaNhapNguyenLieu() {
         int selectedRow = view.getTblNhapNguyenLieu().getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn một phiếu nhập để sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            hienThiThongBao("Vui lòng chọn một phiếu nhập để sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -448,10 +452,9 @@ public class QuanLyNhapNguyenLieuController {
                 "Nguồn nhập:", txtNguonNhap
             };
 
-            int option = JOptionPane.showConfirmDialog(view, message, "Sửa phiếu nhập", 
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            boolean confirmed = showCustomInputDialog(message, "Sửa phiếu nhập");
 
-            if (option == JOptionPane.OK_OPTION) {
+            if (confirmed) {
                 String soLuongStr = txtSoLuong.getText().trim();
                 String donGiaStr = txtDonGia.getText().trim();
                 String nguonNhap = txtNguonNhap.getText().trim();
@@ -460,11 +463,11 @@ public class QuanLyNhapNguyenLieuController {
                 try {
                     soLuong = Integer.parseInt(soLuongStr);
                     if (soLuong <= 0) {
-                        JOptionPane.showMessageDialog(view, "Số lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Số lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(view, "Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -472,11 +475,11 @@ public class QuanLyNhapNguyenLieuController {
                 try {
                     donGia = new BigDecimal(donGiaStr.replaceAll("[^\\d.]", ""));
                     if (donGia.compareTo(BigDecimal.ZERO) <= 0) {
-                        JOptionPane.showMessageDialog(view, "Đơn giá phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Đơn giá phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(view, "Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -487,16 +490,15 @@ public class QuanLyNhapNguyenLieuController {
                 nhapHienTai.setDonGia(donGia);
                 nhapHienTai.setNguonNhap(nguonNhap.isEmpty() ? null : nguonNhap);
 
-                int confirm = JOptionPane.showConfirmDialog(view, 
+                boolean xacNhan = hienThiXacNhan(
                     "Bạn có chắc chắn muốn sửa phiếu nhập này?\n" +
                     "Nguyên liệu: " + nguyenLieuHienTai.getTenNguyenLieu() + "\n" +
                     "Số lượng: " + soLuong + " (" + (soLuongChenhLech >= 0 ? "+" : "") + soLuongChenhLech + ")\n" +
                     "Đơn giá: " + String.format("%,.0f VND", donGia) + "\n" +
-                    "Thành tiền: " + String.format("%,.0f VND", nhapHienTai.getThanhTien()), 
-                    "Xác nhận", 
-                    JOptionPane.YES_NO_OPTION);
+                    "Thành tiền: " + String.format("%,.0f VND", nhapHienTai.getThanhTien())
+                );
                 
-                if (confirm == JOptionPane.YES_OPTION) {
+                if (xacNhan) {
                     boolean success = nhapNguyenLieuService.updateNhapNguyenLieu(nhapHienTai);
                     if (success) {
                         // Cập nhật số lượng tồn kho
@@ -507,22 +509,22 @@ public class QuanLyNhapNguyenLieuController {
                             );
                         }
                         
-                        JOptionPane.showMessageDialog(view, "Sửa phiếu nhập thành công!");
+                        hienThiThongBao("Sửa phiếu nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         loadData();
                     } else {
-                        JOptionPane.showMessageDialog(view, "Sửa phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        hienThiThongBao("Sửa phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi sửa phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi sửa phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void xoaNhapNguyenLieu() {
         int selectedRow = view.getTblNhapNguyenLieu().getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn một phiếu nhập để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            hienThiThongBao("Vui lòng chọn một phiếu nhập để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -531,16 +533,15 @@ public class QuanLyNhapNguyenLieuController {
             NhapNguyenLieu nhap = nhapNguyenLieuService.getNhapNguyenLieuById(maNhap);
             NguyenLieu nguyenLieu = nguyenLieuService.getNguyenLieuById(nhap.getMaNguyenLieu());
 
-            int confirm = JOptionPane.showConfirmDialog(view, 
+            boolean xacNhan = hienThiXacNhan(
                 "Bạn có chắc chắn muốn xóa phiếu nhập này?\n" +
                 "Nguyên liệu: " + nhap.getTenNguyenLieu() + "\n" +
                 "Số lượng: " + nhap.getSoLuong() + "\n" +
                 "Đơn giá: " + String.format("%,.0f VND", nhap.getDonGia()) + "\n\n" +
-                "Lưu ý: Số lượng tồn kho sẽ bị trừ đi " + nhap.getSoLuong() + " " + nhap.getDonViTinh(), 
-                "Xác nhận xóa", 
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                "Lưu ý: Số lượng tồn kho sẽ bị trừ đi " + nhap.getSoLuong() + " " + nhap.getDonViTinh()
+            );
             
-            if (confirm == JOptionPane.YES_OPTION) {
+            if (xacNhan) {
                 boolean success = nhapNguyenLieuService.deleteNhapNguyenLieu(maNhap);
                 if (success) {
                     // Cập nhật số lượng tồn kho (trừ đi số lượng đã nhập)
@@ -548,14 +549,14 @@ public class QuanLyNhapNguyenLieuController {
                     if (soLuongTonMoi < 0) soLuongTonMoi = 0;
                     nguyenLieuService.updateSoLuongTon(nguyenLieu.getMaNguyenLieu(), soLuongTonMoi);
                     
-                    JOptionPane.showMessageDialog(view, "Xóa phiếu nhập thành công!");
+                    hienThiThongBao("Xóa phiếu nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     loadData();
                 } else {
-                    JOptionPane.showMessageDialog(view, "Xóa phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    hienThiThongBao("Xóa phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi xóa phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi xóa phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -587,7 +588,7 @@ public class QuanLyNhapNguyenLieuController {
                 }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi tìm kiếm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi tìm kiếm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -637,7 +638,7 @@ public class QuanLyNhapNguyenLieuController {
                 }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi lọc theo loại: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi lọc theo loại: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -684,7 +685,230 @@ public class QuanLyNhapNguyenLieuController {
                 }
             });
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi mở quản lý loại nguyên liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            hienThiThongBao("Lỗi khi mở quản lý loại nguyên liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    // CÁC PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CUSTOM
+    
+    private void hienThiThongBao(String message, String title, int messageType) {
+        JDialog dialog = createCustomDialog(message, title, messageType);
+        dialog.setVisible(true);
+    }
+
+    private boolean hienThiXacNhan(String message) {
+        JDialog dialog = createConfirmationDialog(message);
+        dialog.setVisible(true);
+        return dialogResult;
+    }
+
+    private boolean showCustomInputDialog(Object[] message, String title) {
+        JDialog dialog = createInputDialog(message, title);
+        dialog.setVisible(true);
+        return dialogResult;
+    }
+
+    private JDialog createCustomDialog(String message, String title, int messageType) {
+        JButton okButton = createStyledButton("OK", COLOR_BUTTON);
+        okButton.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(okButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(COLOR_TEXT);
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        Icon icon = null;
+        switch (messageType) {
+            case JOptionPane.ERROR_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.errorIcon");
+                break;
+            case JOptionPane.INFORMATION_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.informationIcon");
+                break;
+            case JOptionPane.WARNING_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.warningIcon");
+                break;
+            case JOptionPane.QUESTION_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.questionIcon");
+                break;
+        }
+
+        JPanel contentPanel = new JPanel(new BorderLayout(15, 0));
+        contentPanel.setBackground(COLOR_BACKGROUND);
+        if (icon != null) {
+            JLabel iconLabel = new JLabel(icon);
+            contentPanel.add(iconLabel, BorderLayout.WEST);
+        }
+        contentPanel.add(messageLabel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(COLOR_BACKGROUND);
+        buttonPanel.add(okButton);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        JDialog dialog = new JDialog((Frame) null, title, true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setResizable(false);
+
+        return dialog;
+    }
+
+    private JDialog createConfirmationDialog(String message) {
+        JButton yesButton = createStyledButton("Có", COLOR_BUTTON);
+        JButton noButton = createStyledButton("Không", new Color(0xCC, 0x66, 0x66));
+
+        yesButton.addActionListener(e -> {
+            dialogResult = true;
+            Window window = SwingUtilities.getWindowAncestor(yesButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
+
+        noButton.addActionListener(e -> {
+            dialogResult = false;
+            Window window = SwingUtilities.getWindowAncestor(noButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(COLOR_TEXT);
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+
+        JPanel contentPanel = new JPanel(new BorderLayout(15, 0));
+        contentPanel.setBackground(COLOR_BACKGROUND);
+        if (icon != null) {
+            JLabel iconLabel = new JLabel(icon);
+            contentPanel.add(iconLabel, BorderLayout.WEST);
+        }
+        contentPanel.add(messageLabel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(COLOR_BACKGROUND);
+        buttonPanel.add(yesButton);
+        buttonPanel.add(noButton);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        JDialog dialog = new JDialog((Frame) null, "Xác nhận", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setResizable(false);
+
+        return dialog;
+    }
+
+    private JDialog createInputDialog(Object[] message, String title) {
+        JButton okButton = createStyledButton("OK", COLOR_BUTTON);
+        JButton cancelButton = createStyledButton("Hủy", new Color(0xCC, 0x66, 0x66));
+
+        // Tạo panel chứa các component input
+        JPanel inputPanel = new JPanel(new GridLayout(0, 1, 5, 5));
+        inputPanel.setBackground(COLOR_BACKGROUND);
+
+        // Tìm tất cả các JTextField và JComboBox trong message
+        java.util.List<JTextField> textFields = new java.util.ArrayList<>();
+        java.util.List<JComboBox<?>> comboBoxes = new java.util.ArrayList<>();
+
+        for (Object obj : message) {
+            if (obj instanceof JTextField) {
+                textFields.add((JTextField) obj);
+                inputPanel.add((JTextField) obj);
+            } else if (obj instanceof JComboBox) {
+                comboBoxes.add((JComboBox<?>) obj);
+                inputPanel.add((JComboBox<?>) obj);
+            } else if (obj instanceof JPanel) {
+                inputPanel.add((JPanel) obj);
+            } else if (obj instanceof String) {
+                JLabel label = new JLabel((String) obj);
+                label.setForeground(COLOR_TEXT);
+                label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                inputPanel.add(label);
+            }
+        }
+
+        okButton.addActionListener(e -> {
+            dialogResult = true;
+            Window window = SwingUtilities.getWindowAncestor(okButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
+
+        cancelButton.addActionListener(e -> {
+            dialogResult = false;
+            Window window = SwingUtilities.getWindowAncestor(cancelButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(COLOR_BACKGROUND);
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+
+        panel.add(inputPanel, BorderLayout.CENTER);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        JDialog dialog = new JDialog((Frame) null, title, true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setResizable(false);
+
+        return dialog;
+    }
+
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setBackground(bgColor);
+        button.setForeground(COLOR_TEXT);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setOpaque(true);
+        button.setPreferredSize(new Dimension(100, 35));
+        
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor.darker());
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor);
+            }
+        });
+        
+        return button;
     }
 }

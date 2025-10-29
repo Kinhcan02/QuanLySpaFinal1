@@ -17,6 +17,11 @@ public class QuanLyDichVuController {
     private DichVuService dichVuService;
     private LoaiDichVuService loaiDichVuService;
 
+    // Màu sắc giống QuanLyKhachHangController
+    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80); // Màu nền #8cc980
+    private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);     // Màu nút #4d8a57
+    private final Color COLOR_TEXT = Color.WHITE;                       // Màu chữ #ffffff
+
     public QuanLyDichVuController(QuanLyDichVuView view) {
         this.view = view;
         this.dichVuService = new DichVuService();
@@ -53,7 +58,7 @@ public class QuanLyDichVuController {
                 cboLoaiFilter.addItem(loaiDV.getTenLoaiDV());
             }
         } catch (Exception e) {
-            showError("Lỗi khi tải loại dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi tải loại dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -62,7 +67,7 @@ public class QuanLyDichVuController {
             List<DichVu> listDichVu = dichVuService.getAllDichVu();
             displayDichVuOnTable(listDichVu);
         } catch (Exception e) {
-            showError("Lỗi khi tải danh sách dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi tải danh sách dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -114,7 +119,7 @@ public class QuanLyDichVuController {
             QuanLyLoaiDichVuController loaiDichVuController = new QuanLyLoaiDichVuController(this);
             loaiDichVuController.showView();
         } catch (Exception e) {
-            showError("Lỗi khi mở quản lý loại dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi mở quản lý loại dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -125,11 +130,11 @@ public class QuanLyDichVuController {
 
             // Form nhập liệu với BorderLayout
             JPanel formPanel = new JPanel(new BorderLayout(10, 10));
-            formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            formPanel.setBackground(COLOR_BACKGROUND);
 
             // Panel cho các field thông thường
             JPanel basicInfoPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-            basicInfoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            basicInfoPanel.setBackground(COLOR_BACKGROUND);
 
             JTextField txtTenDV = new JTextField();
             JTextField txtGia = new JTextField();
@@ -154,7 +159,7 @@ public class QuanLyDichVuController {
 
             // Panel cho ghi chú
             JPanel ghiChuPanel = new JPanel(new BorderLayout(5, 5));
-            ghiChuPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            ghiChuPanel.setBackground(COLOR_BACKGROUND);
 
             JLabel lblGhiChu = createStyledLabel("Ghi chú:");
             JTextArea txtGhiChu = new JTextArea(6, 30);
@@ -172,8 +177,8 @@ public class QuanLyDichVuController {
 
             // Panel nút
             JPanel buttonPanel = createButtonPanel();
-            JButton btnThem = createStyledButton("Thêm", new Color(0x4D, 0x8A, 0x57));
-            JButton btnHuy = createStyledButton("Hủy", new Color(0x4D, 0x8A, 0x57));
+            JButton btnThem = createStyledButton("Thêm", COLOR_BUTTON);
+            JButton btnHuy = createStyledButton("Hủy", COLOR_BUTTON);
 
             btnThem.addActionListener(e -> handleThemDichVu(dialog, txtTenDV, txtGia, txtThoiGian, cboLoaiDV, txtGhiChu, listLoaiDV));
             btnHuy.addActionListener(e -> dialog.dispose());
@@ -188,7 +193,7 @@ public class QuanLyDichVuController {
             dialog.setVisible(true);
 
         } catch (Exception e) {
-            showError("Lỗi khi thêm dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi thêm dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -198,7 +203,7 @@ public class QuanLyDichVuController {
 
         // Validate dữ liệu
         if (txtTenDV.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(dialog, "Tên dịch vụ không được để trống");
+            hienThiThongBao("Tên dịch vụ không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -206,7 +211,7 @@ public class QuanLyDichVuController {
         try {
             gia = new BigDecimal(txtGia.getText().replaceAll("[^\\d]", ""));
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(dialog, "Giá dịch vụ không hợp lệ");
+            hienThiThongBao("Giá dịch vụ không hợp lệ", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -215,11 +220,11 @@ public class QuanLyDichVuController {
             try {
                 thoiGian = Integer.parseInt(txtThoiGian.getText().trim());
                 if (thoiGian <= 0) {
-                    JOptionPane.showMessageDialog(dialog, "Thời gian phải lớn hơn 0");
+                    hienThiThongBao("Thời gian phải lớn hơn 0", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Thời gian không hợp lệ");
+                hienThiThongBao("Thời gian không hợp lệ", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -239,18 +244,18 @@ public class QuanLyDichVuController {
 
         boolean success = dichVuService.addDichVu(dichVu);
         if (success) {
-            JOptionPane.showMessageDialog(dialog, "Thêm dịch vụ thành công");
+            hienThiThongBao("Thêm dịch vụ thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             loadAllDichVu();
             dialog.dispose();
         } else {
-            JOptionPane.showMessageDialog(dialog, "Thêm dịch vụ thất bại");
+            hienThiThongBao("Thêm dịch vụ thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void suaDichVu() {
         int selectedRow = view.getTblDichVu().getSelectedRow();
         if (selectedRow == -1) {
-            showCustomMessage("Vui lòng chọn một dịch vụ để sửa");
+            hienThiThongBao("Vui lòng chọn một dịch vụ để sửa", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -258,19 +263,19 @@ public class QuanLyDichVuController {
             int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
             String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
 
-            int confirm = showCustomConfirm("Bạn có chắc muốn sửa dịch vụ '" + tenDichVu + "' không?");
+            boolean confirmed = hienThiXacNhan("Bạn có chắc muốn sửa dịch vụ '" + tenDichVu + "' không?");
             
-            if (confirm == JOptionPane.YES_OPTION) {
+            if (confirmed) {
                 DichVu dichVu = dichVuService.getDichVuById(maDichVu);
                 if (dichVu == null) {
-                    showError("Không tìm thấy dịch vụ cần sửa");
+                    hienThiThongBao("Không tìm thấy dịch vụ cần sửa", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 showEditDichVuForm(dichVu);
             }
 
         } catch (Exception e) {
-            showError("Lỗi khi sửa dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi sửa dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -281,11 +286,11 @@ public class QuanLyDichVuController {
 
             // Form nhập liệu với BorderLayout
             JPanel formPanel = new JPanel(new BorderLayout(10, 10));
-            formPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            formPanel.setBackground(COLOR_BACKGROUND);
 
             // Panel cho các field thông thường
             JPanel basicInfoPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-            basicInfoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            basicInfoPanel.setBackground(COLOR_BACKGROUND);
 
             JTextField txtTenDV = new JTextField(dichVu.getTenDichVu());
             JTextField txtGia = new JTextField(dichVu.getGia().toString());
@@ -318,7 +323,7 @@ public class QuanLyDichVuController {
 
             // Panel cho ghi chú
             JPanel ghiChuPanel = new JPanel(new BorderLayout(5, 5));
-            ghiChuPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            ghiChuPanel.setBackground(COLOR_BACKGROUND);
 
             JLabel lblGhiChu = createStyledLabel("Ghi chú:");
             JTextArea txtGhiChu = new JTextArea(6, 30);
@@ -337,8 +342,8 @@ public class QuanLyDichVuController {
 
             // Panel nút
             JPanel buttonPanel = createButtonPanel();
-            JButton btnCapNhat = createStyledButton("Cập nhật", new Color(0x4D, 0x8A, 0x57));
-            JButton btnHuy = createStyledButton("Hủy", new Color(0x4D, 0x8A, 0x57));
+            JButton btnCapNhat = createStyledButton("Cập nhật", COLOR_BUTTON);
+            JButton btnHuy = createStyledButton("Hủy", COLOR_BUTTON);
 
             btnCapNhat.addActionListener(e -> handleCapNhatDichVu(dialog, dichVu, txtTenDV, txtGia, txtThoiGian, cboLoaiDV, txtGhiChu, listLoaiDV));
             btnHuy.addActionListener(e -> dialog.dispose());
@@ -353,7 +358,7 @@ public class QuanLyDichVuController {
             dialog.setVisible(true);
 
         } catch (Exception e) {
-            showError("Lỗi khi hiển thị form sửa dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi hiển thị form sửa dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -363,7 +368,7 @@ public class QuanLyDichVuController {
 
         // Validate dữ liệu
         if (txtTenDV.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(dialog, "Tên dịch vụ không được để trống");
+            hienThiThongBao("Tên dịch vụ không được để trống", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -371,7 +376,7 @@ public class QuanLyDichVuController {
         try {
             gia = new BigDecimal(txtGia.getText().replaceAll("[^\\d]", ""));
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(dialog, "Giá dịch vụ không hợp lệ");
+            hienThiThongBao("Giá dịch vụ không hợp lệ", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -380,11 +385,11 @@ public class QuanLyDichVuController {
             try {
                 thoiGian = Integer.parseInt(txtThoiGian.getText().trim());
                 if (thoiGian <= 0) {
-                    JOptionPane.showMessageDialog(dialog, "Thời gian phải lớn hơn 0");
+                    hienThiThongBao("Thời gian phải lớn hơn 0", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Thời gian không hợp lệ");
+                hienThiThongBao("Thời gian không hợp lệ", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -405,21 +410,21 @@ public class QuanLyDichVuController {
         try {
             boolean success = dichVuService.updateDichVu(dichVu);
             if (success) {
-                showSuccessMessage("Cập nhật dịch vụ thành công");
+                hienThiThongBao("Cập nhật dịch vụ thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 loadAllDichVu();
                 dialog.dispose();
             } else {
-                showError("Cập nhật dịch vụ thất bại");
+                hienThiThongBao("Cập nhật dịch vụ thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            showError("Lỗi khi cập nhật dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi cập nhật dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void xoaDichVu() {
         int selectedRow = view.getTblDichVu().getSelectedRow();
         if (selectedRow == -1) {
-            showCustomMessage("Vui lòng chọn một dịch vụ để xóa");
+            hienThiThongBao("Vui lòng chọn một dịch vụ để xóa", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -427,20 +432,20 @@ public class QuanLyDichVuController {
             int maDichVu = (int) view.getModel().getValueAt(selectedRow, 0);
             String tenDichVu = (String) view.getModel().getValueAt(selectedRow, 1);
 
-            int confirm = showCustomConfirm("Bạn có chắc muốn xóa dịch vụ '" + tenDichVu + "' không?");
+            boolean confirmed = hienThiXacNhan("Bạn có chắc muốn xóa dịch vụ '" + tenDichVu + "' không?");
             
-            if (confirm == JOptionPane.YES_OPTION) {
+            if (confirmed) {
                 boolean success = dichVuService.deleteDichVu(maDichVu);
                 if (success) {
-                    showSuccessMessage("Xóa dịch vụ thành công");
+                    hienThiThongBao("Xóa dịch vụ thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     loadAllDichVu();
                 } else {
-                    showError("Xóa dịch vụ thất bại");
+                    hienThiThongBao("Xóa dịch vụ thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
 
         } catch (Exception e) {
-            showError("Lỗi khi xóa dịch vụ: " + e.getMessage());
+            hienThiThongBao("Lỗi khi xóa dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -461,61 +466,176 @@ public class QuanLyDichVuController {
             displayDichVuOnTable(ketQua);
 
         } catch (Exception e) {
-            showError("Lỗi khi tìm kiếm: " + e.getMessage());
+            hienThiThongBao("Lỗi khi tìm kiếm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Các phương thức hỗ trợ hiển thị message
-    private void showCustomMessage(String message) {
-        JOptionPane.showMessageDialog(view, message, "Thông báo", JOptionPane.WARNING_MESSAGE);
+    // CÁC PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO GIỐNG QuanLyKhachHangController
+
+    // PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CUSTOM VỚI MÀU XANH TRÀN VIỀN
+    private void hienThiThongBao(String message, String title, int messageType) {
+        JDialog dialog = createCustomDialog(message, title, messageType);
+        dialog.setVisible(true);
     }
 
-    private int showCustomConfirm(String message) {
-        return JOptionPane.showConfirmDialog(view, message, "Xác nhận", JOptionPane.YES_NO_OPTION);
+    // PHƯƠNG THỨC HIỂN THỊ XÁC NHẬN CUSTOM VỚI MÀU XANH TRÀN VIỀN
+    private boolean hienThiXacNhan(String message) {
+        JDialog dialog = createConfirmationDialog(message);
+        final boolean[] result = {false};
+        
+        // Đợi dialog đóng
+        dialog.setVisible(true);
+        
+        return result[0];
     }
 
-    private void showSuccessMessage(String message) {
-        JOptionPane.showMessageDialog(view, message, "Thành công", JOptionPane.INFORMATION_MESSAGE);
-    }
+    // PHƯƠNG THỨC TẠO CUSTOM DIALOG
+    private JDialog createCustomDialog(String message, String title, int messageType) {
+        // Tạo custom button OK
+        JButton okButton = createStyledButton("OK", COLOR_BUTTON);
+        okButton.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(okButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
 
-    private void showError(String message) {
-        JOptionPane.showMessageDialog(view, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
-    }
+        // Tạo panel chứa nội dung với màu nền xanh tràn viền
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-    // Các phương thức hỗ trợ tạo giao diện
-    private JDialog createDialog(String title, int width, int height) {
-        JDialog dialog = new JDialog();
-        dialog.setTitle(title);
-        dialog.setSize(width, height);
+        // Tạo icon và message
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(COLOR_TEXT);
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Icon tùy theo loại message
+        Icon icon = null;
+        switch (messageType) {
+            case JOptionPane.ERROR_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.errorIcon");
+                break;
+            case JOptionPane.INFORMATION_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.informationIcon");
+                break;
+            case JOptionPane.WARNING_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.warningIcon");
+                break;
+            case JOptionPane.QUESTION_MESSAGE:
+                icon = UIManager.getIcon("OptionPane.questionIcon");
+                break;
+        }
+
+        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        contentPanel.setBackground(COLOR_BACKGROUND);
+        if (icon != null) {
+            JLabel iconLabel = new JLabel(icon);
+            contentPanel.add(iconLabel);
+        }
+        contentPanel.add(messageLabel);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Panel chứa nút OK
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(COLOR_BACKGROUND);
+        buttonPanel.add(okButton);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Tạo JDialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), title, true);
+        dialog.setContentPane(panel);
+        dialog.pack();
         dialog.setLocationRelativeTo(view);
-        dialog.setModal(true);
+        dialog.setResizable(false);
+
+        // Đặt nút OK làm default button
+        dialog.getRootPane().setDefaultButton(okButton);
+
         return dialog;
     }
 
-    private JPanel createMainPanel() {
+    // PHƯƠNG THỨC TẠO DIALOG XÁC NHẬN
+    private JDialog createConfirmationDialog(String message) {
+        // Tạo custom buttons
+        JButton btnCo = createStyledButton("Có", COLOR_BUTTON);
+        JButton btnKhong = createStyledButton("Không", new Color(149, 165, 166)); // Màu xám cho nút "Không"
+        
+        // Tạo panel chứa nội dung với màu nền xanh tràn viền
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(new Color(0x8C, 0xC9, 0x80));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        return panel;
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Tạo icon và message
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setForeground(COLOR_TEXT);
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Icon question
+        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+
+        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        contentPanel.setBackground(COLOR_BACKGROUND);
+        if (icon != null) {
+            JLabel iconLabel = new JLabel(icon);
+            contentPanel.add(iconLabel);
+        }
+        contentPanel.add(messageLabel);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Panel chứa nút
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        buttonPanel.setBackground(COLOR_BACKGROUND);
+        buttonPanel.add(btnCo);
+        buttonPanel.add(btnKhong);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Tạo JDialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), "Xác nhận", true);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(view);
+        dialog.setResizable(false);
+
+        // Biến để lưu kết quả
+        final boolean[] result = {false};
+
+        // Xử lý sự kiện cho nút
+        btnCo.addActionListener(e -> {
+            result[0] = true;
+            dialog.dispose();
+        });
+
+        btnKhong.addActionListener(e -> {
+            result[0] = false;
+            dialog.dispose();
+        });
+
+        // Xử lý khi đóng cửa sổ
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                result[0] = false;
+                dialog.dispose();
+            }
+        });
+
+        // Đặt nút "Không" làm default button
+        dialog.getRootPane().setDefaultButton(btnKhong);
+
+        return dialog;
     }
 
-    private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panel.setBackground(new Color(0x8C, 0xC9, 0x80));
-        return panel;
-    }
-
-    private JLabel createStyledLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setForeground(Color.WHITE);
-        label.setFont(new Font("Arial", Font.BOLD, 12));
-        return label;
-    }
-
+    // PHƯƠNG THỨC TẠO BUTTON STYLE
     private JButton createStyledButton(String text, Color backgroundColor) {
         JButton button = new JButton(text);
         button.setBackground(backgroundColor);
-        button.setForeground(Color.WHITE);
+        button.setForeground(COLOR_TEXT);
         button.setFont(new Font("Arial", Font.BOLD, 12));
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
@@ -532,5 +652,35 @@ public class QuanLyDichVuController {
         });
 
         return button;
+    }
+
+    // Các phương thức hỗ trợ tạo giao diện
+    private JDialog createDialog(String title, int width, int height) {
+        JDialog dialog = new JDialog();
+        dialog.setTitle(title);
+        dialog.setSize(width, height);
+        dialog.setLocationRelativeTo(view);
+        dialog.setModal(true);
+        return dialog;
+    }
+
+    private JPanel createMainPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        return panel;
+    }
+
+    private JPanel createButtonPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panel.setBackground(COLOR_BACKGROUND);
+        return panel;
+    }
+
+    private JLabel createStyledLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(COLOR_TEXT);
+        label.setFont(new Font("Arial", Font.BOLD, 12));
+        return label;
     }
 }
