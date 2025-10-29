@@ -34,10 +34,20 @@ public class MainView extends JFrame {
     private QuanLyNhapNguyenLieuController quanLyNhapNguyenLieuController;
     private QuanLyNhapNguyenLieuView quanLyNhapNguyenLieuView;
 
-    // Màu sắc mới
-    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80); // Màu nền #8cc980
-    private final Color COLOR_MENU = new Color(0x4D, 0x8A, 0x57);      // Màu menu #4d8a57
-    private final Color COLOR_TEXT = Color.WHITE;                      // Màu chữ #ffffff
+    // Màu sắc
+    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
+    private final Color COLOR_MENU = new Color(0x4D, 0x8A, 0x57);
+    private final Color COLOR_MENU_DARK = new Color(0x3A, 0x6B, 0x47);
+    private final Color COLOR_MENU_LIGHT = new Color(0x5D, 0x9A, 0x67);
+    private final Color COLOR_TEXT = Color.WHITE;
+    private final Color COLOR_SUB_MENU = COLOR_MENU_DARK; // Sử dụng cùng màu với menu chính
+
+    // Biến quản lý trạng thái menu
+    private boolean isNguyenLieuExpanded = false;
+
+    // Các nút submenu
+    private JButton btnNguyenLieu, btnNhapNguyenLieu;
+    private JPanel submenuNguyenLieuPanel;
 
     public MainView() {
         mainViewController = new MainViewController(this);
@@ -58,29 +68,30 @@ public class MainView extends JFrame {
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        // Main layout
         setLayout(new BorderLayout());
 
+        createHeader();
         createSidebar();
         createMainContent();
-        createHeader();
 
-        // Thiết lập sự kiện cho các nút menu
         setupMenuEvents();
     }
 
     private void createHeader() {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(COLOR_MENU);
-        headerPanel.setPreferredSize(new Dimension(getWidth(), 70));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
+        headerPanel.setPreferredSize(new Dimension(getWidth(), 80));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 30, 15, 30));
 
-        // Title
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        titlePanel.setBackground(COLOR_MENU);
+
         JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ SPA BEAUTY");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 24));
         lblTitle.setForeground(COLOR_TEXT);
 
-        // User info
+        titlePanel.add(lblTitle);
+
         JPanel userPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         userPanel.setBackground(COLOR_MENU);
 
@@ -90,7 +101,7 @@ public class MainView extends JFrame {
 
         userPanel.add(lblUserInfo);
 
-        headerPanel.add(lblTitle, BorderLayout.WEST);
+        headerPanel.add(titlePanel, BorderLayout.WEST);
         headerPanel.add(userPanel, BorderLayout.EAST);
 
         add(headerPanel, BorderLayout.NORTH);
@@ -98,56 +109,64 @@ public class MainView extends JFrame {
 
     private void createSidebar() {
         JPanel sidebarPanel = new JPanel();
-        sidebarPanel.setBackground(COLOR_MENU.darker());
+        sidebarPanel.setBackground(COLOR_MENU_DARK);
         sidebarPanel.setPreferredSize(new Dimension(300, getHeight()));
         sidebarPanel.setLayout(new BorderLayout());
 
         // Logo/Title area
         JPanel logoPanel = new JPanel();
         logoPanel.setBackground(COLOR_MENU);
-        logoPanel.setPreferredSize(new Dimension(300, 150));
-        logoPanel.setLayout(new GridLayout(3, 1));
-
-        JLabel lblLogo = new JLabel("💆", JLabel.CENTER);
-        lblLogo.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 40));
-        lblLogo.setForeground(COLOR_TEXT);
+        logoPanel.setPreferredSize(new Dimension(300, 120));
+        logoPanel.setLayout(new GridLayout(2, 1));
 
         JLabel lblMainTitle = new JLabel("SPA BEAUTY", JLabel.CENTER);
-        lblMainTitle.setFont(new Font("Arial", Font.BOLD, 20));
+        lblMainTitle.setFont(new Font("Arial", Font.BOLD, 22));
         lblMainTitle.setForeground(COLOR_TEXT);
 
         JLabel lblSubTitle = new JLabel("Management System", JLabel.CENTER);
-        lblSubTitle.setFont(new Font("Arial", Font.PLAIN, 12));
+        lblSubTitle.setFont(new Font("Arial", Font.PLAIN, 14));
         lblSubTitle.setForeground(COLOR_TEXT);
 
-        logoPanel.add(lblLogo);
         logoPanel.add(lblMainTitle);
         logoPanel.add(lblSubTitle);
 
-        // Navigation buttons với ScrollPane
+        // Navigation panel
         JPanel navPanel = new JPanel();
-        navPanel.setBackground(COLOR_MENU.darker());
+        navPanel.setBackground(COLOR_MENU_DARK);
         navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
-        // Tạo các nút menu
-        btnThongBao = createNavButton("THÔNG BÁO", "Xem thông báo và cảnh báo hệ thống");
-        btnQuanLyNguyenLieu = createNavButton("QUẢN LÝ NGUYÊN LIỆU", "Quản lý kho nguyên liệu");
-        btnDatLich = createNavButton("ĐẶT LỊCH", "Đặt lịch hẹn cho khách hàng");
-        btnDatDichVu = createNavButton("ĐẶT DỊCH VỤ", "Đặt lịch và quản lý dịch vụ");
-        btnQuanLyNhanVien = createNavButton("QUẢN LÝ NHÂN VIÊN", "Quản lý thông tin nhân viên");
-        btnQuanLyCaLam = createNavButton("QUẢN LÝ CA LÀM", "Quản lý ca làm của nhân viên");
-        btnQuanLyKhachHang = createNavButton("QUẢN LÝ KHÁCH HÀNG", "Quản lý thông tin khách hàng");
-        btnQuanLyDichVu = createNavButton("QUẢN LÝ DỊCH VỤ", "Quản lý danh mục dịch vụ");
-        btnThongKe = createNavButton("THỐNG KÊ", "Báo cáo và thống kê");
-        btnCaiDat = createNavButton("CÀI ĐẶT", "Cài đặt hệ thống");
+        // Tạo các nút menu chính
+        btnThongBao = createMenuButton("THÔNG BÁO");
+        btnDatLich = createMenuButton("ĐẶT LỊCH");
 
-        // Thêm các nút vào panel với khoảng cách
+        // Menu Quản lý Nguyên liệu (có submenu)
+        btnQuanLyNguyenLieu = createMenuButtonWithArrow("QUẢN LÝ NGUYÊN LIỆU");
+
+        // Submenu Nguyên liệu (ban đầu ẩn)
+        submenuNguyenLieuPanel = createSubMenuPanel();
+        btnNguyenLieu = createSubMenuButton("NGUYÊN LIỆU"); // Đổi thành chữ in hoa
+        btnNhapNguyenLieu = createSubMenuButton("NHẬP NGUYÊN LIỆU"); // Đổi thành chữ in hoa
+
+        submenuNguyenLieuPanel.add(btnNguyenLieu);
+        submenuNguyenLieuPanel.add(btnNhapNguyenLieu);
+        submenuNguyenLieuPanel.setVisible(false); // Ẩn ban đầu
+
+        btnDatDichVu = createMenuButton("ĐẶT DỊCH VỤ");
+        btnQuanLyNhanVien = createMenuButton("QUẢN LÝ NHÂN VIÊN");
+        btnQuanLyCaLam = createMenuButton("QUẢN LÝ CA LÀM");
+        btnQuanLyKhachHang = createMenuButton("QUẢN LÝ KHÁCH HÀNG");
+        btnQuanLyDichVu = createMenuButton("QUẢN LÝ DỊCH VỤ");
+        btnThongKe = createMenuButton("THỐNG KÊ");
+        btnCaiDat = createMenuButton("CÀI ĐẶT");
+
+        // Thêm các component vào navPanel theo đúng thứ tự
         navPanel.add(btnThongBao);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        navPanel.add(btnDatLich);  // THÊM DÒNG NÀY
+        navPanel.add(btnDatLich);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnQuanLyNguyenLieu);
+        navPanel.add(submenuNguyenLieuPanel);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnDatDichVu);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -166,36 +185,32 @@ public class MainView extends JFrame {
 
         // Separator
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
-        separator.setBackground(COLOR_MENU.brighter());
-        separator.setForeground(COLOR_MENU.brighter());
+        separator.setBackground(COLOR_MENU_LIGHT);
+        separator.setForeground(COLOR_MENU_LIGHT);
         separator.setMaximumSize(new Dimension(270, 2));
         navPanel.add(separator);
         navPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        btnThoat = createNavButton("THOÁT", "Đóng hệ thống");
+        btnThoat = createMenuButton("THOÁT");
         navPanel.add(btnThoat);
 
-        // Tạo JScrollPane cho navigation panel
+        // Scroll pane
         JScrollPane scrollPane = new JScrollPane(navPanel);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setBackground(COLOR_MENU.darker());
-        scrollPane.getViewport().setBackground(COLOR_MENU.darker());
+        scrollPane.setBackground(COLOR_MENU_DARK);
+        scrollPane.getViewport().setBackground(COLOR_MENU_DARK);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         // Customize scroll bar
         JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
         verticalScrollBar.setUnitIncrement(16);
-        verticalScrollBar.setBackground(COLOR_MENU.darker());
-        verticalScrollBar.setForeground(COLOR_MENU.brighter());
+        verticalScrollBar.setBackground(COLOR_MENU_DARK);
         verticalScrollBar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
             @Override
             protected void configureScrollBarColors() {
-                this.thumbColor = COLOR_MENU.brighter();
-                this.trackColor = COLOR_MENU.darker();
-                this.thumbDarkShadowColor = COLOR_MENU.brighter();
-                this.thumbHighlightColor = COLOR_MENU.brighter();
-                this.thumbLightShadowColor = COLOR_MENU.brighter();
+                this.thumbColor = COLOR_MENU_LIGHT;
+                this.trackColor = COLOR_MENU_DARK;
             }
 
             @Override
@@ -233,28 +248,81 @@ public class MainView extends JFrame {
         add(sidebarPanel, BorderLayout.WEST);
     }
 
-    private JButton createNavButton(String title, String tooltip) {
+    private JButton createMenuButton(String title) {
         JButton button = new JButton(title);
-        button.setBackground(COLOR_MENU.darker());
+        button.setBackground(COLOR_MENU_DARK);
         button.setForeground(COLOR_TEXT);
         button.setFont(new Font("Arial", Font.PLAIN, 14));
         button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.setBorder(BorderFactory.createEmptyBorder(15, 25, 15, 25));
+        button.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
         button.setFocusPainted(false);
-        button.setToolTipText(tooltip);
-        button.setMaximumSize(new Dimension(270, 50));
+        button.setMaximumSize(new Dimension(270, 45));
         button.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(COLOR_MENU.brighter());
-                button.setForeground(COLOR_TEXT);
+                button.setBackground(COLOR_MENU_LIGHT);
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(COLOR_MENU.darker());
-                button.setForeground(COLOR_TEXT);
+                button.setBackground(COLOR_MENU_DARK);
+            }
+        });
+
+        return button;
+    }
+
+    private JButton createMenuButtonWithArrow(String title) {
+        JButton button = new JButton("<html>" + title + " &nbsp;&nbsp;&#9660;</html>");
+        button.setBackground(COLOR_MENU_DARK);
+        button.setForeground(COLOR_TEXT);
+        button.setFont(new Font("Arial", Font.PLAIN, 14));
+        button.setHorizontalAlignment(SwingConstants.LEFT);
+        button.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
+        button.setFocusPainted(false);
+        button.setMaximumSize(new Dimension(270, 45));
+        button.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(COLOR_MENU_LIGHT);
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(COLOR_MENU_DARK);
+            }
+        });
+
+        return button;
+    }
+
+    private JPanel createSubMenuPanel() {
+        JPanel panel = new JPanel();
+        panel.setBackground(COLOR_MENU_DARK);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0)); // Giảm indent để đồng bộ
+        panel.setMaximumSize(new Dimension(270, 200));
+        return panel;
+    }
+
+    private JButton createSubMenuButton(String title) {
+        JButton button = new JButton(title);
+        button.setBackground(COLOR_MENU_DARK); // Sử dụng cùng màu nền với menu chính
+        button.setForeground(COLOR_TEXT); // Sử dụng cùng màu chữ với menu chính
+        button.setFont(new Font("Arial", Font.PLAIN, 14)); // Sử dụng cùng font size với menu chính
+        button.setHorizontalAlignment(SwingConstants.LEFT);
+        button.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20)); // Sử dụng cùng padding với menu chính
+        button.setFocusPainted(false);
+        button.setMaximumSize(new Dimension(270, 45)); // Sử dụng cùng kích thước với menu chính
+        button.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(COLOR_MENU_LIGHT); // Hiệu ứng hover giống menu chính
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(COLOR_MENU_DARK); // Trở về màu menu chính
             }
         });
 
@@ -264,15 +332,12 @@ public class MainView extends JFrame {
     private void createMainContent() {
         desktopPane = new JDesktopPane();
         desktopPane.setBackground(COLOR_BACKGROUND);
-
         add(desktopPane, BorderLayout.CENTER);
-        revalidate();
-        repaint();
     }
 
     private void setupMenuEvents() {
+        // Các nút không có submenu
         btnThongBao.addActionListener(mainViewController);
-        btnQuanLyNguyenLieu.addActionListener(mainViewController);
         btnDatLich.addActionListener(mainViewController);
         btnDatDichVu.addActionListener(mainViewController);
         btnQuanLyNhanVien.addActionListener(mainViewController);
@@ -282,69 +347,32 @@ public class MainView extends JFrame {
         btnThongKe.addActionListener(mainViewController);
         btnCaiDat.addActionListener(mainViewController);
         btnThoat.addActionListener(mainViewController);
+
+        // Nút mở rộng menu Nguyên liệu
+        btnQuanLyNguyenLieu.addActionListener(e -> toggleNguyenLieuMenu());
+
+        // Submenu Nguyên liệu
+        btnNguyenLieu.addActionListener(e -> showQuanLyNguyenLieu());
+        btnNhapNguyenLieu.addActionListener(e -> showQuanLyNhapNguyenLieu());
     }
 
-    // PHƯƠNG THỨC HIỂN THỊ MENU QUẢN LÝ NGUYÊN LIỆU
-    public void showQuanLyNguyenLieuMenu() {
-        try {
-            // Tạo popup menu
-            JPopupMenu menu = new JPopupMenu();
-            menu.setBackground(COLOR_MENU.darker());
-            menu.setBorder(BorderFactory.createLineBorder(COLOR_MENU.brighter(), 1));
+    private void toggleNguyenLieuMenu() {
+        isNguyenLieuExpanded = !isNguyenLieuExpanded;
+        submenuNguyenLieuPanel.setVisible(isNguyenLieuExpanded);
 
-            // Tạo các menu item
-            JMenuItem menuNguyenLieu = createMenuItem("Nguyên Liệu");
-            JMenuItem menuNhapNguyenLieu = createMenuItem("Nhập Nguyên Liệu");
-
-            // Thêm sự kiện cho menu item Nguyên Liệu
-            menuNguyenLieu.addActionListener(e -> {
-                showQuanLyNguyenLieu();
-            });
-
-            // Thêm sự kiện cho menu item Nhập Nguyên Liệu
-            menuNhapNguyenLieu.addActionListener(e -> {
-                showQuanLyNhapNguyenLieu();
-            });
-
-            // Thêm các item vào menu
-            menu.add(menuNguyenLieu);
-            menu.add(menuNhapNguyenLieu);
-
-            // Hiển thị menu tại vị trí nút Quản lý Nguyên liệu
-            menu.show(btnQuanLyNguyenLieu,
-                    btnQuanLyNguyenLieu.getWidth() - menu.getPreferredSize().width,
-                    btnQuanLyNguyenLieu.getHeight());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            hienThiThongBao("Lỗi khi hiển thị menu nguyên liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        // Cập nhật mũi tên
+        if (isNguyenLieuExpanded) {
+            btnQuanLyNguyenLieu.setText("<html>QUẢN LÝ NGUYÊN LIỆU &nbsp;&nbsp;&#9650;</html>");
+        } else {
+            btnQuanLyNguyenLieu.setText("<html>QUẢN LÝ NGUYÊN LIỆU &nbsp;&nbsp;&#9660;</html>");
         }
+
+        // Refresh layout
+        btnQuanLyNguyenLieu.getParent().revalidate();
+        btnQuanLyNguyenLieu.getParent().repaint();
     }
 
-    // PHƯƠNG THỨC TẠO MENU ITEM
-    private JMenuItem createMenuItem(String text) {
-        JMenuItem menuItem = new JMenuItem(text);
-        menuItem.setBackground(COLOR_MENU.darker());
-        menuItem.setForeground(COLOR_TEXT);
-        menuItem.setFont(new Font("Arial", Font.PLAIN, 14));
-        menuItem.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        menuItem.setFocusPainted(false);
-
-        // Hiệu ứng hover
-        menuItem.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                menuItem.setBackground(COLOR_MENU.brighter());
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                menuItem.setBackground(COLOR_MENU.darker());
-            }
-        });
-
-        return menuItem;
-    }
-
-    // PHƯƠNG THỨC HIỂN THỊ QUẢN LÝ NGUYÊN LIỆU
+    // CÁC PHƯƠNG THỨC HIỂN THỊ CHỨC NĂNG
     public void showQuanLyNguyenLieu() {
         try {
             JInternalFrame internalFrame = new JInternalFrame(
@@ -365,7 +393,6 @@ public class MainView extends JFrame {
         }
     }
 
-    // PHƯƠNG THỨC HIỂN THỊ QUẢN LÝ NHẬP NGUYÊN LIỆU
     public void showQuanLyNhapNguyenLieu() {
         try {
             JInternalFrame internalFrame = new JInternalFrame(
@@ -473,11 +500,9 @@ public class MainView extends JFrame {
         SwingUtilities.invokeLater(() -> {
             try {
                 if (desktopPane == null) {
-                    System.err.println("DesktopPane is null - recreating...");
                     createMainContent();
                 }
 
-                // Đóng tất cả internal frame hiện có
                 JInternalFrame[] frames = desktopPane.getAllFrames();
                 for (JInternalFrame frame : frames) {
                     try {
@@ -516,212 +541,22 @@ public class MainView extends JFrame {
         });
     }
 
-    // PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CUSTOM
     public void hienThiThongBao(String message, String title, int messageType) {
-        JDialog dialog = createCustomDialog(message, title, messageType);
-        dialog.setVisible(true);
+        JOptionPane.showMessageDialog(this, message, title, messageType);
     }
 
-    // PHƯƠNG THỨC XÁC NHẬN THOÁT CUSTOM
     public void xacNhanThoatChuongTrinh() {
-        JButton btnCo = new JButton("Có");
-        JButton btnKhong = new JButton("Không");
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có chắc muốn thoát chương trình không?",
+                "Xác nhận thoát",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
 
-        styleExitButton(btnCo);
-        styleLoginButton(btnKhong);
-
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(COLOR_BACKGROUND);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel messageLabel = new JLabel("Bạn có chắc muốn thoát chương trình không?");
-        messageLabel.setForeground(Color.WHITE);
-        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
-
-        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        contentPanel.setBackground(COLOR_BACKGROUND);
-        if (icon != null) {
-            JLabel iconLabel = new JLabel(icon);
-            contentPanel.add(iconLabel);
-        }
-        contentPanel.add(messageLabel);
-
-        panel.add(contentPanel, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        buttonPanel.setBackground(COLOR_BACKGROUND);
-        buttonPanel.add(btnCo);
-        buttonPanel.add(btnKhong);
-
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        JDialog dialog = new JDialog(this, "Xác nhận thoát", true);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        dialog.setResizable(false);
-
-        final boolean[] result = {false};
-
-        btnCo.addActionListener(e -> {
-            result[0] = true;
-            dialog.dispose();
-        });
-
-        btnKhong.addActionListener(e -> {
-            result[0] = false;
-            dialog.dispose();
-        });
-
-        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                result[0] = false;
-                dialog.dispose();
-            }
-        });
-
-        dialog.getRootPane().setDefaultButton(btnKhong);
-        dialog.setVisible(true);
-
-        if (result[0]) {
+        if (result == JOptionPane.YES_OPTION) {
             System.exit(0);
         }
-    }
-
-    // PHƯƠNG THỨC TẠO CUSTOM DIALOG
-    private JDialog createCustomDialog(String message, String title, int messageType) {
-        JButton okButton = new JButton("OK");
-        styleLoginButton(okButton);
-        okButton.addActionListener(e -> {
-            Window window = SwingUtilities.getWindowAncestor(okButton);
-            if (window != null) {
-                window.dispose();
-            }
-        });
-
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(COLOR_BACKGROUND);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel messageLabel = new JLabel(message);
-        messageLabel.setForeground(Color.WHITE);
-        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        Icon icon = null;
-        switch (messageType) {
-            case JOptionPane.ERROR_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.errorIcon");
-                break;
-            case JOptionPane.INFORMATION_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.informationIcon");
-                break;
-            case JOptionPane.WARNING_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.warningIcon");
-                break;
-            case JOptionPane.QUESTION_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.questionIcon");
-                break;
-        }
-
-        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        contentPanel.setBackground(COLOR_BACKGROUND);
-        if (icon != null) {
-            JLabel iconLabel = new JLabel(icon);
-            contentPanel.add(iconLabel);
-        }
-        contentPanel.add(messageLabel);
-
-        panel.add(contentPanel, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(COLOR_BACKGROUND);
-        buttonPanel.add(okButton);
-
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        JDialog dialog = new JDialog(this, title, true);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
-        dialog.setResizable(false);
-
-        dialog.getRootPane().setDefaultButton(okButton);
-
-        return dialog;
-    }
-
-    // PHƯƠNG THỨC STYLE BUTTON ĐĂNG NHẬP
-    private void styleLoginButton(JButton button) {
-        Color mainColor = new Color(77, 138, 87);
-        Color hoverColor = new Color(67, 118, 77);
-        Color borderColor = new Color(57, 98, 67);
-
-        button.setBackground(mainColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(borderColor, 1),
-                BorderFactory.createEmptyBorder(10, 25, 10, 25)
-        ));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
-        button.setBorderPainted(false);
-        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (button.isEnabled()) {
-                    button.setBackground(hoverColor);
-                }
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                if (button.isEnabled()) {
-                    button.setBackground(mainColor);
-                }
-            }
-        });
-    }
-
-    // PHƯƠNG THỨC STYLE BUTTON THOÁT
-    private void styleExitButton(JButton button) {
-        Color mainColor = new Color(149, 165, 166);
-        Color hoverColor = new Color(127, 140, 141);
-        Color borderColor = new Color(107, 120, 121);
-
-        button.setBackground(mainColor);
-        button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(borderColor, 1),
-                BorderFactory.createEmptyBorder(10, 25, 10, 25)
-        ));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
-        button.setBorderPainted(false);
-        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (button.isEnabled()) {
-                    button.setBackground(hoverColor);
-                }
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                if (button.isEnabled()) {
-                    button.setBackground(mainColor);
-                }
-            }
-        });
     }
 
     // GETTER METHODS
