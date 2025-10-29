@@ -16,6 +16,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.KeyStroke;
 import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 public class MainView extends JFrame {
@@ -56,7 +61,9 @@ public class MainView extends JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                xacNhanThoatChuongTrinh();
+                if (xacNhanThoatChuongTrinh()) {
+                    System.exit(0);
+                }
             }
         });
     }
@@ -545,18 +552,148 @@ public class MainView extends JFrame {
         JOptionPane.showMessageDialog(this, message, title, messageType);
     }
 
-    public void xacNhanThoatChuongTrinh() {
-        int result = JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có chắc muốn thoát chương trình không?",
-                "Xác nhận thoát",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
+    public boolean xacNhanThoatChuongTrinh() {
+        // Tạo custom buttons
+        JButton btnCo = new JButton("Có");
+        JButton btnKhong = new JButton("Không");
 
-        if (result == JOptionPane.YES_OPTION) {
-            System.exit(0);
+        // Style nút "Có" giống nút thoát (màu xám)
+        styleExitButton(btnCo);
+        // Style nút "Không" giống nút đăng nhập (màu xanh)
+        styleLoginButton(btnKhong);
+
+        // Tạo panel chứa nội dung
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Tạo icon và message
+        JLabel messageLabel = new JLabel("Bạn có chắc chắn muốn thoát chương trình?");
+        messageLabel.setForeground(Color.WHITE);
+        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Icon question
+        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+
+        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        contentPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        if (icon != null) {
+            JLabel iconLabel = new JLabel(icon);
+            contentPanel.add(iconLabel);
         }
+        contentPanel.add(messageLabel);
+
+        panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Panel chứa nút
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        buttonPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        buttonPanel.add(btnCo);
+        buttonPanel.add(btnKhong);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Tạo JDialog
+        JDialog dialog = new JDialog(this, "Xác nhận thoát", true);
+        dialog.setContentPane(panel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setResizable(false);
+
+        // Biến để lưu kết quả
+        final boolean[] result = {false};
+
+        // Xử lý sự kiện cho nút
+        btnCo.addActionListener(e -> {
+            result[0] = true;
+            dialog.dispose();
+        });
+
+        btnKhong.addActionListener(e -> {
+            result[0] = false;
+            dialog.dispose();
+        });
+
+        // Xử lý khi đóng cửa sổ
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                result[0] = false;
+                dialog.dispose();
+            }
+        });
+
+        dialog.setVisible(true);
+        return result[0];
+    }
+
+    private void styleLoginButton(JButton button) {
+        Color mainColor = new Color(77, 138, 87);
+        Color hoverColor = new Color(67, 118, 77);
+        Color borderColor = new Color(57, 98, 67);
+
+        button.setBackground(mainColor);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor, 1),
+                BorderFactory.createEmptyBorder(10, 25, 10, 25)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
+        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(hoverColor);
+                }
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(mainColor);
+                }
+            }
+        });
+    }
+
+    private void styleExitButton(JButton button) {
+        Color mainColor = new Color(149, 165, 166);
+        Color hoverColor = new Color(127, 140, 141);
+        Color borderColor = new Color(107, 120, 121);
+
+        button.setBackground(mainColor);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor, 1),
+                BorderFactory.createEmptyBorder(10, 25, 10, 25)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(false);
+        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(hoverColor);
+                }
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (button.isEnabled()) {
+                    button.setBackground(mainColor);
+                }
+            }
+        });
     }
 
     // GETTER METHODS
