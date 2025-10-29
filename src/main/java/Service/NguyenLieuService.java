@@ -119,4 +119,12 @@ public class NguyenLieuService {
             throw new IllegalArgumentException("Đơn vị tính không được để trống");
         }
     }
+    public NguyenLieu getNguyenLieuByTen(String tenNguyenLieu) {
+    try {
+        return repository.getByTen(tenNguyenLieu);
+    } catch (SQLException e) {
+        logger.log(Level.SEVERE, "Lỗi khi lấy nguyên liệu theo tên: " + tenNguyenLieu, e);
+        throw new RuntimeException("Không thể lấy thông tin nguyên liệu", e);
+    }
+}
 }

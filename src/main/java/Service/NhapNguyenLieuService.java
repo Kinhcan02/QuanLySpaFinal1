@@ -113,8 +113,12 @@ public class NhapNguyenLieuService {
         if (nhapNL.getNgayNhap() == null) {
             throw new IllegalArgumentException("Ngày nhập không được để trống");
         }
-        if (nhapNL.getNguonNhap() == null || nhapNL.getNguonNhap().trim().isEmpty()) {
-            throw new IllegalArgumentException("Nguồn nhập không được để trống");
+        // Thêm validate cho TenNguyenLieu và DonViTinh
+        if (nhapNL.getTenNguyenLieu() == null || nhapNL.getTenNguyenLieu().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên nguyên liệu không được để trống");
+        }
+        if (nhapNL.getDonViTinh() == null || nhapNL.getDonViTinh().trim().isEmpty()) {
+            throw new IllegalArgumentException("Đơn vị tính không được để trống");
         }
     }
 }

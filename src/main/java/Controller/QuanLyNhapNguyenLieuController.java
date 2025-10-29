@@ -10,6 +10,7 @@ import View.QuanLyNhapNguyenLieuView;
 import View.QuanLyLoaiNguyenLieuView;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.math.BigDecimal;
@@ -118,47 +119,87 @@ public class QuanLyNhapNguyenLieuController {
 
     private void themNhapNguyenLieu() {
         try {
-            // Lấy danh sách nguyên liệu
-            List<NguyenLieu> listNL = nguyenLieuService.getAllNguyenLieu();
-            if (listNL.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Chưa có nguyên liệu nào. Vui lòng thêm nguyên liệu trước!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            // Tạo dialog với 2 lựa chọn
+            JPanel panel = new JPanel(new GridLayout(0, 1));
+            
+            JRadioButton rbDaCo = new JRadioButton("Nguyên liệu đã có");
+            JRadioButton rbChuaCo = new JRadioButton("Nguyên liệu chưa có");
+            ButtonGroup group = new ButtonGroup();
+            group.add(rbDaCo);
+            group.add(rbChuaCo);
+            
+            panel.add(new JLabel("Chọn loại nguyên liệu:"));
+            panel.add(rbDaCo);
+            panel.add(rbChuaCo);
+            
+            int option = JOptionPane.showConfirmDialog(view, panel, "Chọn loại nguyên liệu", 
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                
+            if (option != JOptionPane.OK_OPTION) {
                 return;
             }
-
-            JComboBox<String> cboNguyenLieu = new JComboBox<>();
-            for (NguyenLieu nl : listNL) {
-                cboNguyenLieu.addItem(nl.getMaNguyenLieu() + " - " + nl.getTenNguyenLieu());
+            
+            if (rbDaCo.isSelected()) {
+                themNguyenLieuDaCo();
+            } else if (rbChuaCo.isSelected()) {
+                themNguyenLieuChuaCo();
+            } else {
+                JOptionPane.showMessageDialog(view, "Vui lòng chọn một loại nguyên liệu!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Lỗi khi thêm phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
+    private void themNguyenLieuDaCo() {
+        try {
+            // Panel cho nguyên liệu đã có
+            JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+            
+            JComboBox<String> cboNguyenLieu = new JComboBox<>();
             JTextField txtSoLuong = new JTextField();
             JTextField txtDonGia = new JTextField();
             JTextField txtNguonNhap = new JTextField();
-
-            Object[] message = {
-                "Nguyên liệu:", cboNguyenLieu,
-                "Số lượng:", txtSoLuong,
-                "Đơn giá (VND):", txtDonGia,
-                "Nguồn nhập:", txtNguonNhap
-            };
-
-            int option = JOptionPane.showConfirmDialog(view, message, "Thêm phiếu nhập", 
+            
+            // Load danh sách nguyên liệu hiện có
+            List<NguyenLieu> listNL = nguyenLieuService.getAllNguyenLieu();
+            if (listNL.isEmpty()) {
+                JOptionPane.showMessageDialog(view, "Chưa có nguyên liệu nào. Vui lòng thêm nguyên liệu mới trước!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            for (NguyenLieu nl : listNL) {
+                cboNguyenLieu.addItem(nl.getMaNguyenLieu() + " - " + nl.getTenNguyenLieu() + " (Tồn: " + nl.getSoLuongTon() + " " + nl.getDonViTinh() + ")");
+            }
+            
+            panel.add(new JLabel("Chọn nguyên liệu:"));
+            panel.add(cboNguyenLieu);
+            panel.add(new JLabel("Số lượng nhập:"));
+            panel.add(txtSoLuong);
+            panel.add(new JLabel("Đơn giá (VND):"));
+            panel.add(txtDonGia);
+            panel.add(new JLabel("Nguồn nhập:"));
+            panel.add(txtNguonNhap);
+            
+            int option = JOptionPane.showConfirmDialog(view, panel, "Nhập nguyên liệu đã có", 
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
+                
             if (option == JOptionPane.OK_OPTION) {
                 String selectedNL = (String) cboNguyenLieu.getSelectedItem();
                 String soLuongStr = txtSoLuong.getText().trim();
                 String donGiaStr = txtDonGia.getText().trim();
                 String nguonNhap = txtNguonNhap.getText().trim();
-
+                
                 if (selectedNL == null) {
                     JOptionPane.showMessageDialog(view, "Vui lòng chọn nguyên liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-
+                
                 // Lấy mã nguyên liệu từ chuỗi selected
                 int maNguyenLieu = Integer.parseInt(selectedNL.split(" - ")[0]);
                 NguyenLieu nguyenLieu = nguyenLieuService.getNguyenLieuById(maNguyenLieu);
-
+                
                 int soLuong;
                 try {
                     soLuong = Integer.parseInt(soLuongStr);
@@ -170,7 +211,7 @@ public class QuanLyNhapNguyenLieuController {
                     JOptionPane.showMessageDialog(view, "Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-
+                
                 BigDecimal donGia;
                 try {
                     donGia = new BigDecimal(donGiaStr.replaceAll("[^\\d.]", ""));
@@ -182,9 +223,10 @@ public class QuanLyNhapNguyenLieuController {
                     JOptionPane.showMessageDialog(view, "Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-
+                
+                // Tạo phiếu nhập mới
                 NhapNguyenLieu nhapNL = new NhapNguyenLieu(
-                    maNguyenLieu, 
+                    maNguyenLieu,
                     LocalDate.now(),
                     nguyenLieu.getTenNguyenLieu(),
                     nguyenLieu.getDonViTinh(),
@@ -192,11 +234,12 @@ public class QuanLyNhapNguyenLieuController {
                     donGia,
                     nguonNhap.isEmpty() ? null : nguonNhap
                 );
-
+                
                 int confirm = JOptionPane.showConfirmDialog(view, 
                     "Bạn có chắc chắn muốn thêm phiếu nhập này?\n" +
                     "Nguyên liệu: " + nguyenLieu.getTenNguyenLieu() + "\n" +
-                    "Số lượng: " + soLuong + "\n" +
+                    "Số lượng nhập: " + soLuong + " " + nguyenLieu.getDonViTinh() + "\n" +
+                    "Số lượng tồn mới: " + (nguyenLieu.getSoLuongTon() + soLuong) + " " + nguyenLieu.getDonViTinh() + "\n" +
                     "Đơn giá: " + String.format("%,.0f VND", donGia) + "\n" +
                     "Thành tiền: " + String.format("%,.0f VND", nhapNL.getThanhTien()), 
                     "Xác nhận", 
@@ -215,8 +258,170 @@ public class QuanLyNhapNguyenLieuController {
                     }
                 }
             }
+            
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi thêm phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(view, "Lỗi khi thêm nguyên liệu đã có: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void themNguyenLieuChuaCo() {
+        try {
+            // Panel cho nguyên liệu chưa có
+            JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
+            
+            JTextField txtTenNguyenLieu = new JTextField();
+            JTextField txtDonViTinh = new JTextField();
+            JComboBox<String> cboLoaiNL = new JComboBox<>();
+            JTextField txtSoLuong = new JTextField();
+            JTextField txtDonGia = new JTextField();
+            JTextField txtNguonNhap = new JTextField();
+            
+            // Load loại nguyên liệu
+            List<LoaiNguyenLieu> listLoai = loaiNguyenLieuService.getAllLoaiNguyenLieu();
+            for (LoaiNguyenLieu loai : listLoai) {
+                cboLoaiNL.addItem(loai.getTenLoaiNL());
+            }
+            
+            panel.add(new JLabel("Tên nguyên liệu mới:"));
+            panel.add(txtTenNguyenLieu);
+            panel.add(new JLabel("Đơn vị tính:"));
+            panel.add(txtDonViTinh);
+            panel.add(new JLabel("Loại nguyên liệu:"));
+            panel.add(cboLoaiNL);
+            panel.add(new JLabel("Số lượng nhập:"));
+            panel.add(txtSoLuong);
+            panel.add(new JLabel("Đơn giá (VND):"));
+            panel.add(txtDonGia);
+            panel.add(new JLabel("Nguồn nhập:"));
+            panel.add(txtNguonNhap);
+            
+            int option = JOptionPane.showConfirmDialog(view, panel, "Thêm nguyên liệu mới và nhập", 
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                
+            if (option == JOptionPane.OK_OPTION) {
+                String tenNguyenLieu = txtTenNguyenLieu.getText().trim();
+                String donViTinh = txtDonViTinh.getText().trim();
+                String tenLoai = (String) cboLoaiNL.getSelectedItem();
+                String soLuongStr = txtSoLuong.getText().trim();
+                String donGiaStr = txtDonGia.getText().trim();
+                String nguonNhap = txtNguonNhap.getText().trim();
+                
+                // Validate dữ liệu
+                if (tenNguyenLieu.isEmpty()) {
+                    JOptionPane.showMessageDialog(view, "Tên nguyên liệu không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if (donViTinh.isEmpty()) {
+                    JOptionPane.showMessageDialog(view, "Đơn vị tính không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Kiểm tra xem tên nguyên liệu đã tồn tại chưa
+                try {
+                    NguyenLieu nlExist = nguyenLieuService.getNguyenLieuByTen(tenNguyenLieu);
+                    if (nlExist != null) {
+                        int choice = JOptionPane.showConfirmDialog(view, 
+                            "Nguyên liệu '" + tenNguyenLieu + "' đã tồn tại!\nBạn có muốn chuyển sang nhập nguyên liệu đã có không?", 
+                            "Nguyên liệu đã tồn tại", 
+                            JOptionPane.YES_NO_OPTION);
+                        
+                        if (choice == JOptionPane.YES_OPTION) {
+                            themNguyenLieuDaCo();
+                            return;
+                        } else {
+                            return;
+                        }
+                    }
+                } catch (Exception ex) {
+                    // Nếu hàm getNguyenLieuByTen chưa có, bỏ qua kiểm tra
+                    System.out.println("Chưa có hàm getNguyenLieuByTen, bỏ qua kiểm tra trùng tên");
+                }
+                
+                int soLuong;
+                try {
+                    soLuong = Integer.parseInt(soLuongStr);
+                    if (soLuong <= 0) {
+                        JOptionPane.showMessageDialog(view, "Số lượng phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(view, "Số lượng phải là số nguyên!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                BigDecimal donGia;
+                try {
+                    donGia = new BigDecimal(donGiaStr.replaceAll("[^\\d.]", ""));
+                    if (donGia.compareTo(BigDecimal.ZERO) <= 0) {
+                        JOptionPane.showMessageDialog(view, "Đơn giá phải lớn hơn 0!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(view, "Đơn giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Lấy mã loại từ tên loại
+                Integer maLoai = getMaLoaiFromTen(tenLoai);
+                
+                // Tạo nguyên liệu mới
+                NguyenLieu nlMoi = new NguyenLieu(
+                    tenNguyenLieu,
+                    soLuong, // Số lượng tồn = số lượng nhập
+                    donViTinh,
+                    maLoai
+                );
+                
+                // Thêm nguyên liệu mới vào database
+                boolean successNL = nguyenLieuService.addNguyenLieu(nlMoi);
+                if (!successNL) {
+                    JOptionPane.showMessageDialog(view, "Thêm nguyên liệu mới thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Lấy mã nguyên liệu vừa tạo (tìm lại theo tên)
+                NguyenLieu nlVuaTao = null;
+                try {
+                    nlVuaTao = nguyenLieuService.getNguyenLieuByTen(tenNguyenLieu);
+                } catch (Exception ex) {
+                    // Nếu không lấy được theo tên, thử lấy theo danh sách
+                    List<NguyenLieu> allNL = nguyenLieuService.getAllNguyenLieu();
+                    for (NguyenLieu nl : allNL) {
+                        if (nl.getTenNguyenLieu().equals(tenNguyenLieu)) {
+                            nlVuaTao = nl;
+                            break;
+                        }
+                    }
+                }
+                
+                if (nlVuaTao == null) {
+                    JOptionPane.showMessageDialog(view, "Không thể lấy thông tin nguyên liệu vừa tạo!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                // Tạo phiếu nhập cho nguyên liệu mới
+                NhapNguyenLieu nhapNL = new NhapNguyenLieu(
+                    nlVuaTao.getMaNguyenLieu(),
+                    LocalDate.now(),
+                    tenNguyenLieu,
+                    donViTinh,
+                    soLuong,
+                    donGia,
+                    nguonNhap.isEmpty() ? null : nguonNhap
+                );
+                
+                boolean successNhap = nhapNguyenLieuService.addNhapNguyenLieu(nhapNL);
+                if (successNhap) {
+                    JOptionPane.showMessageDialog(view, "Thêm nguyên liệu mới và phiếu nhập thành công!");
+                    loadData();
+                } else {
+                    JOptionPane.showMessageDialog(view, "Thêm phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Lỗi khi thêm nguyên liệu mới: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 

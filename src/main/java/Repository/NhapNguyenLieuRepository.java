@@ -71,8 +71,8 @@ public class NhapNguyenLieuRepository {
     }
 
     public boolean insert(NhapNguyenLieu nhapNL) throws SQLException {
-        String sql = "INSERT INTO NhapNguyenLieu (MaNguyenLieu, NgayNhap, SoLuong, DonGia, NguonNhap) "
-                + "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO NhapNguyenLieu (MaNguyenLieu, NgayNhap, TenNguyenLieu, DonViTinh, SoLuong, DonGia, NguonNhap) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DataConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -92,13 +92,13 @@ public class NhapNguyenLieuRepository {
     }
 
     public boolean update(NhapNguyenLieu nhapNL) throws SQLException {
-        String sql = "UPDATE NhapNguyenLieu SET MaNguyenLieu=?, NgayNhap=?, SoLuong=?, DonGia=?, NguonNhap=? "
+        String sql = "UPDATE NhapNguyenLieu SET MaNguyenLieu=?, NgayNhap=?, TenNguyenLieu=?, DonViTinh=?, SoLuong=?, DonGia=?, NguonNhap=? "
                 + "WHERE MaNhap=?";
 
         try (Connection conn = DataConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             setNhapNguyenLieuParameters(stmt, nhapNL);
-            stmt.setInt(6, nhapNL.getMaNhap());
+            stmt.setInt(8, nhapNL.getMaNhap());
 
             return stmt.executeUpdate() > 0;
         }
@@ -117,9 +117,11 @@ public class NhapNguyenLieuRepository {
     private void setNhapNguyenLieuParameters(PreparedStatement stmt, NhapNguyenLieu nhapNL) throws SQLException {
         stmt.setInt(1, nhapNL.getMaNguyenLieu());
         stmt.setDate(2, Date.valueOf(nhapNL.getNgayNhap()));
-        stmt.setInt(3, nhapNL.getSoLuong());
-        stmt.setBigDecimal(4, nhapNL.getDonGia());
-        stmt.setString(5, nhapNL.getNguonNhap());
+        stmt.setString(3, nhapNL.getTenNguyenLieu());
+        stmt.setString(4, nhapNL.getDonViTinh());
+        stmt.setInt(5, nhapNL.getSoLuong());
+        stmt.setBigDecimal(6, nhapNL.getDonGia());
+        stmt.setString(7, nhapNL.getNguonNhap());
     }
 
     private NhapNguyenLieu mapResultSetToNhapNguyenLieu(ResultSet rs) throws SQLException {
@@ -127,8 +129,8 @@ public class NhapNguyenLieuRepository {
                 rs.getInt("MaNhap"),
                 rs.getInt("MaNguyenLieu"),
                 rs.getDate("NgayNhap").toLocalDate(),
-                rs.getString("TenNguyenLieu"), // Thêm dòng này
-                rs.getString("DonViTinh"), // Thêm dòng này
+                rs.getString("TenNguyenLieu"),
+                rs.getString("DonViTinh"),
                 rs.getInt("SoLuong"),
                 rs.getBigDecimal("DonGia"),
                 rs.getString("NguonNhap")

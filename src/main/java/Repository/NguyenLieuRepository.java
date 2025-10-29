@@ -153,4 +153,20 @@ public class NguyenLieuRepository {
             rs.getInt("MaLoaiNL")
         );
     }
+    public NguyenLieu getByTen(String tenNguyenLieu) throws SQLException {
+    String sql = "SELECT * FROM NguyenLieu WHERE TenNguyenLieu = ?";
+    
+    try (Connection conn = DataConnection.getConnection(); 
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+        stmt.setString(1, tenNguyenLieu);
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return mapResultSetToNguyenLieu(rs);
+            }
+        }
+    }
+    return null;
+}
+    
 }
