@@ -38,7 +38,7 @@ public class NhapNguyenLieuService {
         }
     }
 
-    public List<NhapNguyenLieu> getNhapNguyenLieuByMaNguyenLieu(int maNguyenLieu) {
+    public List<NhapNguyenLieu> getNhapNguyenLieuByMaNguyenLieu(Integer maNguyenLieu) { // Đổi thành Integer
         try {
             return repository.getByMaNguyenLieu(maNguyenLieu);
         } catch (SQLException e) {
@@ -97,13 +97,32 @@ public class NhapNguyenLieuService {
         }
     }
 
+    // THÊM PHƯƠNG THỨC KIỂM TRA PHIẾU NHẬP CÓ THỂ XÓA
+    public boolean isPhieuNhapCoTheXoa(Integer maNhap) {
+        // LUÔN CHO PHÉP XÓA, KỂ CẢ KHI MaNguyenLieu = NULL
+        return true;
+    }
+
+    // THÊM PHƯƠNG THỨC KIỂM TRA CÓ PHIẾU NHẬP LIÊN QUAN
+    public boolean hasPhieuNhapLienQuan(Integer maNguyenLieu) {
+        try {
+            List<NhapNguyenLieu> list = getNhapNguyenLieuByMaNguyenLieu(maNguyenLieu);
+            return list != null && !list.isEmpty();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private void validateNhapNguyenLieu(NhapNguyenLieu nhapNL) {
         if (nhapNL == null) {
             throw new IllegalArgumentException("Nhập nguyên liệu không được null");
         }
-        if (nhapNL.getMaNguyenLieu() <= 0) {
+        
+        // SỬA LẠI: CHO PHÉP MaNguyenLieu = null hoặc = 0
+        if (nhapNL.getMaNguyenLieu() != null && nhapNL.getMaNguyenLieu() <= 0) {
             throw new IllegalArgumentException("Mã nguyên liệu không hợp lệ");
         }
+        
         if (nhapNL.getSoLuong() <= 0) {
             throw new IllegalArgumentException("Số lượng nhập phải lớn hơn 0");
         }

@@ -88,28 +88,35 @@ public class QuanLyNhapNguyenLieuController {
         });
     }
 
-    private void loadData() {
-        try {
-            List<NhapNguyenLieu> list = nhapNguyenLieuService.getAllNhapNguyenLieu();
-            model.setRowCount(0);
-            for (NhapNguyenLieu nhap : list) {
-                BigDecimal thanhTien = nhap.getThanhTien();
-                model.addRow(new Object[]{
-                    nhap.getMaNhap(),
-                    nhap.getNgayNhap().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                    nhap.getTenNguyenLieu(),
-                    nhap.getSoLuong(),
-                    nhap.getDonViTinh(),
-                    String.format("%,.0f VND", nhap.getDonGia()),
-                    String.format("%,.0f VND", thanhTien),
-                    nhap.getNguonNhap(),
-                    nhap.getMaNguyenLieu()
-                });
+private void loadData() {
+    try {
+        List<NhapNguyenLieu> list = nhapNguyenLieuService.getAllNhapNguyenLieu();
+        model.setRowCount(0);
+        for (NhapNguyenLieu nhap : list) {
+            BigDecimal thanhTien = nhap.getThanhTien();
+            
+            // ĐÁNH DẤU PHIẾU NHẬP KHÔNG CÓ NGUYÊN LIỆU (CHỈ ĐỂ HIỂN THỊ)
+            String tenNguyenLieuHienThi = nhap.getTenNguyenLieu();
+            if (nhap.getMaNguyenLieu() == null || nhap.getMaNguyenLieu() == 0) {
+                tenNguyenLieuHienThi = "[ĐÃ XÓA] " + tenNguyenLieuHienThi;
             }
-        } catch (Exception e) {
-            hienThiThongBao("Lỗi khi tải dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            
+            model.addRow(new Object[]{
+                nhap.getMaNhap(),
+                nhap.getNgayNhap().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                tenNguyenLieuHienThi,
+                nhap.getSoLuong(),
+                nhap.getDonViTinh(),
+                String.format("%,.0f VND", nhap.getDonGia()),
+                String.format("%,.0f VND", thanhTien),
+                nhap.getNguonNhap(),
+                nhap.getMaNguyenLieu()
+            });
         }
+    } catch (Exception e) {
+        hienThiThongBao("Lỗi khi tải dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
+}
 
     private void loadLoaiNguyenLieu() {
         try {
@@ -521,44 +528,60 @@ public class QuanLyNhapNguyenLieuController {
         }
     }
 
-    private void xoaNhapNguyenLieu() {
-        int selectedRow = view.getTblNhapNguyenLieu().getSelectedRow();
-        if (selectedRow == -1) {
-            hienThiThongBao("Vui lòng chọn một phiếu nhập để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
-            return;
+private void xoaNhapNguyenLieu() {
+    int selectedRow = view.getTblNhapNguyenLieu().getSelectedRow();
+    if (selectedRow == -1) {
+        hienThiThongBao("Vui lòng chọn một phiếu nhập để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    try {
+        Integer maNhap = (Integer) model.getValueAt(selectedRow, 0);
+        NhapNguyenLieu nhap = nhapNguyenLieuService.getNhapNguyenLieuById(maNhap);
+        
+        // CHO PHÉP XÓA CẢ PHIẾU NHẬP CÓ MaNguyenLieu = NULL
+        String message;
+        
+        if (nhap.getMaNguyenLieu() == null || nhap.getMaNguyenLieu() == 0) {
+            // PHIẾU NHẬP KHÔNG CÓ NGUYÊN LIỆU
+            message = "Bạn có chắc chắn muốn xóa phiếu nhập này?\n" +
+                     "Nguyên liệu: " + nhap.getTenNguyenLieu() + " (ĐÃ XÓA)\n" +
+                     "Số lượng: " + nhap.getSoLuong() + "\n" +
+                     "Đơn giá: " + String.format("%,.0f VND", nhap.getDonGia()) + "\n\n" +
+                     "Lưu ý: Phiếu nhập này không ảnh hưởng đến tồn kho.";
+        } else {
+            // PHIẾU NHẬP CÓ NGUYÊN LIỆU HỢP LỆ
+            NguyenLieu nguyenLieu = nguyenLieuService.getNguyenLieuById(nhap.getMaNguyenLieu());
+            message = "Bạn có chắc chắn muốn xóa phiếu nhập này?\n" +
+                     "Nguyên liệu: " + nhap.getTenNguyenLieu() + "\n" +
+                     "Số lượng: " + nhap.getSoLuong() + "\n" +
+                     "Đơn giá: " + String.format("%,.0f VND", nhap.getDonGia()) + "\n\n" +
+                     "Lưu ý: Số lượng tồn kho sẽ bị trừ đi " + nhap.getSoLuong() + " " + nhap.getDonViTinh();
         }
 
-        try {
-            Integer maNhap = (Integer) model.getValueAt(selectedRow, 0);
-            NhapNguyenLieu nhap = nhapNguyenLieuService.getNhapNguyenLieuById(maNhap);
-            NguyenLieu nguyenLieu = nguyenLieuService.getNguyenLieuById(nhap.getMaNguyenLieu());
-
-            boolean xacNhan = hienThiXacNhan(
-                "Bạn có chắc chắn muốn xóa phiếu nhập này?\n" +
-                "Nguyên liệu: " + nhap.getTenNguyenLieu() + "\n" +
-                "Số lượng: " + nhap.getSoLuong() + "\n" +
-                "Đơn giá: " + String.format("%,.0f VND", nhap.getDonGia()) + "\n\n" +
-                "Lưu ý: Số lượng tồn kho sẽ bị trừ đi " + nhap.getSoLuong() + " " + nhap.getDonViTinh()
-            );
-            
-            if (xacNhan) {
-                boolean success = nhapNguyenLieuService.deleteNhapNguyenLieu(maNhap);
-                if (success) {
-                    // Cập nhật số lượng tồn kho (trừ đi số lượng đã nhập)
+        boolean xacNhan = hienThiXacNhan(message);
+        
+        if (xacNhan) {
+            boolean success = nhapNguyenLieuService.deleteNhapNguyenLieu(maNhap);
+            if (success) {
+                // CHỈ CẬP NHẬT TỒN KHO NẾU CÓ MaNguyenLieu HỢP LỆ
+                if (nhap.getMaNguyenLieu() != null && nhap.getMaNguyenLieu() != 0) {
+                    NguyenLieu nguyenLieu = nguyenLieuService.getNguyenLieuById(nhap.getMaNguyenLieu());
                     int soLuongTonMoi = nguyenLieu.getSoLuongTon() - nhap.getSoLuong();
                     if (soLuongTonMoi < 0) soLuongTonMoi = 0;
                     nguyenLieuService.updateSoLuongTon(nguyenLieu.getMaNguyenLieu(), soLuongTonMoi);
-                    
-                    hienThiThongBao("Xóa phiếu nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    loadData();
-                } else {
-                    hienThiThongBao("Xóa phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
+                
+                hienThiThongBao("Xóa phiếu nhập thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadData();
+            } else {
+                hienThiThongBao("Xóa phiếu nhập thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception e) {
-            hienThiThongBao("Lỗi khi xóa phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    } catch (Exception e) {
+        hienThiThongBao("Lỗi khi xóa phiếu nhập: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
+}
 
     private void timKiem() {
         String keyword = view.getTxtTimKiem().getText().trim();
