@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 public class QuanLyNguyenLieuController {
+
     private QuanLyNguyenLieuView view;
     private NguyenLieuService nguyenLieuService;
     private LoaiNguyenLieuService loaiNguyenLieuService;
@@ -105,7 +106,7 @@ public class QuanLyNguyenLieuController {
         try {
             view.getCboLoaiFilter().removeAllItems();
             view.getCboLoaiFilter().addItem("Tất cả");
-            
+
             List<LoaiNguyenLieu> list = loaiNguyenLieuService.getAllLoaiNguyenLieu();
             for (LoaiNguyenLieu loaiNL : list) {
                 view.getCboLoaiFilter().addItem(loaiNL.getTenLoaiNL());
@@ -116,7 +117,9 @@ public class QuanLyNguyenLieuController {
     }
 
     private String getTenLoaiNguyenLieu(Integer maLoaiNL) {
-        if (maLoaiNL == null) return "";
+        if (maLoaiNL == null) {
+            return "";
+        }
         try {
             LoaiNguyenLieu loaiNL = loaiNguyenLieuService.getLoaiNguyenLieuById(maLoaiNL);
             return loaiNL.getTenLoaiNL();
@@ -126,7 +129,9 @@ public class QuanLyNguyenLieuController {
     }
 
     private Integer getMaLoaiFromTen(String tenLoai) {
-        if (tenLoai.equals("Tất cả") || tenLoai.isEmpty()) return null;
+        if (tenLoai.equals("Tất cả") || tenLoai.isEmpty()) {
+            return null;
+        }
         try {
             List<LoaiNguyenLieu> list = loaiNguyenLieuService.getAllLoaiNguyenLieu();
             for (LoaiNguyenLieu loaiNL : list) {
@@ -145,7 +150,7 @@ public class QuanLyNguyenLieuController {
             JTextField txtTen = new JTextField();
             JTextField txtSoLuong = new JTextField("0");
             JTextField txtDonVi = new JTextField();
-            
+
             JComboBox<String> cboLoai = new JComboBox<>();
             cboLoai.addItem(""); // Trống
             List<LoaiNguyenLieu> listLoai = loaiNguyenLieuService.getAllLoaiNguyenLieu();
@@ -161,7 +166,7 @@ public class QuanLyNguyenLieuController {
             };
 
             boolean confirmed = showCustomInputDialog(message, "Thêm nguyên liệu");
-            
+
             if (confirmed) {
                 String ten = txtTen.getText().trim();
                 String soLuongStr = txtSoLuong.getText().trim();
@@ -192,9 +197,9 @@ public class QuanLyNguyenLieuController {
 
                 Integer maLoai = getMaLoaiFromTen(tenLoai);
                 NguyenLieu nguyenLieu = new NguyenLieu(ten, soLuong, donVi, maLoai);
-                
+
                 boolean xacNhan = hienThiXacNhan("Bạn có chắc chắn muốn thêm nguyên liệu này?");
-                
+
                 if (xacNhan) {
                     boolean success = nguyenLieuService.addNguyenLieu(nguyenLieu);
                     if (success) {
@@ -228,7 +233,7 @@ public class QuanLyNguyenLieuController {
             JTextField txtTen = new JTextField(tenHienTai);
             JTextField txtSoLuong = new JTextField(soLuongHienTai.toString());
             JTextField txtDonVi = new JTextField(donViHienTai);
-            
+
             JComboBox<String> cboLoai = new JComboBox<>();
             cboLoai.addItem(""); // Trống
             List<LoaiNguyenLieu> listLoai = loaiNguyenLieuService.getAllLoaiNguyenLieu();
@@ -247,7 +252,7 @@ public class QuanLyNguyenLieuController {
             };
 
             boolean confirmed = showCustomInputDialog(message, "Sửa nguyên liệu");
-            
+
             if (confirmed) {
                 String ten = txtTen.getText().trim();
                 String soLuongStr = txtSoLuong.getText().trim();
@@ -278,9 +283,9 @@ public class QuanLyNguyenLieuController {
 
                 Integer maLoai = getMaLoaiFromTen(tenLoai);
                 NguyenLieu nguyenLieu = new NguyenLieu(maNguyenLieu, ten, soLuong, donVi, maLoai);
-                
+
                 boolean xacNhan = hienThiXacNhan("Bạn có chắc chắn muốn sửa nguyên liệu này?");
-                
+
                 if (xacNhan) {
                     boolean success = nguyenLieuService.updateNguyenLieu(nguyenLieu);
                     if (success) {
@@ -309,7 +314,7 @@ public class QuanLyNguyenLieuController {
             String tenNguyenLieu = (String) model.getValueAt(selectedRow, 1);
 
             boolean xacNhan = hienThiXacNhan("Bạn có chắc chắn muốn xóa nguyên liệu '" + tenNguyenLieu + "'?");
-            
+
             if (xacNhan) {
                 boolean success = nguyenLieuService.deleteNguyenLieu(maNguyenLieu);
                 if (success) {
@@ -335,8 +340,8 @@ public class QuanLyNguyenLieuController {
             List<NguyenLieu> list = nguyenLieuService.getAllNguyenLieu();
             model.setRowCount(0);
             for (NguyenLieu nl : list) {
-                if (nl.getTenNguyenLieu().toLowerCase().contains(keyword.toLowerCase()) ||
-                    (nl.getDonViTinh() != null && nl.getDonViTinh().toLowerCase().contains(keyword.toLowerCase()))) {
+                if (nl.getTenNguyenLieu().toLowerCase().contains(keyword.toLowerCase())
+                        || (nl.getDonViTinh() != null && nl.getDonViTinh().toLowerCase().contains(keyword.toLowerCase()))) {
                     String tenLoai = getTenLoaiNguyenLieu(nl.getMaLoaiNL());
                     model.addRow(new Object[]{
                         nl.getMaNguyenLieu(),
@@ -400,10 +405,10 @@ public class QuanLyNguyenLieuController {
 
             QuanLyLoaiNguyenLieuView loaiNLView = new QuanLyLoaiNguyenLieuView();
             new QuanLyLoaiNguyenLieuController(loaiNLView);
-            
+
             frame.add(loaiNLView);
             frame.setVisible(true);
-            
+
             // Reload lại danh sách loại nguyên liệu khi đóng cửa sổ
             frame.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
@@ -418,7 +423,6 @@ public class QuanLyNguyenLieuController {
     }
 
     // CÁC PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CUSTOM
-    
     private void hienThiThongBao(String message, String title, int messageType) {
         JDialog dialog = createCustomDialog(message, title, messageType);
         dialog.setVisible(true);
@@ -499,7 +503,7 @@ public class QuanLyNguyenLieuController {
     private JDialog createConfirmationDialog(String message) {
         JButton btnCo = createStyledButton("Có", COLOR_BUTTON);
         JButton btnKhong = createStyledButton("Không", new Color(149, 165, 166));
-        
+
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(COLOR_BACKGROUND);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -560,30 +564,67 @@ public class QuanLyNguyenLieuController {
     private JDialog createInputDialog(Object[] message, String title) {
         JButton btnOK = createStyledButton("OK", COLOR_BUTTON);
         JButton btnHuy = createStyledButton("Hủy", new Color(149, 165, 166));
-        
-        // Tạo panel chứa các component input
-        JPanel inputPanel = new JPanel(new GridLayout(message.length / 2, 2, 5, 5));
+
+        // Tạo panel chứa các component input với kích thước lớn hơn
+        JPanel inputPanel = new JPanel(new GridLayout(message.length / 2, 2, 10, 15));
         inputPanel.setBackground(COLOR_BACKGROUND);
-        
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Định nghĩa font và kích thước lớn hơn
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 14);
+        Font fieldFont = new Font("Segoe UI", Font.PLAIN, 14);
+        Dimension fieldSize = new Dimension(250, 35);
+
         for (int i = 0; i < message.length; i += 2) {
             JLabel label = new JLabel(message[i].toString());
             label.setForeground(COLOR_TEXT);
+            label.setFont(labelFont);
             inputPanel.add(label);
-            
+
             if (message[i + 1] instanceof JTextField) {
-                inputPanel.add((JTextField) message[i + 1]);
+                JTextField textField = (JTextField) message[i + 1];
+                textField.setFont(fieldFont);
+                textField.setPreferredSize(fieldSize);
+                textField.setMinimumSize(fieldSize);
+                textField.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                        BorderFactory.createEmptyBorder(5, 8, 5, 8)
+                ));
+                inputPanel.add(textField);
             } else if (message[i + 1] instanceof JComboBox) {
-                inputPanel.add((JComboBox<?>) message[i + 1]);
+                JComboBox<?> comboBox = (JComboBox<?>) message[i + 1];
+                comboBox.setFont(fieldFont);
+                comboBox.setPreferredSize(fieldSize);
+                comboBox.setMinimumSize(fieldSize);
+                comboBox.setBackground(Color.WHITE);
+                comboBox.setRenderer(new DefaultListCellRenderer() {
+                    @Override
+                    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                        Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                        if (c instanceof JLabel) {
+                            ((JLabel) c).setFont(fieldFont);
+                        }
+                        return c;
+                    }
+                });
+                inputPanel.add(comboBox);
             }
         }
 
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(COLOR_BACKGROUND);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(25, 30, 25, 30));
         panel.add(inputPanel, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         buttonPanel.setBackground(COLOR_BACKGROUND);
+
+        // Tăng kích thước nút
+        btnOK.setPreferredSize(new Dimension(100, 40));
+        btnOK.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnHuy.setPreferredSize(new Dimension(100, 40));
+        btnHuy.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
         buttonPanel.add(btnOK);
         buttonPanel.add(btnHuy);
 
@@ -592,13 +633,29 @@ public class QuanLyNguyenLieuController {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), title, true);
         dialog.setContentPane(panel);
         dialog.pack();
-        dialog.setLocationRelativeTo(view);
-        dialog.setResizable(false);
 
-        btnOK.addActionListener(e -> {
+        // Đặt kích thước tối thiểu cho dialog
+        dialog.setMinimumSize(new Dimension(500, 350));
+        dialog.setSize(new Dimension(500, 350));
+
+        dialog.setLocationRelativeTo(view);
+        dialog.setResizable(true);
+
+        // Thêm Enter key listener cho các text field
+        ActionListener okAction = e -> {
             dialogResult = true;
             dialog.dispose();
-        });
+        };
+
+        btnOK.addActionListener(okAction);
+
+        // Cho phép nhấn Enter để xác nhận
+        for (int i = 0; i < message.length; i += 2) {
+            if (message[i + 1] instanceof JTextField) {
+                JTextField textField = (JTextField) message[i + 1];
+                textField.addActionListener(okAction);
+            }
+        }
 
         btnHuy.addActionListener(e -> {
             dialogResult = false;
@@ -623,18 +680,29 @@ public class QuanLyNguyenLieuController {
         JButton button = new JButton(text);
         button.setBackground(backgroundColor);
         button.setForeground(COLOR_TEXT);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(backgroundColor.darker(), 2),
+                BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 button.setBackground(backgroundColor.darker());
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(backgroundColor.darker().darker(), 2),
+                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
+                ));
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setBackground(backgroundColor);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(backgroundColor.darker(), 2),
+                        BorderFactory.createEmptyBorder(10, 20, 10, 20)
+                ));
             }
         });
 
