@@ -7,18 +7,24 @@ import java.util.Objects;
  * Model class cho bảng DichVu
  */
 public class DichVu {
+
     private Integer maDichVu;
     private String tenDichVu;
     private BigDecimal gia;
     private Integer thoiGian; // Thêm trường thời gian
     private Integer maLoaiDV;
     private String ghiChu;
-    
+
     // Reference to LoaiDichVu object (optional - for JOIN operations)
     private LoaiDichVu loaiDichVu;
 
     // Constructor mặc định
     public DichVu() {
+    }
+// Constructor cho item mặc định
+
+    public DichVu(String displayText) {
+        this.tenDichVu = displayText;
     }
 
     // Constructor với tất cả tham số
@@ -107,22 +113,26 @@ public class DichVu {
 
     // Validation method
     public boolean isValid() {
-        return tenDichVu != null && !tenDichVu.trim().isEmpty() &&
-               gia != null && gia.compareTo(BigDecimal.ZERO) >= 0;
+        return tenDichVu != null && !tenDichVu.trim().isEmpty()
+                && gia != null && gia.compareTo(BigDecimal.ZERO) >= 0;
     }
 
     // equals và hashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         DichVu dichVu = (DichVu) o;
-        return Objects.equals(maDichVu, dichVu.maDichVu) &&
-               Objects.equals(tenDichVu, dichVu.tenDichVu) &&
-               Objects.equals(gia, dichVu.gia) &&
-               Objects.equals(thoiGian, dichVu.thoiGian) &&
-               Objects.equals(maLoaiDV, dichVu.maLoaiDV) &&
-               Objects.equals(ghiChu, dichVu.ghiChu);
+        return Objects.equals(maDichVu, dichVu.maDichVu)
+                && Objects.equals(tenDichVu, dichVu.tenDichVu)
+                && Objects.equals(gia, dichVu.gia)
+                && Objects.equals(thoiGian, dichVu.thoiGian)
+                && Objects.equals(maLoaiDV, dichVu.maLoaiDV)
+                && Objects.equals(ghiChu, dichVu.ghiChu);
     }
 
     @Override
@@ -133,13 +143,10 @@ public class DichVu {
     // toString
     @Override
     public String toString() {
-        return "DichVu{" +
-                "maDichVu=" + maDichVu +
-                ", tenDichVu='" + tenDichVu + '\'' +
-                ", gia=" + gia +
-                ", thoiGian=" + thoiGian +
-                ", maLoaiDV=" + maLoaiDV +
-                ", ghiChu='" + ghiChu + '\'' +
-                '}';
+        if (maDichVu == null) {
+            return "-- Chọn dịch vụ --";
+        }
+        return tenDichVu + " - " + (gia != null ? String.format("%,d VNĐ", gia.intValue()) : "0 VNĐ")
+                + (thoiGian != null ? " (" + thoiGian + " phút)" : "");
     }
 }

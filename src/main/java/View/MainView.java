@@ -7,9 +7,11 @@ import Controller.MainViewController;
 import Controller.QuanLyNguyenLieuController;
 import Controller.QuanLyNhapNguyenLieuController;
 import Controller.QuanLyCaLamController;
+import Controller.QuanLyDatLichController;
 import View.QuanLyNguyenLieuView;
 import View.QuanLyNhapNguyenLieuView;
 import Service.CaLamService;
+import Service.DatLichService;
 import Service.KhachHangService;
 import Service.NhanVienService;
 import javax.swing.*;
@@ -25,6 +27,9 @@ import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 public class MainView extends JFrame {
 
+    private QuanLyDatLichView quanLyDatLichView;
+    private QuanLyDatLichController quanLyDatLichController;
+    private Timer thongBaoTimer;
     private JDesktopPane desktopPane;
     private JButton btnThongBao, btnDatLich, btnQuanLyNguyenLieu,
             btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam,
@@ -66,6 +71,7 @@ public class MainView extends JFrame {
                 }
             }
         });
+        setupThongBaoTimer();
     }
 
     private void initUI() {
@@ -354,6 +360,7 @@ public class MainView extends JFrame {
         btnThongKe.addActionListener(mainViewController);
         btnCaiDat.addActionListener(mainViewController);
         btnThoat.addActionListener(mainViewController);
+        btnDatLich.addActionListener(e -> showQuanLyDatLich());
 
         // Nút mở rộng menu Nguyên liệu
         btnQuanLyNguyenLieu.addActionListener(e -> toggleNguyenLieuMenu());
@@ -377,6 +384,72 @@ public class MainView extends JFrame {
         // Refresh layout
         btnQuanLyNguyenLieu.getParent().revalidate();
         btnQuanLyNguyenLieu.getParent().repaint();
+    }
+
+    private void kiemTraThongBaoDatLich() {
+        if (quanLyDatLichController != null) {
+            // Gọi service để kiểm tra thông báo
+            DatLichService datLichService = new DatLichService();
+            datLichService.kiemTraThongBao();
+        }
+    }
+
+    private void setupThongBaoTimer() {
+        // Timer kiểm tra thông báo mỗi 30 giây
+        thongBaoTimer = new Timer(30000, e -> kiemTraThongBaoDatLich());
+        thongBaoTimer.start();
+    }
+
+    public void showThongBao() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Thông Báo Đặt Lịch",
+                    true, true, true, true
+            );
+
+            JPanel thongBaoPanel = new JPanel(new BorderLayout());
+            thongBaoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+            thongBaoPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            JTextArea txtThongBao = new JTextArea();
+            txtThongBao.setEditable(false);
+            txtThongBao.setFont(new Font("Arial", Font.PLAIN, 14));
+            txtThongBao.setBackground(Color.WHITE);
+            txtThongBao.setText("Các thông báo về lịch hẹn sắp tới sẽ hiển thị ở đây.\n\n"
+                    + "Hệ thống sẽ tự động thông báo trước 10 phút khi lịch hẹn sắp bắt đầu.");
+
+            JScrollPane scrollPane = new JScrollPane(txtThongBao);
+            thongBaoPanel.add(scrollPane, BorderLayout.CENTER);
+
+            internalFrame.setContentPane(thongBaoPanel);
+            internalFrame.setSize(400, 300);
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            hienThiThongBao("Lỗi khi mở thông báo: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void showQuanLyDatLich() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Quản Lý Đặt Lịch",
+                    true, true, true, true
+            );
+
+            quanLyDatLichView = new QuanLyDatLichView();
+            quanLyDatLichController = new QuanLyDatLichController(quanLyDatLichView);
+
+            internalFrame.setContentPane(quanLyDatLichView);
+            internalFrame.pack();
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở quản lý đặt lịch: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // CÁC PHƯƠNG THỨC HIỂN THỊ CHỨC NĂNG

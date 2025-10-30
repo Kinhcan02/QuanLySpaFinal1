@@ -28,10 +28,10 @@ public class MainViewController implements ActionListener {
         Object source = e.getSource();
 
         if (source == mainView.getBtnThongBao()) {
-            hienThiThongBao("Tính năng Thông báo đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            mainView.showThongBao();
         } 
         else if (source == mainView.getBtnDatLich()) {
-            hienThiThongBao("Tính năng Đặt lịch đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            mainView.showQuanLyDatLich(); // Mở quản lý đặt lịch
         }
         else if (source == mainView.getBtnDatDichVu()) {
             hienThiThongBao("Tính năng Đặt dịch vụ đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);

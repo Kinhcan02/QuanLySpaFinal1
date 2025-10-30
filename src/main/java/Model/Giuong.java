@@ -3,99 +3,64 @@ package Model;
 public class Giuong {
     private Integer maGiuong;
     private String soHieu;
-    private Boolean trangThai;
-    
-    // Constructor mặc định
+    private String trangThai; // "Trống", "Đã đặt", "Đang sử dụng", "Bảo trì"
+    private String ghiChu;  // Đổi từ moTa thành ghiChu
+
+    // Constructor
     public Giuong() {
-        this.trangThai = false; // Mặc định là trống
+        this.trangThai = "Trống";
     }
-    
-    // Constructor với số hiệu
-    public Giuong(String soHieu) {
-        this();
-        this.soHieu = soHieu;
-    }
-    
-    // Constructor với số hiệu và trạng thái
-    public Giuong(String soHieu, Boolean trangThai) {
-        this.soHieu = soHieu;
-        this.trangThai = trangThai != null ? trangThai : false;
-    }
-    
-    // Constructor đầy đủ tham số (KHÔNG có khóa chính MaGiuong)
-    public Giuong(Integer maGiuong, String soHieu, Boolean trangThai) {
+
+    public Giuong(Integer maGiuong, String soHieu, String trangThai, String ghiChu) {
         this.maGiuong = maGiuong;
         this.soHieu = soHieu;
-        this.trangThai = trangThai != null ? trangThai : false;
+        this.trangThai = trangThai != null ? trangThai : "Trống";
+        this.ghiChu = ghiChu;
     }
-    
+
     // Getter và Setter
-    public Integer getMaGiuong() {
-        return maGiuong;
+    public Integer getMaGiuong() { return maGiuong; }
+    public void setMaGiuong(Integer maGiuong) { this.maGiuong = maGiuong; }
+
+    public String getSoHieu() { return soHieu; }
+    public void setSoHieu(String soHieu) { this.soHieu = soHieu; }
+
+    public String getTrangThai() { return trangThai; }
+    public void setTrangThai(String trangThai) { 
+        this.trangThai = trangThai != null ? trangThai : "Trống";
     }
-    
-    public void setMaGiuong(Integer maGiuong) {
-        this.maGiuong = maGiuong;
-    }
-    
-    public String getSoHieu() {
-        return soHieu;
-    }
-    
-    public void setSoHieu(String soHieu) {
-        this.soHieu = soHieu;
-    }
-    
-    public Boolean getTrangThai() {
-        return trangThai;
-    }
-    
-    public void setTrangThai(Boolean trangThai) {
-        this.trangThai = trangThai != null ? trangThai : false;
-    }
-    
-    // Phương thức kiểm tra giường có hợp lệ không
-    public boolean isValid() {
-        return soHieu != null && !soHieu.trim().isEmpty();
-    }
-    
-    // Phương thức kiểm tra giường có trống không
+
+    public String getGhiChu() { return ghiChu; }  // Đổi từ getMoTa thành getGhiChu
+    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }  // Đổi từ setMoTa thành setGhiChu
+
+    // Phương thức kiểm tra trạng thái
     public boolean isTrong() {
-        return !trangThai;
+        return "Trống".equals(trangThai);
     }
-    
-    // Phương thức kiểm tra giường đang được sử dụng
+
+    public boolean isDaDat() {
+        return "Đã đặt".equals(trangThai);
+    }
+
     public boolean isDangSuDung() {
-        return trangThai;
+        return "Đang sử dụng".equals(trangThai);
     }
-    
-    // Phương thức đánh dấu giường là đang sử dụng
-    public void markDangSuDung() {
-        this.trangThai = true;
+
+    public boolean isBaoTri() {
+        return "Bảo trì".equals(trangThai);
     }
-    
-    // Phương thức đánh dấu giường là trống
-    public void markTrong() {
-        this.trangThai = false;
-    }
-    
-    // Phương thức chuyển đổi trạng thái
-    public void toggleTrangThai() {
-        this.trangThai = !this.trangThai;
-    }
-    
-    // Phương thức lấy trạng thái dạng text
-    public String getTrangThaiText() {
-        return trangThai ? "Đang dùng" : "Trống";
-    }
-    
+
+    // Phương thức chuyển trạng thái
+    public void markTrong() { this.trangThai = "Trống"; }
+    public void markDaDat() { this.trangThai = "Đã đặt"; }
+    public void markDangSuDung() { this.trangThai = "Đang sử dụng"; }
+    public void markBaoTri() { this.trangThai = "Bảo trì"; }
+
     @Override
     public String toString() {
-        return "Giuong{" +
-                "maGiuong=" + maGiuong +
-                ", soHieu='" + soHieu + '\'' +
-                ", trangThai=" + trangThai +
-                ", trangThaiText='" + getTrangThaiText() + '\'' +
-                '}';
+        if (getMaGiuong() == null) {
+            return "-- Chọn giường --";
+        }
+        return getSoHieu() + " - " + getTrangThai();
     }
 }
