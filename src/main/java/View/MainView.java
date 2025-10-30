@@ -8,6 +8,7 @@ import Controller.QuanLyNguyenLieuController;
 import Controller.QuanLyNhapNguyenLieuController;
 import Controller.QuanLyCaLamController;
 import Controller.QuanLyDatLichController;
+import Controller.QuanLyTaiKhoanController;
 import View.QuanLyNguyenLieuView;
 import View.QuanLyNhapNguyenLieuView;
 import Service.CaLamService;
@@ -34,7 +35,7 @@ public class MainView extends JFrame {
     private JButton btnThongBao, btnDatLich, btnQuanLyNguyenLieu,
             btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam,
             btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe,
-            btnCaiDat, btnThoat;
+            btnQuanLyTaiKhoan, btnThoat;
     private JLabel lblUserInfo, lblVersion;
     private QuanLyDichVuView quanLyDichVuView;
     private QuanLyDichVuController quanLyDichVuController;
@@ -171,7 +172,7 @@ public class MainView extends JFrame {
         btnQuanLyKhachHang = createMenuButton("QUẢN LÝ KHÁCH HÀNG");
         btnQuanLyDichVu = createMenuButton("QUẢN LÝ DỊCH VỤ");
         btnThongKe = createMenuButton("THỐNG KÊ");
-        btnCaiDat = createMenuButton("CÀI ĐẶT");
+        btnQuanLyTaiKhoan = createMenuButton("QUẢN LÝ TÀI KHOẢN");
 
         // Thêm các component vào navPanel theo đúng thứ tự
         navPanel.add(btnThongBao);
@@ -193,7 +194,7 @@ public class MainView extends JFrame {
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnThongKe);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        navPanel.add(btnCaiDat);
+        navPanel.add(btnQuanLyTaiKhoan);
         navPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
         // Separator
@@ -358,7 +359,7 @@ public class MainView extends JFrame {
         btnQuanLyKhachHang.addActionListener(mainViewController);
         btnQuanLyDichVu.addActionListener(mainViewController);
         btnThongKe.addActionListener(mainViewController);
-        btnCaiDat.addActionListener(mainViewController);
+        btnQuanLyTaiKhoan.addActionListener(mainViewController);
         btnThoat.addActionListener(mainViewController);
         btnDatLich.addActionListener(e -> showQuanLyDatLich());
 
@@ -575,7 +576,25 @@ public class MainView extends JFrame {
             hienThiThongBao("Lỗi khi mở quản lý dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
+public void showQuanLyTaiKhoan() {
+    try {
+        JInternalFrame internalFrame = new JInternalFrame(
+                "Quản Lý Tài Khoản",
+                true, true, true, true
+        );
 
+        QuanLyTaiKhoanView quanLyTaiKhoanView = new QuanLyTaiKhoanView();
+        QuanLyTaiKhoanController quanLyTaiKhoanController = new QuanLyTaiKhoanController(quanLyTaiKhoanView);
+
+        internalFrame.setContentPane(quanLyTaiKhoanView);
+        internalFrame.pack();
+        showInternalFrame(internalFrame);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        hienThiThongBao("Lỗi khi mở quản lý tài khoản: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+}
     public void showInternalFrame(JInternalFrame internalFrame) {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -802,8 +821,8 @@ public class MainView extends JFrame {
         return btnThongKe;
     }
 
-    public JButton getBtnCaiDat() {
-        return btnCaiDat;
+    public JButton getBtnQuanLyTaiKhoan() {
+        return btnQuanLyTaiKhoan;
     }
 
     public JButton getBtnThoat() {

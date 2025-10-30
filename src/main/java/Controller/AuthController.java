@@ -77,14 +77,14 @@ public class AuthController {
         mainView.getBtnQuanLyKhachHang().setEnabled(false);
         mainView.getBtnQuanLyDichVu().setEnabled(false);
         mainView.getBtnThongKe().setEnabled(false);
-        mainView.getBtnCaiDat().setEnabled(false);
+        mainView.getBtnQuanLyTaiKhoan().setEnabled(false);
 
         // Thay đổi tooltip để hiển thị không có quyền
         mainView.getBtnQuanLyNhanVien().setToolTipText("Không có quyền truy cập");
         mainView.getBtnQuanLyKhachHang().setToolTipText("Không có quyền truy cập");
         mainView.getBtnQuanLyDichVu().setToolTipText("Không có quyền truy cập");
         mainView.getBtnThongKe().setToolTipText("Không có quyền truy cập");
-        mainView.getBtnCaiDat().setToolTipText("Không có quyền truy cập");
+        mainView.getBtnQuanLyTaiKhoan().setToolTipText("Không có quyền truy cập");
     }
 
     private void phanQuyenThuNgan() {
@@ -94,12 +94,12 @@ public class AuthController {
         mainView.getBtnQuanLyKhachHang().setEnabled(true);
         mainView.getBtnQuanLyDichVu().setEnabled(false);
         mainView.getBtnThongKe().setEnabled(true);
-        mainView.getBtnCaiDat().setEnabled(false);
+        mainView.getBtnQuanLyTaiKhoan().setEnabled(false);
 
         // Thay đổi tooltip để hiển thị không có quyền
         mainView.getBtnQuanLyNhanVien().setToolTipText("Không có quyền truy cập");
         mainView.getBtnQuanLyDichVu().setToolTipText("Không có quyền truy cập");
-        mainView.getBtnCaiDat().setToolTipText("Không có quyền truy cập");
+        mainView.getBtnQuanLyTaiKhoan().setToolTipText("Không có quyền truy cập");
     }
 
     private void phanQuyenAdmin() {
@@ -109,7 +109,7 @@ public class AuthController {
         mainView.getBtnQuanLyKhachHang().setEnabled(true);
         mainView.getBtnQuanLyDichVu().setEnabled(true);
         mainView.getBtnThongKe().setEnabled(true);
-        mainView.getBtnCaiDat().setEnabled(true);
+        mainView.getBtnQuanLyTaiKhoan().setEnabled(true);
     }
 
     public void khoiDong() {
