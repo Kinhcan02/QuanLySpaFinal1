@@ -2,7 +2,6 @@ package Service;
 
 import Model.Giuong;
 import Model.DatLich;
-import Model.DichVu;
 import Repository.GiuongRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -84,7 +83,6 @@ public class GiuongService {
                     
                     // Kiểm tra xem có đang trong giờ sử dụng không
                     LocalTime gioBatDau = datLich.getGioDat();
-                    // SỬA: Sử dụng phương thức tính tổng thời gian
                     LocalTime gioKetThuc = gioBatDau.plusMinutes(datLich.tinhTongThoiGian());
                     
                     if (now.isAfter(gioBatDau) && now.isBefore(gioKetThuc)) {
@@ -114,7 +112,6 @@ public class GiuongService {
                     !datLich.isQuaGio()) {
                     
                     LocalTime gioBatDau = datLich.getGioDat();
-                    // SỬA: Sử dụng phương thức tính tổng thời gian
                     LocalTime gioKetThuc = gioBatDau.plusMinutes(datLich.tinhTongThoiGian());
                     
                     // Giường đã được đặt nhưng chưa đến giờ sử dụng hoặc đang trong tương lai
@@ -126,17 +123,6 @@ public class GiuongService {
             return false;
         } catch (Exception e) {
             return false;
-        }
-    }
-
-    private int getThoiGianDichVu(Integer maDichVu) {
-        if (maDichVu == null) return 60;
-        try {
-            DichVuService dichVuService = new DichVuService();
-            DichVu dv = dichVuService.getDichVuById(maDichVu);
-            return dv != null && dv.getThoiGian() != null ? dv.getThoiGian() : 60;
-        } catch (Exception e) {
-            return 60;
         }
     }
 
@@ -181,6 +167,15 @@ public class GiuongService {
         }
     }
 
+    // Thêm phương thức cập nhật trạng thái giường
+    public boolean updateTrangThaiGiuong(Integer maGiuong, String trangThai) {
+        try {
+            return repository.updateTrangThai(maGiuong, trangThai);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi cập nhật trạng thái giường: " + e.getMessage(), e);
+        }
+    }
+
     // Các phương thức lọc theo trạng thái
     public List<Giuong> getGiuongTrong() {
         try {
@@ -213,4 +208,5 @@ public class GiuongService {
             throw new RuntimeException("Lỗi khi lấy giường bảo trì: " + e.getMessage(), e);
         }
     }
+    
 }

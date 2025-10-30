@@ -391,7 +391,6 @@ public class MainView extends JFrame {
         if (quanLyDatLichController != null) {
             // Gọi service để kiểm tra thông báo
             DatLichService datLichService = new DatLichService();
-            datLichService.kiemTraThongBao();
         }
     }
 

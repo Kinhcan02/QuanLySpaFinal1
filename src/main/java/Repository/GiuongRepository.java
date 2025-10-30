@@ -2,6 +2,7 @@ package Repository;
 
 import Data.DataConnection;
 import Model.Giuong;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,14 +11,15 @@ public class GiuongRepository {
     
     public List<Giuong> getAll() throws SQLException {
         List<Giuong> list = new ArrayList<>();
-        String sql = "SELECT * FROM Giuong";
+        String sql = "SELECT * FROM Giuong ORDER BY SoHieu";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
-                list.add(mapResultSetToGiuong(rs));
+                Giuong giuong = mapResultSetToGiuong(rs);
+                list.add(giuong);
             }
         }
         return list;
@@ -43,23 +45,13 @@ public class GiuongRepository {
         String sql = "INSERT INTO Giuong (SoHieu, TrangThai, GhiChu) VALUES (?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setString(1, giuong.getSoHieu());
             stmt.setString(2, giuong.getTrangThai());
             stmt.setString(3, giuong.getGhiChu());
             
-            int affectedRows = stmt.executeUpdate();
-            
-            if (affectedRows > 0) {
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        giuong.setMaGiuong(rs.getInt(1));
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return stmt.executeUpdate() > 0;
         }
     }
     
@@ -78,6 +70,17 @@ public class GiuongRepository {
         }
     }
     
+    public boolean delete(int maGiuong) throws SQLException {
+        String sql = "DELETE FROM Giuong WHERE MaGiuong = ?";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, maGiuong);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+    
     public boolean updateTrangThai(int maGiuong, String trangThai) throws SQLException {
         String sql = "UPDATE Giuong SET TrangThai = ? WHERE MaGiuong = ?";
         
@@ -91,20 +94,30 @@ public class GiuongRepository {
         }
     }
     
-    public boolean delete(int maGiuong) throws SQLException {
-        String sql = "DELETE FROM Giuong WHERE MaGiuong = ?";
-        
-        try (Connection conn = DataConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setInt(1, maGiuong);
-            return stmt.executeUpdate() > 0;
-        }
+    // Các phương thức lọc theo trạng thái
+    public List<Giuong> getGiuongTrong() throws SQLException {
+        return getGiuongByTrangThai("Trống");
     }
     
-    public List<Giuong> getByTrangThai(String trangThai) throws SQLException {
+    public List<Giuong> getGiuongDaDat() throws SQLException {
+        return getGiuongByTrangThai("Đã đặt");
+    }
+    
+    public List<Giuong> getGiuongDangPhucVu() throws SQLException {
+        return getGiuongByTrangThai("Đang phục vụ");
+    }
+    
+    public List<Giuong> getGiuongDangSuDung() throws SQLException {
+        return getGiuongByTrangThai("Đang sử dụng");
+    }
+    
+    public List<Giuong> getGiuongBaoTri() throws SQLException {
+        return getGiuongByTrangThai("Bảo trì");
+    }
+    
+    private List<Giuong> getGiuongByTrangThai(String trangThai) throws SQLException {
         List<Giuong> list = new ArrayList<>();
-        String sql = "SELECT * FROM Giuong WHERE TrangThai = ?";
+        String sql = "SELECT * FROM Giuong WHERE TrangThai = ? ORDER BY SoHieu";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -112,35 +125,20 @@ public class GiuongRepository {
             stmt.setString(1, trangThai);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapResultSetToGiuong(rs));
+                    Giuong giuong = mapResultSetToGiuong(rs);
+                    list.add(giuong);
                 }
             }
         }
         return list;
     }
     
-    public List<Giuong> getGiuongTrong() throws SQLException {
-        return getByTrangThai("Trống");
-    }
-    
-    public List<Giuong> getGiuongDaDat() throws SQLException {
-        return getByTrangThai("Đã đặt");
-    }
-    
-    public List<Giuong> getGiuongDangSuDung() throws SQLException {
-        return getByTrangThai("Đang sử dụng");
-    }
-    
-    public List<Giuong> getGiuongBaoTri() throws SQLException {
-        return getByTrangThai("Bảo trì");
-    }
-    
     private Giuong mapResultSetToGiuong(ResultSet rs) throws SQLException {
-        return new Giuong(
-            rs.getInt("MaGiuong"),
-            rs.getString("SoHieu"),
-            rs.getString("TrangThai"),
-            rs.getString("GhiChu")  // Đổi từ MoTa thành GhiChu
-        );
+        Giuong giuong = new Giuong();
+        giuong.setMaGiuong(rs.getInt("MaGiuong"));
+        giuong.setSoHieu(rs.getString("SoHieu"));
+        giuong.setTrangThai(rs.getString("TrangThai"));
+        giuong.setGhiChu(rs.getString("GhiChu"));
+        return giuong;
     }
 }
