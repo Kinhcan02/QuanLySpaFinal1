@@ -12,10 +12,12 @@ public class KhachHang {
     private String soDienThoai;
     private String ghiChu;
     private LocalDateTime ngayTao;
+    private Integer diemTichLuy;
 
     // Constructor mặc định
     public KhachHang() {
         this.ngayTao = LocalDateTime.now();
+        this.diemTichLuy = 0;
     }
 
     // Constructor với họ tên
@@ -41,16 +43,18 @@ public class KhachHang {
 
     // Constructor đầy đủ tham số (KHÔNG có khóa chính MaKhachHang)
     public KhachHang(String hoTen, LocalDate ngaySinh, String loaiKhach,
-            String soDienThoai, String ghiChu, LocalDateTime ngayTao) {
+            String soDienThoai, String ghiChu, LocalDateTime ngayTao, Integer diemTichLuy) {
         this.hoTen = hoTen;
         this.ngaySinh = ngaySinh;
         this.loaiKhach = loaiKhach;
         this.soDienThoai = soDienThoai;
         this.ghiChu = ghiChu;
         this.ngayTao = ngayTao != null ? ngayTao : LocalDateTime.now();
+        this.diemTichLuy = diemTichLuy != null ? diemTichLuy : 0;
     }
 
-    public KhachHang(Integer maKhachHang, String hoTen, LocalDate ngaySinh, String loaiKhach, String soDienThoai, String ghiChu, LocalDateTime ngayTao) {
+    public KhachHang(Integer maKhachHang, String hoTen, LocalDate ngaySinh, String loaiKhach, 
+                    String soDienThoai, String ghiChu, LocalDateTime ngayTao, Integer diemTichLuy) {
         this.maKhachHang = maKhachHang;
         this.hoTen = hoTen;
         this.ngaySinh = ngaySinh;
@@ -58,6 +62,7 @@ public class KhachHang {
         this.soDienThoai = soDienThoai;
         this.ghiChu = ghiChu;
         this.ngayTao = ngayTao;
+        this.diemTichLuy = diemTichLuy != null ? diemTichLuy : 0;
     }
 
     // Constructor không có ngày tạo (tự động set ngày hiện tại)
@@ -69,6 +74,7 @@ public class KhachHang {
         this.soDienThoai = soDienThoai;
         this.ghiChu = ghiChu;
         this.ngayTao = LocalDateTime.now();
+        this.diemTichLuy = 0;
     }
 
     // Getter và Setter
@@ -126,6 +132,14 @@ public class KhachHang {
 
     public void setNgayTao(LocalDateTime ngayTao) {
         this.ngayTao = ngayTao != null ? ngayTao : LocalDateTime.now();
+    }
+
+    public Integer getDiemTichLuy() {
+        return diemTichLuy != null ? diemTichLuy : 0;
+    }
+
+    public void setDiemTichLuy(Integer diemTichLuy) {
+        this.diemTichLuy = diemTichLuy != null ? diemTichLuy : 0;
     }
 
     // Phương thức kiểm tra khách hàng có hợp lệ không

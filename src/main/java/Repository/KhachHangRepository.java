@@ -1,4 +1,3 @@
-// KhachHangRepository.java
 package Repository;
 
 import Data.DataConnection;
@@ -91,8 +90,8 @@ public class KhachHangRepository {
     }
     
     public boolean insert(KhachHang khachHang) throws SQLException {
-        String sql = "INSERT INTO KhachHang (HoTen, NgaySinh, LoaiKhach, SoDienThoai, GhiChu, NgayTao) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO KhachHang (HoTen, NgaySinh, LoaiKhach, SoDienThoai, GhiChu, NgayTao, DiemTichLuy) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -113,14 +112,14 @@ public class KhachHangRepository {
     }
     
     public boolean update(KhachHang khachHang) throws SQLException {
-        String sql = "UPDATE KhachHang SET HoTen=?, NgaySinh=?, LoaiKhach=?, SoDienThoai=?, GhiChu=? " +
+        String sql = "UPDATE KhachHang SET HoTen=?, NgaySinh=?, LoaiKhach=?, SoDienThoai=?, GhiChu=?, DiemTichLuy=? " +
                     "WHERE MaKhachHang=?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             setKhachHangParameters(stmt, khachHang);
-            stmt.setInt(6, khachHang.getMaKhachHang());
+            stmt.setInt(7, khachHang.getMaKhachHang());
             
             return stmt.executeUpdate() > 0;
         }
@@ -150,6 +149,7 @@ public class KhachHangRepository {
         stmt.setString(4, khachHang.getSoDienThoai());
         stmt.setString(5, khachHang.getGhiChu());
         stmt.setTimestamp(6, Timestamp.valueOf(khachHang.getNgayTao()));
+        stmt.setInt(7, khachHang.getDiemTichLuy());
     }
     
     private KhachHang mapResultSetToKhachHang(ResultSet rs) throws SQLException {
@@ -160,7 +160,8 @@ public class KhachHangRepository {
             rs.getString("LoaiKhach"),
             rs.getString("SoDienThoai"),
             rs.getString("GhiChu"),
-            rs.getTimestamp("NgayTao").toLocalDateTime()
+            rs.getTimestamp("NgayTao").toLocalDateTime(),
+            rs.getInt("DiemTichLuy")
         );
     }
 }

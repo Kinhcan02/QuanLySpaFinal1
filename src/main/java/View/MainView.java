@@ -503,7 +503,7 @@ public class MainView extends JFrame {
 
             QuanLyKhachHangView quanLyKhachHangView = new QuanLyKhachHangView();
             KhachHangService khachHangService = new KhachHangService();
-            QuanLyKhachHangController quanLyKhachHangController = new QuanLyKhachHangController(quanLyKhachHangView, khachHangService);
+            QuanLyKhachHangController quanLyKhachHangController = new QuanLyKhachHangController(quanLyKhachHangView);
 
             internalFrame.setContentPane(quanLyKhachHangView);
             internalFrame.pack();

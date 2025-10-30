@@ -73,6 +73,8 @@ public class KhachHangService {
 
     public boolean addKhachHang(KhachHang khachHang) {
         validateKhachHang(khachHang);
+        // Khi thêm mới, điểm tích lũy luôn là 0
+        khachHang.setDiemTichLuy(0);
         try {
             return repository.insert(khachHang);
         } catch (SQLException e) {
@@ -106,6 +108,28 @@ public class KhachHangService {
         }
     }
 
+    // Phương thức cập nhật điểm tích lũy
+    public boolean updateDiemTichLuy(int maKhachHang, int diemTichLuy) {
+        if (maKhachHang <= 0) {
+            throw new IllegalArgumentException("Mã khách hàng không hợp lệ");
+        }
+        if (diemTichLuy < 0) {
+            throw new IllegalArgumentException("Điểm tích lũy không được âm");
+        }
+        
+        try {
+            KhachHang khachHang = repository.getById(maKhachHang);
+            if (khachHang == null) {
+                throw new RuntimeException("Khách hàng không tồn tại");
+            }
+            khachHang.setDiemTichLuy(diemTichLuy);
+            return repository.update(khachHang);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Lỗi khi cập nhật điểm tích lũy cho khách hàng: " + maKhachHang, e);
+            throw new RuntimeException("Không thể cập nhật điểm tích lũy", e);
+        }
+    }
+
     private void validateKhachHang(KhachHang khachHang) {
         if (khachHang == null) {
             throw new IllegalArgumentException("Khách hàng không được null");
@@ -119,6 +143,9 @@ public class KhachHangService {
         validateSoDienThoai(khachHang.getSoDienThoai());
         if (khachHang.getNgayTao() == null) {
             throw new IllegalArgumentException("Ngày tạo không được để trống");
+        }
+        if (khachHang.getDiemTichLuy() < 0) {
+            throw new IllegalArgumentException("Điểm tích lũy không được âm");
         }
     }
 
