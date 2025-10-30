@@ -1,6 +1,7 @@
 package Model;
 
 public class Giuong {
+
     private Integer maGiuong;
     private String soHieu;
     private String trangThai; // "Trống", "Đã đặt", "Đang sử dụng", "Bảo trì"
@@ -19,19 +20,37 @@ public class Giuong {
     }
 
     // Getter và Setter
-    public Integer getMaGiuong() { return maGiuong; }
-    public void setMaGiuong(Integer maGiuong) { this.maGiuong = maGiuong; }
+    public Integer getMaGiuong() {
+        return maGiuong;
+    }
 
-    public String getSoHieu() { return soHieu; }
-    public void setSoHieu(String soHieu) { this.soHieu = soHieu; }
+    public void setMaGiuong(Integer maGiuong) {
+        this.maGiuong = maGiuong;
+    }
 
-    public String getTrangThai() { return trangThai; }
-    public void setTrangThai(String trangThai) { 
+    public String getSoHieu() {
+        return soHieu;
+    }
+
+    public void setSoHieu(String soHieu) {
+        this.soHieu = soHieu;
+    }
+
+    public String getTrangThai() {
+        return trangThai;
+    }
+
+    public void setTrangThai(String trangThai) {
         this.trangThai = trangThai != null ? trangThai : "Trống";
     }
 
-    public String getGhiChu() { return ghiChu; }  // Đổi từ getMoTa thành getGhiChu
-    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }  // Đổi từ setMoTa thành setGhiChu
+    public String getGhiChu() {
+        return ghiChu;
+    }  // Đổi từ getMoTa thành getGhiChu
+
+    public void setGhiChu(String ghiChu) {
+        this.ghiChu = ghiChu;
+    }  // Đổi từ setMoTa thành setGhiChu
 
     // Phương thức kiểm tra trạng thái
     public boolean isTrong() {
@@ -51,10 +70,21 @@ public class Giuong {
     }
 
     // Phương thức chuyển trạng thái
-    public void markTrong() { this.trangThai = "Trống"; }
-    public void markDaDat() { this.trangThai = "Đã đặt"; }
-    public void markDangSuDung() { this.trangThai = "Đang sử dụng"; }
-    public void markBaoTri() { this.trangThai = "Bảo trì"; }
+    public void markTrong() {
+        this.trangThai = "Trống";
+    }
+
+    public void markDaDat() {
+        this.trangThai = "Đã đặt";
+    }
+
+    public void markDangSuDung() {
+        this.trangThai = "Đang sử dụng";
+    }
+
+    public void markBaoTri() {
+        this.trangThai = "Bảo trì";
+    }
 
     @Override
     public String toString() {
