@@ -1,10 +1,12 @@
-// DatLichRepository.java
 package Repository;
 
 import Data.DataConnection;
 import Model.DatLich;
+import Model.DatLichChiTiet;
+import Model.DichVu;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,21 +14,30 @@ public class DatLichRepository {
     
     public List<DatLich> getAll() throws SQLException {
         List<DatLich> list = new ArrayList<>();
-        String sql = "SELECT * FROM DatLich";
+        String sql = "SELECT dl.*, " +
+                    "(SELECT SUM(dv.ThoiGian) FROM DatLich_ChiTiet ct " +
+                    "JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu WHERE ct.MaLich = dl.MaLich) as TongThoiGian " +
+                    "FROM DatLich dl ORDER BY dl.NgayDat DESC, dl.GioDat DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
-                list.add(mapResultSetToDatLich(rs));
+                DatLich datLich = mapResultSetToDatLich(rs);
+                // Load chi tiết dịch vụ
+                datLich.setDanhSachDichVu(getChiTietByMaLich(datLich.getMaLich()));
+                list.add(datLich);
             }
         }
         return list;
     }
     
     public DatLich getById(int maLich) throws SQLException {
-        String sql = "SELECT * FROM DatLich WHERE MaLich = ?";
+        String sql = "SELECT dl.*, " +
+                    "(SELECT SUM(dv.ThoiGian) FROM DatLich_ChiTiet ct " +
+                    "JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu WHERE ct.MaLich = dl.MaLich) as TongThoiGian " +
+                    "FROM DatLich dl WHERE dl.MaLich = ?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -34,41 +45,68 @@ public class DatLichRepository {
             stmt.setInt(1, maLich);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapResultSetToDatLich(rs);
+                    DatLich datLich = mapResultSetToDatLich(rs);
+                    // Load chi tiết dịch vụ
+                    datLich.setDanhSachDichVu(getChiTietByMaLich(maLich));
+                    return datLich;
                 }
             }
         }
         return null;
     }
     
-    public List<DatLich> getByMaKhachHang(int maKhachHang) throws SQLException {
+    public List<DatLich> getByNgay(LocalDate ngay) throws SQLException {
         List<DatLich> list = new ArrayList<>();
-        String sql = "SELECT * FROM DatLich WHERE MaKhachHang = ?";
+        String sql = "SELECT dl.*, " +
+                    "(SELECT SUM(dv.ThoiGian) FROM DatLich_ChiTiet ct " +
+                    "JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu WHERE ct.MaLich = dl.MaLich) as TongThoiGian " +
+                    "FROM DatLich dl WHERE dl.NgayDat = ? ORDER BY dl.GioDat ASC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setInt(1, maKhachHang);
+            stmt.setDate(1, Date.valueOf(ngay));
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapResultSetToDatLich(rs));
+                    DatLich datLich = mapResultSetToDatLich(rs);
+                    // Load chi tiết dịch vụ
+                    datLich.setDanhSachDichVu(getChiTietByMaLich(datLich.getMaLich()));
+                    list.add(datLich);
                 }
             }
         }
         return list;
     }
     
-    public List<DatLich> getByTrangThai(String trangThai) throws SQLException {
-        List<DatLich> list = new ArrayList<>();
-        String sql = "SELECT * FROM DatLich WHERE TrangThai = ?";
+    public List<DatLichChiTiet> getChiTietByMaLich(int maLich) throws SQLException {
+        List<DatLichChiTiet> list = new ArrayList<>();
+        String sql = "SELECT ct.*, dv.TenDichVu, dv.ThoiGian, dv.Gia " +
+                    "FROM DatLich_ChiTiet ct " +
+                    "JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu " +
+                    "WHERE ct.MaLich = ?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, trangThai);
+            stmt.setInt(1, maLich);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapResultSetToDatLich(rs));
+                    DatLichChiTiet chiTiet = new DatLichChiTiet();
+                    chiTiet.setMaCTDL(rs.getInt("MaCTDL"));
+                    chiTiet.setMaLich(rs.getInt("MaLich"));
+                    chiTiet.setMaDichVu(rs.getInt("MaDichVu"));
+                    chiTiet.setGhiChu(rs.getString("GhiChu"));
+                    chiTiet.setNgayTao(rs.getTimestamp("NgayTao").toLocalDateTime());
+                    
+                    // Thông tin dịch vụ
+                    DichVu dichVu = new DichVu();
+                    dichVu.setMaDichVu(rs.getInt("MaDichVu"));
+                    dichVu.setTenDichVu(rs.getString("TenDichVu"));
+                    dichVu.setThoiGian(rs.getInt("ThoiGian"));
+                    dichVu.setGia(rs.getBigDecimal("Gia"));
+                    chiTiet.setDichVu(dichVu);
+                    
+                    list.add(chiTiet);
                 }
             }
         }
@@ -76,38 +114,139 @@ public class DatLichRepository {
     }
     
     public boolean insert(DatLich datLich) throws SQLException {
-        String sql = "INSERT INTO DatLich (MaKhachHang, NgayDat, GioDat, MaDichVu, TrangThai, MaGiuong, GhiChu) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO DatLich (MaKhachHang, NgayDat, GioDat, TrangThai, MaGiuong, ThoiGianDuKien, GhiChu, MaNhanVienTao) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
-        try (Connection conn = DataConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DataConnection.getConnection();
+            conn.setAutoCommit(false);
             
-            setDatLichParameters(stmt, datLich);
+            stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            stmt.setInt(1, datLich.getMaKhachHang());
+            stmt.setDate(2, Date.valueOf(datLich.getNgayDat()));
+            stmt.setTime(3, Time.valueOf(datLich.getGioDat()));
+            stmt.setString(4, datLich.getTrangThai());
+            
+            if (datLich.getMaGiuong() != null) {
+                stmt.setInt(5, datLich.getMaGiuong());
+            } else {
+                stmt.setNull(5, Types.INTEGER);
+            }
+            
+            stmt.setInt(6, datLich.tinhTongThoiGian());
+            stmt.setString(7, datLich.getGhiChu());
+            
+            // TODO: Set MaNhanVienTao từ session hiện tại
+            stmt.setNull(8, Types.INTEGER);
+            
             int affectedRows = stmt.executeUpdate();
             
             if (affectedRows > 0) {
-                try (ResultSet rs = stmt.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        datLich.setMaLich(rs.getInt(1));
-                        return true;
+                rs = stmt.getGeneratedKeys();
+                if (rs.next()) {
+                    int generatedMaLich = rs.getInt(1);
+                    datLich.setMaLich(generatedMaLich);
+                    
+                    // Insert chi tiết dịch vụ
+                    if (datLich.hasDichVu()) {
+                        for (DatLichChiTiet chiTiet : datLich.getDanhSachDichVu()) {
+                            insertChiTiet(conn, generatedMaLich, chiTiet);
+                        }
                     }
+                    
+                    conn.commit();
+                    return true;
                 }
             }
+            conn.rollback();
             return false;
+            
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (conn != null) conn.close();
+        }
+    }
+    
+    private void insertChiTiet(Connection conn, int maLich, DatLichChiTiet chiTiet) throws SQLException {
+        String sql = "INSERT INTO DatLich_ChiTiet (MaLich, MaDichVu, GhiChu) VALUES (?, ?, ?)";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, maLich);
+            stmt.setInt(2, chiTiet.getMaDichVu());
+            stmt.setString(3, chiTiet.getGhiChu());
+            stmt.executeUpdate();
         }
     }
     
     public boolean update(DatLich datLich) throws SQLException {
-        String sql = "UPDATE DatLich SET MaKhachHang=?, NgayDat=?, GioDat=?, MaDichVu=?, " +
-                    "TrangThai=?, MaGiuong=?, GhiChu=? WHERE MaLich=?";
+        String sql = "UPDATE DatLich SET MaKhachHang=?, NgayDat=?, GioDat=?, TrangThai=?, " +
+                    "MaGiuong=?, ThoiGianDuKien=?, GhiChu=?, NgayCapNhat=SYSUTCDATETIME() WHERE MaLich=?";
         
-        try (Connection conn = DataConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        
+        try {
+            conn = DataConnection.getConnection();
+            conn.setAutoCommit(false);
             
-            setDatLichParameters(stmt, datLich);
+            stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, datLich.getMaKhachHang());
+            stmt.setDate(2, Date.valueOf(datLich.getNgayDat()));
+            stmt.setTime(3, Time.valueOf(datLich.getGioDat()));
+            stmt.setString(4, datLich.getTrangThai());
+            
+            if (datLich.getMaGiuong() != null) {
+                stmt.setInt(5, datLich.getMaGiuong());
+            } else {
+                stmt.setNull(5, Types.INTEGER);
+            }
+            
+            stmt.setInt(6, datLich.tinhTongThoiGian());
+            stmt.setString(7, datLich.getGhiChu());
             stmt.setInt(8, datLich.getMaLich());
             
-            return stmt.executeUpdate() > 0;
+            int affectedRows = stmt.executeUpdate();
+            
+            if (affectedRows > 0) {
+                // Xóa chi tiết cũ và thêm mới
+                deleteChiTietByMaLich(conn, datLich.getMaLich());
+                
+                // Insert chi tiết dịch vụ mới
+                if (datLich.hasDichVu()) {
+                    for (DatLichChiTiet chiTiet : datLich.getDanhSachDichVu()) {
+                        insertChiTiet(conn, datLich.getMaLich(), chiTiet);
+                    }
+                }
+                
+                conn.commit();
+                return true;
+            }
+            conn.rollback();
+            return false;
+            
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (stmt != null) stmt.close();
+            if (conn != null) conn.close();
+        }
+    }
+    
+    private void deleteChiTietByMaLich(Connection conn, int maLich) throws SQLException {
+        String sql = "DELETE FROM DatLich_ChiTiet WHERE MaLich = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, maLich);
+            stmt.executeUpdate();
         }
     }
     
@@ -123,7 +262,7 @@ public class DatLichRepository {
     }
     
     public boolean updateTrangThai(int maLich, String trangThai) throws SQLException {
-        String sql = "UPDATE DatLich SET TrangThai = ? WHERE MaLich = ?";
+        String sql = "UPDATE DatLich SET TrangThai = ?, NgayCapNhat = SYSUTCDATETIME() WHERE MaLich = ?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -135,38 +274,37 @@ public class DatLichRepository {
         }
     }
     
-    private void setDatLichParameters(PreparedStatement stmt, DatLich datLich) throws SQLException {
-        stmt.setInt(1, datLich.getMaKhachHang());
-        stmt.setDate(2, Date.valueOf(datLich.getNgayDat()));
-        stmt.setTime(3, Time.valueOf(datLich.getGioDat()));
-        
-        if (datLich.getMaDichVu() != null) {
-            stmt.setInt(4, datLich.getMaDichVu());
-        } else {
-            stmt.setNull(4, Types.INTEGER);
-        }
-        
-        stmt.setString(5, datLich.getTrangThai());
-        
-        if (datLich.getMaGiuong() != null) {
-            stmt.setInt(6, datLich.getMaGiuong());
-        } else {
-            stmt.setNull(6, Types.INTEGER);
-        }
-        
-        stmt.setString(7, datLich.getGhiChu());
-    }
-    
     private DatLich mapResultSetToDatLich(ResultSet rs) throws SQLException {
-        return new DatLich(
-            rs.getInt("MaLich"),
-            rs.getInt("MaKhachHang"),
-            rs.getDate("NgayDat").toLocalDate(),
-            rs.getTime("GioDat").toLocalTime(),
-            rs.getInt("MaDichVu"),
-            rs.getString("TrangThai"),
-            rs.getInt("MaGiuong"),
-            rs.getString("GhiChu")
-        );
+        DatLich datLich = new DatLich();
+        datLich.setMaLich(rs.getInt("MaLich"));
+        datLich.setMaKhachHang(rs.getInt("MaKhachHang"));
+        datLich.setNgayDat(rs.getDate("NgayDat").toLocalDate());
+        datLich.setGioDat(rs.getTime("GioDat").toLocalTime());
+        datLich.setTrangThai(rs.getString("TrangThai"));
+        
+        int maGiuong = rs.getInt("MaGiuong");
+        if (!rs.wasNull()) {
+            datLich.setMaGiuong(maGiuong);
+        }
+        
+        datLich.setThoiGianDuKien(rs.getInt("ThoiGianDuKien"));
+        datLich.setGhiChu(rs.getString("GhiChu"));
+        
+        Timestamp ngayTao = rs.getTimestamp("NgayTao");
+        if (ngayTao != null) {
+            datLich.setNgayTao(ngayTao.toLocalDateTime());
+        }
+        
+        Timestamp ngayCapNhat = rs.getTimestamp("NgayCapNhat");
+        if (ngayCapNhat != null) {
+            datLich.setNgayCapNhat(ngayCapNhat.toLocalDateTime());
+        }
+        
+        int maNhanVienTao = rs.getInt("MaNhanVienTao");
+        if (!rs.wasNull()) {
+            datLich.setMaNhanVienTao(maNhanVienTao);
+        }
+        
+        return datLich;
     }
 }

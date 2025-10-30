@@ -25,7 +25,6 @@ public class DatLichService {
 
     // Interface cho lắng nghe thông báo
     public interface ThongBaoListener {
-
         void onThongBaoSapToiGio(DatLich datLich);
     }
 
@@ -63,22 +62,23 @@ public class DatLichService {
         }
     }
 
-    public List<DatLich> getDatLichTheoNgay(LocalDate ngay) {
-        try {
-            List<DatLich> tatCaDatLich = repository.getAll();
-            List<DatLich> ketQua = new ArrayList<>();
-
-            for (DatLich datLich : tatCaDatLich) {
-                if (datLich.getNgayDat().equals(ngay)) {
-                    ketQua.add(datLich);
-                }
-            }
-            return ketQua;
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Lỗi khi lấy đặt lịch theo ngày: " + ngay, e);
-            throw new RuntimeException("Không thể lấy đặt lịch theo ngày", e);
-        }
-    }
+    // XÓA PHƯƠNG THỨC TRÙNG LẶP NÀY
+    // public List<DatLich> getDatLichTheoNgay(LocalDate ngay) {
+    //     try {
+    //         List<DatLich> tatCaDatLich = repository.getAll();
+    //         List<DatLich> ketQua = new ArrayList<>();
+    //
+    //         for (DatLich datLich : tatCaDatLich) {
+    //             if (datLich.getNgayDat().equals(ngay)) {
+    //                 ketQua.add(datLich);
+    //             }
+    //         }
+    //         return ketQua;
+    //     } catch (SQLException e) {
+    //         logger.log(Level.SEVERE, "Lỗi khi lấy đặt lịch theo ngày: " + ngay, e);
+    //         throw new RuntimeException("Không thể lấy đặt lịch theo ngày", e);
+    //     }
+    // }
 
     public List<DatLich> getDatLichHomNay() {
         return getDatLichTheoNgay(LocalDate.now());
@@ -160,9 +160,8 @@ public class DatLichService {
                         && datLich.isDaXacNhan()) {
 
                     LocalTime batDauHienTai = datLich.getGioDat();
-                    LocalTime ketThucHienTai = batDauHienTai.plusMinutes(
-                            datLich.getMaDichVu() != null ? getThoiGianDichVu(datLich.getMaDichVu()) : 60
-                    );
+                    // SỬA LẠI: Sử dụng phương thức tính tổng thời gian từ danh sách dịch vụ
+                    LocalTime ketThucHienTai = batDauHienTai.plusMinutes(datLich.tinhTongThoiGian());
 
                     // Kiểm tra xung đột thời gian
                     if (gioBatDau.isBefore(ketThucHienTai) && gioKetThuc.isAfter(batDauHienTai)) {
@@ -206,6 +205,16 @@ public class DatLichService {
         }
         if (datLich.getNgayDat().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Không thể đặt lịch trong quá khứ");
+        }
+    }
+
+    // PHƯƠNG THỨC MỚI SỬ DỤNG REPOSITORY
+    public List<DatLich> getDatLichTheoNgay(LocalDate ngay) {
+        try {
+            return repository.getByNgay(ngay);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Lỗi khi lấy đặt lịch theo ngày: " + ngay, e);
+            throw new RuntimeException("Không thể lấy đặt lịch theo ngày", e);
         }
     }
 }

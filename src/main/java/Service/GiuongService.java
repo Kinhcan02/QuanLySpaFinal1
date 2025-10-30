@@ -84,7 +84,8 @@ public class GiuongService {
                     
                     // Kiểm tra xem có đang trong giờ sử dụng không
                     LocalTime gioBatDau = datLich.getGioDat();
-                    LocalTime gioKetThuc = gioBatDau.plusMinutes(getThoiGianDichVu(datLich.getMaDichVu()));
+                    // SỬA: Sử dụng phương thức tính tổng thời gian
+                    LocalTime gioKetThuc = gioBatDau.plusMinutes(datLich.tinhTongThoiGian());
                     
                     if (now.isAfter(gioBatDau) && now.isBefore(gioKetThuc)) {
                         return true;
@@ -113,7 +114,8 @@ public class GiuongService {
                     !datLich.isQuaGio()) {
                     
                     LocalTime gioBatDau = datLich.getGioDat();
-                    LocalTime gioKetThuc = gioBatDau.plusMinutes(getThoiGianDichVu(datLich.getMaDichVu()));
+                    // SỬA: Sử dụng phương thức tính tổng thời gian
+                    LocalTime gioKetThuc = gioBatDau.plusMinutes(datLich.tinhTongThoiGian());
                     
                     // Giường đã được đặt nhưng chưa đến giờ sử dụng hoặc đang trong tương lai
                     if (now.isBefore(gioBatDau) || (now.isAfter(gioBatDau) && now.isBefore(gioKetThuc))) {

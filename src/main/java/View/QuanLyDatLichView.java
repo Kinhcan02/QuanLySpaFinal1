@@ -8,7 +8,6 @@ import Service.DatLichService;
 import Service.KhachHangService;
 import Service.DichVuService;
 import Service.GiuongService;
-import com.toedter.calendar.JDateChooser;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -18,23 +17,25 @@ import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.DayOfWeek;
+import java.time.YearMonth;
 import java.util.List;
-import javax.swing.border.Border;
+import java.util.*;
 
 public class QuanLyDatLichView extends JPanel {
-
     private DatLichService datLichService;
     private KhachHangService khachHangService;
     private DichVuService dichVuService;
     private GiuongService giuongService;
 
     // Components
-    private JTable tableDatLich;
-    private DefaultTableModel tableModel;
-    private JTextField txtTimKiem;
-    private JComboBox<String> cbTrangThai;
-    private JDateChooser dateChooser;
-    private JButton btnThem, btnSua, btnXoa, btnXacNhan, btnHuy;
+    private JPanel calendarPanel;
+    private JPanel timelinePanel;
+    private JLabel lblThangNam;
+    private JButton btnThangTruoc, btnThangSau;
+    private JButton btnHomNay;
+    private LocalDate currentDate;
+    private LocalDate selectedDate;
 
     // Form components
     private JComboBox<KhachHang> cbKhachHang;
@@ -43,16 +44,19 @@ public class QuanLyDatLichView extends JPanel {
     private JTextField txtNgayDat;
     private JTextField txtGioDat;
     private JTextArea txtGhiChu;
+    private JButton btnThem, btnSua, btnXoa, btnXacNhan, btnHuy;
 
-    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
-    private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);
-    private final Color COLOR_TEXT = Color.WHITE;
+    private final Color COLOR_BACKGROUND = new Color(0xf8, 0xf9, 0xfa);
+    private final Color COLOR_PRIMARY = new Color(0x4D, 0x8A, 0x57);
+    private final Color COLOR_SECONDARY = new Color(0x6c, 0x75, 0x7d);
+    private final Color COLOR_TODAY = new Color(0x0d, 0x6e, 0xfd);
+    private final Color COLOR_SELECTED = new Color(0x4D, 0x8A, 0x57);
+    private final Color COLOR_EVENT = new Color(0xff, 0xe6, 0xe6);
 
     public QuanLyDatLichView() {
         initServices();
         initUI();
         loadData();
-        setupEvents();
     }
 
     private void initServices() {
@@ -67,15 +71,22 @@ public class QuanLyDatLichView extends JPanel {
         setBackground(COLOR_BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
+        currentDate = LocalDate.now();
+        selectedDate = LocalDate.now();
+
         // Header
         add(createHeaderPanel(), BorderLayout.NORTH);
 
-        // Main content
-        add(createMainContentPanel(), BorderLayout.CENTER);
+        // Main content - Split pane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(400);
+        splitPane.setLeftComponent(createCalendarPanel());
+        splitPane.setRightComponent(createTimelinePanel());
 
-        // Form panel (HIỂN THỊ LUÔN thay vì ẩn ban đầu)
+        add(splitPane, BorderLayout.CENTER);
+
+        // Form panel
         add(createFormPanel(), BorderLayout.SOUTH);
-        setupGiuongComboBoxRenderer();
     }
 
     private JPanel createHeaderPanel() {
@@ -83,83 +94,85 @@ public class QuanLyDatLichView extends JPanel {
         headerPanel.setBackground(COLOR_BACKGROUND);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 
-        JLabel lblTitle = new JLabel("QUẢN LÝ ĐẶT LỊCH");
+        JLabel lblTitle = new JLabel("LỊCH HẸN THEO NGÀY");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 24));
-        lblTitle.setForeground(COLOR_TEXT);
+        lblTitle.setForeground(COLOR_PRIMARY);
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        searchPanel.setBackground(COLOR_BACKGROUND);
+        // Navigation buttons
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        navPanel.setBackground(COLOR_BACKGROUND);
 
-        txtTimKiem = new JTextField(20);
-        txtTimKiem.setFont(new Font("Arial", Font.PLAIN, 14));
+        btnHomNay = createStyledButton("Hôm nay", COLOR_PRIMARY);
+        btnHomNay.addActionListener(e -> selectToday());
 
-        cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Chờ xác nhận", "Đã xác nhận", "Đã hủy", "Hoàn thành"});
-        cbTrangThai.setFont(new Font("Arial", Font.PLAIN, 14));
-
-        JButton btnTimKiem = createStyledButton("Tìm kiếm", COLOR_BUTTON);
-
-        searchPanel.add(new JLabel("Tìm kiếm:"));
-        searchPanel.add(txtTimKiem);
-        searchPanel.add(new JLabel("Trạng thái:"));
-        searchPanel.add(cbTrangThai);
-        searchPanel.add(btnTimKiem);
+        navPanel.add(btnHomNay);
 
         headerPanel.add(lblTitle, BorderLayout.WEST);
-        headerPanel.add(searchPanel, BorderLayout.EAST);
+        headerPanel.add(navPanel, BorderLayout.EAST);
 
         return headerPanel;
     }
 
-    private JPanel createMainContentPanel() {
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBackground(COLOR_BACKGROUND);
+    private JPanel createCalendarPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createTitledBorder("Lịch tháng"));
+        panel.setBackground(Color.WHITE);
 
-        // Table
-        String[] columns = {"Mã lịch", "Khách hàng", "Ngày đặt", "Giờ đặt", "Dịch vụ", "Giường", "Trạng thái", "Ghi chú"};
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tableDatLich = new JTable(tableModel);
-        tableDatLich.setFont(new Font("Arial", Font.PLAIN, 14));
-        tableDatLich.setRowHeight(25);
-        tableDatLich.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        // Month navigation
+        JPanel navPanel = new JPanel(new BorderLayout());
+        navPanel.setBackground(Color.WHITE);
 
-        JScrollPane scrollPane = new JScrollPane(tableDatLich);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Danh sách đặt lịch"));
+        btnThangTruoc = createStyledButton("◀", COLOR_SECONDARY);
+        btnThangTruoc.setPreferredSize(new Dimension(40, 30));
+        btnThangTruoc.addActionListener(e -> previousMonth());
 
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.setBackground(COLOR_BACKGROUND);
+        btnThangSau = createStyledButton("▶", COLOR_SECONDARY);
+        btnThangSau.setPreferredSize(new Dimension(40, 30));
+        btnThangSau.addActionListener(e -> nextMonth());
 
-        btnThem = createStyledButton("Thêm mới", COLOR_BUTTON);
-        btnSua = createStyledButton("Sửa", COLOR_BUTTON);
-        btnXoa = createStyledButton("Xóa", new Color(0xE7, 0x4C, 0x3C));
-        btnXacNhan = createStyledButton("Xác nhận", new Color(0x2E, 0xCC, 0x71));
-        btnHuy = createStyledButton("Hủy lịch", new Color(0xE6, 0x7E, 0x22));
+        lblThangNam = new JLabel("", JLabel.CENTER);
+        lblThangNam.setFont(new Font("Arial", Font.BOLD, 16));
 
-        buttonPanel.add(btnThem);
-        buttonPanel.add(btnSua);
-        buttonPanel.add(btnXoa);
-        buttonPanel.add(btnXacNhan);
-        buttonPanel.add(btnHuy);
+        navPanel.add(btnThangTruoc, BorderLayout.WEST);
+        navPanel.add(lblThangNam, BorderLayout.CENTER);
+        navPanel.add(btnThangSau, BorderLayout.EAST);
 
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        // Calendar grid
+        calendarPanel = new JPanel(new GridLayout(0, 7, 2, 2));
+        calendarPanel.setBackground(Color.WHITE);
 
-        return mainPanel;
+        panel.add(navPanel, BorderLayout.NORTH);
+        panel.add(calendarPanel, BorderLayout.CENTER);
+
+        updateCalendar();
+
+        return panel;
+    }
+
+    private JPanel createTimelinePanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createTitledBorder("Lịch hẹn ngày " + selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))));
+        panel.setBackground(Color.WHITE);
+
+        timelinePanel = new JPanel();
+        timelinePanel.setLayout(new BoxLayout(timelinePanel, BoxLayout.Y_AXIS));
+        timelinePanel.setBackground(Color.WHITE);
+
+        JScrollPane scrollPane = new JScrollPane(timelinePanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        updateTimeline();
+
+        return panel;
     }
 
     private JPanel createFormPanel() {
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(COLOR_BACKGROUND);
-        formPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.DARK_GRAY),
-                "Thông tin đặt lịch"
-        ));
-        formPanel.setVisible(true); // Ẩn ban đầu
+        formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin đặt lịch"));
+        formPanel.setVisible(true);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -167,8 +180,7 @@ public class QuanLyDatLichView extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
 
         // Row 0
-        gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridx = 0; gbc.gridy = 0;
         formPanel.add(new JLabel("Khách hàng *:"), gbc);
 
         gbc.gridx = 1;
@@ -177,8 +189,7 @@ public class QuanLyDatLichView extends JPanel {
         formPanel.add(cbKhachHang, gbc);
 
         // Row 1
-        gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridx = 0; gbc.gridy = 1;
         formPanel.add(new JLabel("Dịch vụ:"), gbc);
 
         gbc.gridx = 1;
@@ -187,8 +198,7 @@ public class QuanLyDatLichView extends JPanel {
         formPanel.add(cbDichVu, gbc);
 
         // Row 2
-        gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridx = 0; gbc.gridy = 2;
         formPanel.add(new JLabel("Giường:"), gbc);
 
         gbc.gridx = 1;
@@ -197,8 +207,7 @@ public class QuanLyDatLichView extends JPanel {
         formPanel.add(cbGiuong, gbc);
 
         // Row 3
-        gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridx = 0; gbc.gridy = 3;
         formPanel.add(new JLabel("Ngày đặt *:"), gbc);
 
         gbc.gridx = 1;
@@ -207,8 +216,7 @@ public class QuanLyDatLichView extends JPanel {
         formPanel.add(txtNgayDat, gbc);
 
         // Row 4
-        gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridx = 0; gbc.gridy = 4;
         formPanel.add(new JLabel("Giờ đặt *:"), gbc);
 
         gbc.gridx = 1;
@@ -217,8 +225,7 @@ public class QuanLyDatLichView extends JPanel {
         formPanel.add(txtGioDat, gbc);
 
         // Row 5
-        gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridx = 0; gbc.gridy = 5;
         formPanel.add(new JLabel("Ghi chú:"), gbc);
 
         gbc.gridx = 1;
@@ -229,145 +236,263 @@ public class QuanLyDatLichView extends JPanel {
         formPanel.add(scrollGhiChu, gbc);
 
         // Button row
-        gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridx = 0; gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
 
         JPanel formButtonPanel = new JPanel(new FlowLayout());
         formButtonPanel.setBackground(COLOR_BACKGROUND);
 
-        JButton btnLuu = createStyledButton("Lưu", COLOR_BUTTON);
-        JButton btnHuyForm = createStyledButton("Hủy", new Color(0x95, 0xA5, 0xA6));
+        btnThem = createStyledButton("Thêm mới", COLOR_PRIMARY);
+        btnSua = createStyledButton("Sửa", COLOR_PRIMARY);
+        btnXoa = createStyledButton("Xóa", new Color(0xE7, 0x4C, 0x3C));
+        btnXacNhan = createStyledButton("Xác nhận", new Color(0x2E, 0xCC, 0x71));
+        btnHuy = createStyledButton("Hủy lịch", new Color(0xE6, 0x7E, 0x22));
 
-        formButtonPanel.add(btnLuu);
-        formButtonPanel.add(btnHuyForm);
+        formButtonPanel.add(btnThem);
+        formButtonPanel.add(btnSua);
+        formButtonPanel.add(btnXoa);
+        formButtonPanel.add(btnXacNhan);
+        formButtonPanel.add(btnHuy);
 
         formPanel.add(formButtonPanel, gbc);
 
         return formPanel;
     }
 
-    public void setFormVisible(boolean visible) {
-        JPanel formPanel = getFormPanel();
-        if (formPanel != null) {
-            formPanel.setVisible(visible);
-            revalidate();
-            repaint();
+    private void updateCalendar() {
+        calendarPanel.removeAll();
+        
+        YearMonth yearMonth = YearMonth.from(currentDate);
+        LocalDate firstOfMonth = yearMonth.atDay(1);
+        LocalDate lastOfMonth = yearMonth.atEndOfMonth();
+
+        // Update month year label
+        lblThangNam.setText(yearMonth.getMonth().toString() + " " + yearMonth.getYear());
+
+        // Day headers
+        String[] dayNames = {"CN", "T2", "T3", "T4", "T5", "T6", "T7"};
+        for (String dayName : dayNames) {
+            JLabel lblDay = new JLabel(dayName, JLabel.CENTER);
+            lblDay.setFont(new Font("Arial", Font.BOLD, 12));
+            lblDay.setForeground(COLOR_SECONDARY);
+            lblDay.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+            calendarPanel.add(lblDay);
         }
+
+        // Fill in days before first of month
+        DayOfWeek firstDayOfWeek = firstOfMonth.getDayOfWeek();
+        for (int i = 0; i < firstDayOfWeek.getValue() % 7; i++) {
+            calendarPanel.add(new JLabel(""));
+        }
+
+        // Add days of month
+        for (int day = 1; day <= lastOfMonth.getDayOfMonth(); day++) {
+            final LocalDate date = yearMonth.atDay(day);
+            JButton btnDay = createDayButton(date);
+            calendarPanel.add(btnDay);
+        }
+
+        calendarPanel.revalidate();
+        calendarPanel.repaint();
     }
 
-    public void setFormEnabled(boolean enabled) {
-        cbKhachHang.setEnabled(enabled);
-        cbDichVu.setEnabled(enabled);
-        cbGiuong.setEnabled(enabled);
-        txtNgayDat.setEnabled(enabled);
-        txtGioDat.setEnabled(enabled);
-        txtGhiChu.setEnabled(enabled);
-    }
+    private JButton createDayButton(LocalDate date) {
+        JButton btn = new JButton(String.valueOf(date.getDayOfMonth()));
+        btn.setFont(new Font("Arial", Font.PLAIN, 12));
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    public void setFormState(boolean isEditMode, boolean hasSelection) {
-        if (isEditMode && hasSelection) {
-            setFormEnabled(true);
-            // Có thể thay đổi màu sắc hoặc style để chỉ ra đang chỉnh sửa
-            setBackground(new Color(0xE8, 0xF5, 0xE8)); // Màu xanh nhạt
+        // Style based on date
+        if (date.equals(LocalDate.now())) {
+            btn.setBackground(COLOR_TODAY);
+            btn.setForeground(Color.WHITE);
+        } else if (date.equals(selectedDate)) {
+            btn.setBackground(COLOR_SELECTED);
+            btn.setForeground(Color.WHITE);
         } else {
-            setFormEnabled(true);
-            setBackground(COLOR_BACKGROUND); // Màu nền mặc định
+            btn.setBackground(Color.WHITE);
+            btn.setForeground(Color.BLACK);
         }
-    }
-    // Phương thức để lấy nút Lưu từ form
 
-    public JButton getBtnLuu() {
-        return findButtonInContainer(this, "Lưu");
+        // Add event indicator if there are appointments
+        try {
+            List<DatLich> appointments = datLichService.getDatLichTheoNgay(date);
+            if (!appointments.isEmpty()) {
+                btn.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+            }
+        } catch (Exception e) {
+            // Ignore errors for event indicators
+        }
+
+        btn.addActionListener(e -> selectDate(date));
+
+        return btn;
     }
 
-    // Phương thức để lấy nút Hủy từ form
-    public JButton getBtnHuyForm() {
-        return findButtonInContainer(this, "Hủy");
-    }
+    public void updateTimeline() {
+        timelinePanel.removeAll();
 
-    private JButton findButtonInContainer(Container container, String buttonText) {
-        for (Component comp : container.getComponents()) {
-            if (comp instanceof JButton) {
-                JButton button = (JButton) comp;
-                if (buttonText.equals(button.getText())) {
-                    return button;
-                }
-            } else if (comp instanceof Container) {
-                JButton found = findButtonInContainer((Container) comp, buttonText);
-                if (found != null) {
-                    return found;
+        try {
+            List<DatLich> appointments = datLichService.getDatLichTheoNgay(selectedDate);
+            
+            if (appointments.isEmpty()) {
+                JLabel lblEmpty = new JLabel("Không có lịch hẹn nào cho ngày này", JLabel.CENTER);
+                lblEmpty.setFont(new Font("Arial", Font.ITALIC, 14));
+                lblEmpty.setForeground(COLOR_SECONDARY);
+                timelinePanel.add(lblEmpty);
+            } else {
+                // Sort appointments by time
+                appointments.sort((a, b) -> a.getGioDat().compareTo(b.getGioDat()));
+
+                for (DatLich appointment : appointments) {
+                    timelinePanel.add(createAppointmentPanel(appointment));
+                    timelinePanel.add(Box.createRigidArea(new Dimension(0, 5)));
                 }
             }
+        } catch (Exception e) {
+            JLabel lblError = new JLabel("Lỗi khi tải lịch hẹn: " + e.getMessage(), JLabel.CENTER);
+            lblError.setForeground(Color.RED);
+            timelinePanel.add(lblError);
         }
-        return null;
+
+        timelinePanel.revalidate();
+        timelinePanel.repaint();
+
+        // Update panel title
+        Container parent = timelinePanel.getParent();
+        while (parent != null && !(parent instanceof JPanel)) {
+            parent = parent.getParent();
+        }
+        if (parent instanceof JPanel) {
+            ((JPanel) parent).setBorder(BorderFactory.createTitledBorder(
+                "Lịch hẹn ngày " + selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+            ));
+        }
     }
 
-    public void setFormMode(boolean isEditMode) {
-        if (isEditMode) {
-            // Có thể thay đổi tiêu đề hoặc style khi ở chế độ chỉnh sửa
-            Border border = BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(Color.BLUE),
-                    "Chỉnh sửa đặt lịch"
-            );
-            getFormPanel().setBorder(border);
+    private JPanel createAppointmentPanel(DatLich appointment) {
+        JPanel panel = new JPanel(new BorderLayout(10, 5));
+        panel.setBackground(COLOR_EVENT);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Time and status
+        JPanel leftPanel = new JPanel(new GridLayout(2, 1));
+        leftPanel.setBackground(COLOR_EVENT);
+
+        JLabel lblTime = new JLabel(appointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm")));
+        lblTime.setFont(new Font("Arial", Font.BOLD, 14));
+
+        JLabel lblStatus = new JLabel(appointment.getTrangThai());
+        lblStatus.setFont(new Font("Arial", Font.PLAIN, 11));
+        
+        // Color code status
+        switch (appointment.getTrangThai()) {
+            case "Đã xác nhận":
+                lblStatus.setForeground(new Color(0x28, 0xa7, 0x45));
+                break;
+            case "Đã hủy":
+                lblStatus.setForeground(Color.RED);
+                break;
+            case "Hoàn thành":
+                lblStatus.setForeground(new Color(0x00, 0x7b, 0xff));
+                break;
+            case "Đang thực hiện":
+                lblStatus.setForeground(new Color(0xff, 0xc1, 0x07));
+                break;
+            default:
+                lblStatus.setForeground(COLOR_SECONDARY);
+        }
+
+        leftPanel.add(lblTime);
+        leftPanel.add(lblStatus);
+
+        // Customer and service info
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(COLOR_EVENT);
+
+        String customerName = getTenKhachHang(appointment.getMaKhachHang());
+        JLabel lblCustomer = new JLabel(customerName);
+        lblCustomer.setFont(new Font("Arial", Font.BOLD, 12));
+
+        // Service names
+        StringBuilder services = new StringBuilder();
+        if (appointment.hasDichVu()) {
+            for (int i = 0; i < Math.min(appointment.getDanhSachDichVu().size(), 2); i++) {
+                if (i > 0) services.append(", ");
+                services.append(appointment.getDanhSachDichVu().get(i).getDichVu().getTenDichVu());
+            }
+            if (appointment.getDanhSachDichVu().size() > 2) {
+                services.append("...");
+            }
         } else {
-            Border border = BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(Color.DARK_GRAY),
-                    "Thông tin đặt lịch"
-            );
-            getFormPanel().setBorder(border);
+            services.append("Không có dịch vụ");
         }
-    }
 
-    private void setupGiuongComboBoxRenderer() {
-        cbGiuong.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value,
-                    int index, boolean isSelected, boolean cellHasFocus) {
-                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        JLabel lblServices = new JLabel(services.toString());
+        lblServices.setFont(new Font("Arial", Font.PLAIN, 11));
+        lblServices.setForeground(COLOR_SECONDARY);
 
-                if (value instanceof Giuong) {
-                    Giuong giuong = (Giuong) value;
+        rightPanel.add(lblCustomer, BorderLayout.NORTH);
+        rightPanel.add(lblServices, BorderLayout.CENTER);
 
-                    // Đổi màu theo trạng thái
-                    if (giuong.getMaGiuong() != null) {
-                        switch (giuong.getTrangThai()) {
-                            case "Trống":
-                                setForeground(new Color(0, 128, 0)); // Xanh lá
-                                setText(giuong.getSoHieu() + " - " + giuong.getTrangThai());
-                                break;
-                            case "Đã đặt":
-                                setForeground(Color.ORANGE);
-                                setText(giuong.getSoHieu() + " - " + giuong.getTrangThai());
-                                break;
-                            case "Đang sử dụng":
-                                setForeground(Color.RED);
-                                setText(giuong.getSoHieu() + " - " + giuong.getTrangThai());
-                                break;
-                            case "Bảo trì":
-                                setForeground(Color.GRAY);
-                                setText(giuong.getSoHieu() + " - " + giuong.getTrangThai());
-                                break;
-                            default:
-                                setForeground(Color.BLACK);
-                                setText(giuong.getSoHieu() + " - " + giuong.getTrangThai());
-                        }
-                    } else {
-                        setText("-- Chọn giường --");
-                    }
-                }
+        panel.add(leftPanel, BorderLayout.WEST);
+        panel.add(rightPanel, BorderLayout.CENTER);
 
-                return c;
+        // Add click listener
+        panel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                showAppointmentDetails(appointment);
             }
         });
+
+        return panel;
+    }
+
+    private void showAppointmentDetails(DatLich appointment) {
+        // TODO: Implement appointment details dialog
+        JOptionPane.showMessageDialog(this, 
+            "Chi tiết lịch hẹn:\n" +
+            "Khách hàng: " + getTenKhachHang(appointment.getMaKhachHang()) + "\n" +
+            "Thời gian: " + appointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm")) + "\n" +
+            "Trạng thái: " + appointment.getTrangThai() + "\n" +
+            "Ghi chú: " + (appointment.getGhiChu() != null ? appointment.getGhiChu() : "Không có"),
+            "Chi tiết lịch hẹn",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    private void selectDate(LocalDate date) {
+        selectedDate = date;
+        updateCalendar();
+        updateTimeline();
+        
+        // Auto-fill date in form
+        txtNgayDat.setText(date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+    }
+
+    private void selectToday() {
+        selectDate(LocalDate.now());
+    }
+
+    private void previousMonth() {
+        currentDate = currentDate.minusMonths(1);
+        updateCalendar();
+    }
+
+    private void nextMonth() {
+        currentDate = currentDate.plusMonths(1);
+        updateCalendar();
     }
 
     private JButton createStyledButton(String text, Color backgroundColor) {
         JButton button = new JButton(text);
         button.setBackground(backgroundColor);
-        button.setForeground(COLOR_TEXT);
+        button.setForeground(Color.WHITE);
         button.setFont(new Font("Arial", Font.BOLD, 12));
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
@@ -387,41 +512,11 @@ public class QuanLyDatLichView extends JPanel {
     }
 
     private void loadData() {
-        // Load danh sách đặt lịch
-        loadTableData();
-
-        // Load combobox data
         loadComboboxData();
-    }
-
-    private void loadTableData() {
-        tableModel.setRowCount(0);
-        try {
-            List<DatLich> danhSachDatLich = datLichService.getAllDatLich();
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-
-            for (DatLich datLich : danhSachDatLich) {
-                String tenKhachHang = getTenKhachHang(datLich.getMaKhachHang());
-                String tenDichVu = getTenDichVu(datLich.getMaDichVu());
-                String tenGiuong = getTenGiuong(datLich.getMaGiuong());
-
-                Object[] row = {
-                    datLich.getMaLich(),
-                    tenKhachHang,
-                    datLich.getNgayDat().format(dateFormatter),
-                    datLich.getGioDat().format(timeFormatter),
-                    tenDichVu,
-                    tenGiuong,
-                    datLich.getTrangThai(),
-                    datLich.getGhiChu()
-                };
-                tableModel.addRow(row);
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải dữ liệu: " + e.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
+        updateTimeline();
+        
+        // Auto-fill today's date
+        txtNgayDat.setText(selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
     }
 
     private void loadComboboxData() {
@@ -433,7 +528,7 @@ public class QuanLyDatLichView extends JPanel {
                 cbKhachHang.addItem(kh);
             }
 
-            // Load dịch vụ - thêm item mặc định
+            // Load dịch vụ
             cbDichVu.removeAllItems();
             cbDichVu.addItem(new DichVu()); // Item trống
             List<DichVu> dichVus = dichVuService.getAllDichVu();
@@ -441,7 +536,7 @@ public class QuanLyDatLichView extends JPanel {
                 cbDichVu.addItem(dv);
             }
 
-            // Load giường - thêm item mặc định
+            // Load giường
             cbGiuong.removeAllItems();
             cbGiuong.addItem(new Giuong()); // Item trống
             List<Giuong> giuongs = giuongService.getAllGiuong();
@@ -456,9 +551,7 @@ public class QuanLyDatLichView extends JPanel {
     }
 
     private String getTenKhachHang(Integer maKhachHang) {
-        if (maKhachHang == null) {
-            return "";
-        }
+        if (maKhachHang == null) return "Không xác định";
         try {
             KhachHang kh = khachHangService.getKhachHangById(maKhachHang);
             return kh != null ? kh.getHoTen() : "Không xác định";
@@ -467,116 +560,17 @@ public class QuanLyDatLichView extends JPanel {
         }
     }
 
-    private String getTenDichVu(Integer maDichVu) {
-        if (maDichVu == null) {
-            return "";
-        }
-        try {
-            DichVu dv = dichVuService.getDichVuById(maDichVu);
-            return dv != null ? dv.getTenDichVu() : "Không xác định";
-        } catch (Exception e) {
-            return "Lỗi";
-        }
-    }
-
-    private String getTenGiuong(Integer maGiuong) {
-        if (maGiuong == null) {
-            return "";
-        }
-        try {
-            Giuong g = giuongService.getGiuongById(maGiuong);
-            return g != null ? g.getSoHieu() : "Không xác định";
-        } catch (Exception e) {
-            return "Lỗi";
-        }
-    }
-
-    private void setupEvents() {
-        btnThem.addActionListener(e -> showFormThemMoi());
-        // Thêm các event listeners khác...
-    }
-
-    private void showFormThemMoi() {
-        clearForm();
-        JPanel formPanel = (JPanel) getComponent(2); // Lấy form panel
-        formPanel.setVisible(true);
-        revalidate();
-        repaint();
-    }
-
-    private void clearForm() {
-        cbKhachHang.setSelectedIndex(0);
-        cbDichVu.setSelectedIndex(0);
-        cbGiuong.setSelectedIndex(0);
-        txtNgayDat.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        txtGioDat.setText("");
-        txtGhiChu.setText("");
-    }
-    // Thêm các phương thức getter này vào class QuanLyDatLichView
-
-    public JButton getBtnThem() {
-        return btnThem;
-    }
-
-    public JButton getBtnSua() {
-        return btnSua;
-    }
-
-    public JButton getBtnXoa() {
-        return btnXoa;
-    }
-
-    public JButton getBtnXacNhan() {
-        return btnXacNhan;
-    }
-
-    public JButton getBtnHuy() {
-        return btnHuy;
-    }
-
-    public JTable getTableDatLich() {
-        return tableDatLich;
-    }
-
-    public DefaultTableModel getTableModel() {
-        return tableModel;
-    }
-
-    public JTextField getTxtTimKiem() {
-        return txtTimKiem;
-    }
-
-    public JComboBox<String> getCbTrangThai() {
-        return cbTrangThai;
-    }
-
-    public JComboBox<KhachHang> getCbKhachHang() {
-        return cbKhachHang;
-    }
-
-    public JComboBox<DichVu> getCbDichVu() {
-        return cbDichVu;
-    }
-
-    public JComboBox<Giuong> getCbGiuong() {
-        return cbGiuong;
-    }
-
-    public JTextField getTxtNgayDat() {
-        return txtNgayDat;
-    }
-
-    public JTextField getTxtGioDat() {
-        return txtGioDat;
-    }
-
-    public JTextArea getTxtGhiChu() {
-        return txtGhiChu;
-    }
-
-    public JPanel getFormPanel() {
-        // Giả sử form panel là component thứ 2 trong BorderLayout.SOUTH
-        return (JPanel) getComponent(2);
-    }
-    // Các phương thức khác cho CRUD operations...
+    // Getter methods for controller
+    public JComboBox<KhachHang> getCbKhachHang() { return cbKhachHang; }
+    public JComboBox<DichVu> getCbDichVu() { return cbDichVu; }
+    public JComboBox<Giuong> getCbGiuong() { return cbGiuong; }
+    public JTextField getTxtNgayDat() { return txtNgayDat; }
+    public JTextField getTxtGioDat() { return txtGioDat; }
+    public JTextArea getTxtGhiChu() { return txtGhiChu; }
+    public JButton getBtnThem() { return btnThem; }
+    public JButton getBtnSua() { return btnSua; }
+    public JButton getBtnXoa() { return btnXoa; }
+    public JButton getBtnXacNhan() { return btnXacNhan; }
+    public JButton getBtnHuy() { return btnHuy; }
+    public LocalDate getSelectedDate() { return selectedDate; }
 }
