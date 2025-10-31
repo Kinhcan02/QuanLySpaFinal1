@@ -4,6 +4,7 @@ import Model.KhachHang;
 import Repository.KhachHangRepository;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -100,11 +101,38 @@ public class KhachHangService {
         if (maKhachHang <= 0) {
             throw new IllegalArgumentException("Mã khách hàng không hợp lệ");
         }
+        
         try {
+            // Kiểm tra khách hàng có tồn tại không
+            KhachHang khachHang = repository.getById(maKhachHang);
+            if (khachHang == null) {
+                throw new RuntimeException("Khách hàng không tồn tại");
+            }
+            
             return repository.delete(maKhachHang);
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi xóa khách hàng: " + maKhachHang, e);
-            throw new RuntimeException("Không thể xóa khách hàng", e);
+            
+            // Xử lý lỗi ràng buộc khóa ngoại
+            if (e.getSQLState().equals("23000") || e.getMessage().contains("foreign key constraint")) {
+                throw new RuntimeException("Không thể xóa khách hàng vì có dữ liệu liên quan (hóa đơn, đặt lịch, etc.)");
+            }
+            
+            throw new RuntimeException("Không thể xóa khách hàng: " + e.getMessage());
+        }
+    }
+
+    // PHƯƠNG THỨC MỚI - KIỂM TRA DỮ LIỆU LIÊN QUAN
+    public Map<String, Integer> kiemTraDuLieuLienQuan(int maKhachHang) {
+        if (maKhachHang <= 0) {
+            throw new IllegalArgumentException("Mã khách hàng không hợp lệ");
+        }
+        
+        try {
+            return repository.kiemTraDuLieuLienQuan(maKhachHang);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Lỗi khi kiểm tra dữ liệu liên quan: " + maKhachHang, e);
+            throw new RuntimeException("Không thể kiểm tra dữ liệu liên quan", e);
         }
     }
 

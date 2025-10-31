@@ -10,9 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import com.toedter.calendar.JDateChooser;
 
 public class QuanLyKhachHangController {
@@ -158,6 +158,13 @@ public class QuanLyKhachHangController {
             return;
         }
 
+        // Validate số điện thoại trước khi gọi service
+        String soDienThoai = txtSoDienThoai.getText().trim();
+        if (!isValidPhoneNumber(soDienThoai)) {
+            hienThiThongBao("Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại có 10-11 chữ số", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         // Parse ngày sinh từ JDateChooser
         LocalDate ngaySinh = null;
         if (dateChooserNgaySinh.getDate() != null) {
@@ -170,7 +177,7 @@ public class QuanLyKhachHangController {
                 txtHoTen.getText().trim(),
                 ngaySinh,
                 (String) cboLoaiKhach.getSelectedItem(),
-                txtSoDienThoai.getText().trim(),
+                soDienThoai,
                 txtGhiChu.getText().trim()
         );
 
@@ -184,6 +191,15 @@ public class QuanLyKhachHangController {
         }
     }
 
+    private boolean isValidPhoneNumber(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false;
+        }
+
+        String cleanedPhone = phone.trim().replaceAll("\\s+", "").replaceAll("-", "").replaceAll("\\+", "");
+        return cleanedPhone.matches("\\d{9,11}");
+    }
+
     private void suaKhachHang() {
         int selectedRow = view.getTblKhachHang().getSelectedRow();
         if (selectedRow == -1) {
@@ -193,18 +209,12 @@ public class QuanLyKhachHangController {
 
         try {
             int maKhachHang = (int) view.getModel().getValueAt(selectedRow, 0);
-            String tenKhachHang = (String) view.getModel().getValueAt(selectedRow, 1);
-
-            boolean confirmed = hienThiXacNhan("Bạn có chắc muốn sửa khách hàng '" + tenKhachHang + "' không?");
-            
-            if (confirmed) {
-                KhachHang khachHang = service.getKhachHangById(maKhachHang);
-                if (khachHang == null) {
-                    hienThiThongBao("Không tìm thấy khách hàng cần sửa", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                showEditKhachHangForm(khachHang);
+            KhachHang khachHang = service.getKhachHangById(maKhachHang);
+            if (khachHang == null) {
+                hienThiThongBao("Không tìm thấy khách hàng cần sửa", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+            showEditKhachHangForm(khachHang);
 
         } catch (Exception e) {
             hienThiThongBao("Lỗi khi sửa khách hàng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -216,31 +226,25 @@ public class QuanLyKhachHangController {
             JDialog dialog = createDialog("Sửa Khách Hàng", 500, 550);
             JPanel mainPanel = createMainPanel();
 
-            // Form nhập liệu với BorderLayout
+            // Form nhập liệu với BorderLayout - GIỐNG FORM THÊM
             JPanel formPanel = new JPanel(new BorderLayout(10, 10));
             formPanel.setBackground(COLOR_BACKGROUND);
 
-            // Panel cho các field thông thường
-            JPanel basicInfoPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+            // Panel cho các field thông thường - GIỐNG FORM THÊM
+            JPanel basicInfoPanel = new JPanel(new GridLayout(4, 2, 10, 10));
             basicInfoPanel.setBackground(COLOR_BACKGROUND);
 
-            JTextField txtMaKH = new JTextField(String.valueOf(khachHang.getMaKhachHang()));
-            txtMaKH.setEditable(false);
             JTextField txtHoTen = new JTextField(khachHang.getHoTen());
-            
             JDateChooser dateChooserNgaySinh = view.createStyledDateChooser();
             if (khachHang.getNgaySinh() != null) {
                 dateChooserNgaySinh.setDate(Date.from(khachHang.getNgaySinh().atStartOfDay(ZoneId.systemDefault()).toInstant()));
             }
-            
+
             JComboBox<String> cboLoaiKhach = new JComboBox<>(new String[]{"Thân thiết", "Thường xuyên", "Mới"});
             cboLoaiKhach.setSelectedItem(khachHang.getLoaiKhach());
             JTextField txtSoDienThoai = new JTextField(khachHang.getSoDienThoai());
-            JTextField txtDiemTichLuy = new JTextField(String.valueOf(khachHang.getDiemTichLuy()));
-            txtDiemTichLuy.setEditable(false);
 
-            basicInfoPanel.add(createStyledLabel("Mã KH:"));
-            basicInfoPanel.add(txtMaKH);
+            // SẮP XẾP THEO ĐÚNG THỨ TỰ GIỐNG FORM THÊM
             basicInfoPanel.add(createStyledLabel("Họ tên:"));
             basicInfoPanel.add(txtHoTen);
             basicInfoPanel.add(createStyledLabel("Ngày sinh:"));
@@ -249,10 +253,8 @@ public class QuanLyKhachHangController {
             basicInfoPanel.add(cboLoaiKhach);
             basicInfoPanel.add(createStyledLabel("Số điện thoại:"));
             basicInfoPanel.add(txtSoDienThoai);
-            basicInfoPanel.add(createStyledLabel("Điểm tích lũy:"));
-            basicInfoPanel.add(txtDiemTichLuy);
 
-            // Panel cho ghi chú
+            // Panel cho ghi chú - GIỐNG FORM THÊM
             JPanel ghiChuPanel = new JPanel(new BorderLayout(5, 5));
             ghiChuPanel.setBackground(COLOR_BACKGROUND);
 
@@ -267,11 +269,11 @@ public class QuanLyKhachHangController {
             ghiChuPanel.add(lblGhiChu, BorderLayout.NORTH);
             ghiChuPanel.add(scrollGhiChu, BorderLayout.CENTER);
 
-            // Thêm các panel vào form chính
+            // Thêm các panel vào form chính - GIỐNG FORM THÊM
             formPanel.add(basicInfoPanel, BorderLayout.NORTH);
             formPanel.add(ghiChuPanel, BorderLayout.CENTER);
 
-            // Panel nút
+            // Panel nút - GIỐNG FORM THÊM
             JPanel buttonPanel = createButtonPanel();
             JButton btnCapNhat = createStyledButton("Cập nhật", COLOR_BUTTON);
             JButton btnHuy = createStyledButton("Hủy", COLOR_BUTTON);
@@ -337,28 +339,56 @@ public class QuanLyKhachHangController {
     }
 
     private void xoaKhachHang() {
-        int selectedRow = view.getTblKhachHang().getSelectedRow();
-        if (selectedRow == -1) {
-            hienThiThongBao("Vui lòng chọn một khách hàng để xóa", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         try {
+            int selectedRow = view.getTblKhachHang().getSelectedRow();
+            if (selectedRow == -1) {
+                hienThiThongBao("Vui lòng chọn khách hàng cần xóa", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
             int maKhachHang = (int) view.getModel().getValueAt(selectedRow, 0);
             String tenKhachHang = (String) view.getModel().getValueAt(selectedRow, 1);
-
-            boolean confirmed = hienThiXacNhan("Bạn có chắc muốn xóa khách hàng '" + tenKhachHang + "' không?");
             
-            if (confirmed) {
-                boolean success = service.deleteKhachHang(maKhachHang);
-                if (success) {
-                    hienThiThongBao("Xóa khách hàng thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    loadAllKhachHang();
-                } else {
-                    hienThiThongBao("Xóa khách hàng thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            // Kiểm tra dữ liệu liên quan
+            Map<String, Integer> duLieuLienQuan = service.kiemTraDuLieuLienQuan(maKhachHang);
+            
+            if (!duLieuLienQuan.isEmpty()) {
+                StringBuilder message = new StringBuilder();
+                message.append("Không thể xóa khách hàng '").append(tenKhachHang).append("' vì có dữ liệu liên quan:\n\n");
+                
+                for (Map.Entry<String, Integer> entry : duLieuLienQuan.entrySet()) {
+                    message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" bản ghi\n");
+                }
+                
+                message.append("\nVui lòng xóa các dữ liệu liên quan trước khi xóa khách hàng.");
+                hienThiThongBao(message.toString(), "Không thể xóa", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            // Xác nhận xóa - SỬA LẠI PHẦN NÀY
+            int confirmed = JOptionPane.showConfirmDialog(
+                view, 
+                "Bạn có chắc muốn xóa khách hàng '" + tenKhachHang + "' không?", 
+                "Xác nhận xóa", 
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+            
+            if (confirmed == JOptionPane.YES_OPTION) {
+                try {
+                    boolean success = service.deleteKhachHang(maKhachHang);
+                    
+                    if (success) {
+                        hienThiThongBao("Xóa khách hàng thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                        loadAllKhachHang(); // Refresh danh sách
+                    } else {
+                        hienThiThongBao("Xóa khách hàng thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception ex) {
+                    hienThiThongBao("Lỗi khi xóa khách hàng: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
-
+            
         } catch (Exception e) {
             hienThiThongBao("Lỗi khi xóa khách hàng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -385,157 +415,11 @@ public class QuanLyKhachHangController {
         }
     }
 
-    // CÁC PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO GIỐNG QuanLyDichVuController
-
-    // PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO CUSTOM VỚI MÀU XANH TRÀN VIỀN
+    // CÁC PHƯƠNG THỨC HIỂN THỊ THÔNG BÁO
     private void hienThiThongBao(String message, String title, int messageType) {
-        JDialog dialog = createCustomDialog(message, title, messageType);
-        dialog.setVisible(true);
+        JOptionPane.showMessageDialog(view, message, title, messageType);
     }
 
-    // PHƯƠNG THỨC HIỂN THỊ XÁC NHẬN CUSTOM VỚI MÀU XANH TRÀN VIỀN
-    private boolean hienThiXacNhan(String message) {
-        JDialog dialog = createConfirmationDialog(message);
-        final boolean[] result = {false};
-        
-        // Đợi dialog đóng
-        dialog.setVisible(true);
-        
-        return result[0];
-    }
-
-    // PHƯƠNG THỨC TẠO CUSTOM DIALOG
-    private JDialog createCustomDialog(String message, String title, int messageType) {
-        // Tạo custom button OK
-        JButton okButton = createStyledButton("OK", COLOR_BUTTON);
-        okButton.addActionListener(e -> {
-            Window window = SwingUtilities.getWindowAncestor(okButton);
-            if (window != null) {
-                window.dispose();
-            }
-        });
-
-        // Tạo panel chứa nội dung với màu nền xanh tràn viền
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(COLOR_BACKGROUND);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Tạo icon và message
-        JLabel messageLabel = new JLabel(message);
-        messageLabel.setForeground(COLOR_TEXT);
-        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        // Icon tùy theo loại message
-        Icon icon = null;
-        switch (messageType) {
-            case JOptionPane.ERROR_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.errorIcon");
-                break;
-            case JOptionPane.INFORMATION_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.informationIcon");
-                break;
-            case JOptionPane.WARNING_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.warningIcon");
-                break;
-            case JOptionPane.QUESTION_MESSAGE:
-                icon = UIManager.getIcon("OptionPane.questionIcon");
-                break;
-        }
-
-        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        contentPanel.setBackground(COLOR_BACKGROUND);
-        if (icon != null) {
-            JLabel iconLabel = new JLabel(icon);
-            contentPanel.add(iconLabel);
-        }
-        contentPanel.add(messageLabel);
-
-        panel.add(contentPanel, BorderLayout.CENTER);
-
-        // Panel chứa nút OK
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(COLOR_BACKGROUND);
-        buttonPanel.add(okButton);
-
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Tạo JDialog
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), title, true);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(view);
-        dialog.setResizable(false);
-
-        // Đặt nút OK làm default button
-        dialog.getRootPane().setDefaultButton(okButton);
-
-        return dialog;
-    }
-
-    // PHƯƠNG THỨC TẠO DIALOG XÁC NHẬN
-    private JDialog createConfirmationDialog(String message) {
-        // Tạo custom buttons
-        JButton btnCo = createStyledButton("Có", COLOR_BUTTON);
-        JButton btnKhong = createStyledButton("Không", new Color(149, 165, 166)); // Màu xám cho nút "Không"
-        
-        // Tạo panel chứa nội dung với màu nền xanh tràn viền
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(COLOR_BACKGROUND);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Tạo icon và message
-        JLabel messageLabel = new JLabel(message);
-        messageLabel.setForeground(COLOR_TEXT);
-        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        contentPanel.setBackground(COLOR_BACKGROUND);
-        
-        // Thêm icon question
-        Icon questionIcon = UIManager.getIcon("OptionPane.questionIcon");
-        if (questionIcon != null) {
-            JLabel iconLabel = new JLabel(questionIcon);
-            contentPanel.add(iconLabel);
-        }
-        contentPanel.add(messageLabel);
-
-        panel.add(contentPanel, BorderLayout.CENTER);
-
-        // Panel chứa nút
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        buttonPanel.setBackground(COLOR_BACKGROUND);
-        buttonPanel.add(btnCo);
-        buttonPanel.add(btnKhong);
-
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Tạo JDialog
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), "Xác nhận", true);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(view);
-        dialog.setResizable(false);
-
-        // Xử lý sự kiện cho nút
-        final boolean[] result = {false};
-        
-        btnCo.addActionListener(e -> {
-            result[0] = true;
-            dialog.dispose();
-        });
-        
-        btnKhong.addActionListener(e -> {
-            result[0] = false;
-            dialog.dispose();
-        });
-
-        // Đặt nút "Có" làm default button
-        dialog.getRootPane().setDefaultButton(btnCo);
-
-        return dialog;
-    }
-
-    // PHƯƠNG THỨC TẠO DIALOG
     private JDialog createDialog(String title, int width, int height) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), title, true);
         dialog.setSize(width, height);
@@ -544,7 +428,6 @@ public class QuanLyKhachHangController {
         return dialog;
     }
 
-    // PHƯƠNG THỨC TẠO MAIN PANEL
     private JPanel createMainPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -552,14 +435,12 @@ public class QuanLyKhachHangController {
         return mainPanel;
     }
 
-    // PHƯƠNG THỨC TẠO BUTTON PANEL
     private JPanel createButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         buttonPanel.setBackground(COLOR_BACKGROUND);
         return buttonPanel;
     }
 
-    // PHƯƠNG THỨC TẠO STYLED LABEL
     private JLabel createStyledLabel(String text) {
         JLabel label = new JLabel(text);
         label.setForeground(COLOR_TEXT);
@@ -567,7 +448,6 @@ public class QuanLyKhachHangController {
         return label;
     }
 
-    // PHƯƠNG THỨC TẠO STYLED BUTTON
     private JButton createStyledButton(String text, Color backgroundColor) {
         JButton button = new JButton(text);
         button.setBackground(backgroundColor);

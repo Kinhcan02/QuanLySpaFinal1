@@ -48,6 +48,9 @@ public class MainViewController implements ActionListener {
         else if (source == mainView.getBtnQuanLyKhachHang()) {
             mainView.showQuanLyKhachHang();
         } 
+        else if (source == mainView.getBtnThongBao()) {
+            mainView.showThongBao();
+        } 
         else if (source == mainView.getBtnThongKe()) {
             hienThiThongBao("Tính năng Thống kê đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         } 

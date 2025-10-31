@@ -1,16 +1,7 @@
 package View;
 
-import Controller.QuanLyDichVuController;
-import Controller.QuanLyKhachHangController;
-import Controller.QuanLyNhanVienController;
-import Controller.MainViewController;
-import Controller.QuanLyNguyenLieuController;
-import Controller.QuanLyNhapNguyenLieuController;
-import Controller.QuanLyCaLamController;
-import Controller.QuanLyDatLichController;
-import Controller.QuanLyTaiKhoanController;
-import View.QuanLyNguyenLieuView;
-import View.QuanLyNhapNguyenLieuView;
+import Controller.*;
+import View.*;
 import Service.CaLamService;
 import Service.DatLichService;
 import Service.KhachHangService;
@@ -30,7 +21,6 @@ public class MainView extends JFrame {
 
     private QuanLyDatLichView quanLyDatLichView;
     private QuanLyDatLichController quanLyDatLichController;
-    private Timer thongBaoTimer;
     private JDesktopPane desktopPane;
     private JButton btnThongBao, btnDatLich, btnQuanLyNguyenLieu,
             btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam,
@@ -44,7 +34,8 @@ public class MainView extends JFrame {
     private QuanLyNguyenLieuView quanLyNguyenLieuView;
     private QuanLyNhapNguyenLieuController quanLyNhapNguyenLieuController;
     private QuanLyNhapNguyenLieuView quanLyNhapNguyenLieuView;
-
+    private ThongBaoView thongBaoView;
+    private ThongBaoController thongBaoController;
     // Màu sắc
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
     private final Color COLOR_MENU = new Color(0x4D, 0x8A, 0x57);
@@ -72,7 +63,6 @@ public class MainView extends JFrame {
                 }
             }
         });
-        setupThongBaoTimer();
     }
 
     private void initUI() {
@@ -393,44 +383,44 @@ public class MainView extends JFrame {
             DatLichService datLichService = new DatLichService();
         }
     }
-
-    private void setupThongBaoTimer() {
-        // Timer kiểm tra thông báo mỗi 30 giây
-        thongBaoTimer = new Timer(30000, e -> kiemTraThongBaoDatLich());
-        thongBaoTimer.start();
-    }
-
-    public void showThongBao() {
-        try {
-            JInternalFrame internalFrame = new JInternalFrame(
-                    "Thông Báo Đặt Lịch",
-                    true, true, true, true
+public void showThongBao() {
+    try {
+        // Kiểm tra nếu thongBaoView đã tồn tại nhưng bị dispose
+        if (thongBaoView != null && thongBaoView.isDisplayable()) {
+            // Nếu đang hiển thị thì đưa lên trước
+            thongBaoView.toFront();
+            try {
+                thongBaoView.setSelected(true);
+            } catch (java.beans.PropertyVetoException e) {
+                e.printStackTrace();
+            }
+        } else {
+            // Tạo mới nếu chưa có hoặc đã bị dispose
+            thongBaoView = new ThongBaoView();
+            thongBaoController = new ThongBaoController(thongBaoView);
+            
+            // Thêm thongBaoView vào desktopPane
+            desktopPane.add(thongBaoView);
+            
+            // Đặt vị trí ở góc trên bên phải
+            Dimension desktopSize = desktopPane.getSize();
+            Dimension frameSize = thongBaoView.getSize();
+            thongBaoView.setLocation(
+                desktopSize.width - frameSize.width - 20,
+                20
             );
-
-            JPanel thongBaoPanel = new JPanel(new BorderLayout());
-            thongBaoPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            thongBaoPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-            JTextArea txtThongBao = new JTextArea();
-            txtThongBao.setEditable(false);
-            txtThongBao.setFont(new Font("Arial", Font.PLAIN, 14));
-            txtThongBao.setBackground(Color.WHITE);
-            txtThongBao.setText("Các thông báo về lịch hẹn sắp tới sẽ hiển thị ở đây.\n\n"
-                    + "Hệ thống sẽ tự động thông báo trước 10 phút khi lịch hẹn sắp bắt đầu.");
-
-            JScrollPane scrollPane = new JScrollPane(txtThongBao);
-            thongBaoPanel.add(scrollPane, BorderLayout.CENTER);
-
-            internalFrame.setContentPane(thongBaoPanel);
-            internalFrame.setSize(400, 300);
-            showInternalFrame(internalFrame);
-
-        } catch (Exception e) {
-            hienThiThongBao("Lỗi khi mở thông báo: " + e.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+        
+        // Đảm bảo hiển thị
+        thongBaoView.setVisible(true);
+        thongBaoView.toFront();
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+        hienThiThongBao("Lỗi khi mở thông báo: " + e.getMessage(),
+                "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
-
+}
     public void showQuanLyDatLich() {
         try {
             JInternalFrame internalFrame = new JInternalFrame(
@@ -575,25 +565,27 @@ public class MainView extends JFrame {
             hienThiThongBao("Lỗi khi mở quản lý dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
-public void showQuanLyTaiKhoan() {
-    try {
-        JInternalFrame internalFrame = new JInternalFrame(
-                "Quản Lý Tài Khoản",
-                true, true, true, true
-        );
 
-        QuanLyTaiKhoanView quanLyTaiKhoanView = new QuanLyTaiKhoanView();
-        QuanLyTaiKhoanController quanLyTaiKhoanController = new QuanLyTaiKhoanController(quanLyTaiKhoanView);
+    public void showQuanLyTaiKhoan() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Quản Lý Tài Khoản",
+                    true, true, true, true
+            );
 
-        internalFrame.setContentPane(quanLyTaiKhoanView);
-        internalFrame.pack();
-        showInternalFrame(internalFrame);
+            QuanLyTaiKhoanView quanLyTaiKhoanView = new QuanLyTaiKhoanView();
+            QuanLyTaiKhoanController quanLyTaiKhoanController = new QuanLyTaiKhoanController(quanLyTaiKhoanView);
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        hienThiThongBao("Lỗi khi mở quản lý tài khoản: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            internalFrame.setContentPane(quanLyTaiKhoanView);
+            internalFrame.pack();
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở quản lý tài khoản: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
-}
+
     public void showInternalFrame(JInternalFrame internalFrame) {
         SwingUtilities.invokeLater(() -> {
             try {
