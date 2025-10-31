@@ -5,9 +5,11 @@ import Model.DatLich;
 import Repository.GiuongRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GiuongService {
+
     private final GiuongRepository repository;
     private final DatLichService datLichService;
 
@@ -20,12 +22,12 @@ public class GiuongService {
     public List<Giuong> getAllGiuongWithStatus() {
         try {
             List<Giuong> giuongs = repository.getAll();
-            
+
             // Cập nhật trạng thái cho từng giường
             for (Giuong giuong : giuongs) {
                 updateGiuongStatus(giuong);
             }
-            
+
             return giuongs;
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi lấy danh sách giường: " + e.getMessage(), e);
@@ -34,7 +36,9 @@ public class GiuongService {
 
     // Cập nhật trạng thái giường dựa trên lịch đặt
     public void updateGiuongStatus(Giuong giuong) {
-        if (giuong == null || giuong.getMaGiuong() == null) return;
+        if (giuong == null || giuong.getMaGiuong() == null) {
+            return;
+        }
 
         try {
             // Nếu giường đang bảo trì, giữ nguyên trạng thái
@@ -48,20 +52,18 @@ public class GiuongService {
                     giuong.markDangSuDung();
                     repository.updateTrangThai(giuong.getMaGiuong(), "Đang sử dụng");
                 }
-            }
-            // Kiểm tra nếu giường đã được đặt cho hôm nay
+            } // Kiểm tra nếu giường đã được đặt cho hôm nay
             else if (isGiuongDaDatHomNay(giuong.getMaGiuong())) {
                 if (!giuong.isDaDat()) {
                     giuong.markDaDat();
                     repository.updateTrangThai(giuong.getMaGiuong(), "Đã đặt");
                 }
-            }
-            // Nếu không có gì thì trở về trạng thái trống
+            } // Nếu không có gì thì trở về trạng thái trống
             else if (!giuong.isTrong()) {
                 giuong.markTrong();
                 repository.updateTrangThai(giuong.getMaGiuong(), "Trống");
             }
-            
+
         } catch (Exception e) {
             System.err.println("Lỗi khi cập nhật trạng thái giường: " + e.getMessage());
         }
@@ -69,22 +71,24 @@ public class GiuongService {
 
     // Kiểm tra giường đang được sử dụng
     private boolean isGiuongDangSuDung(Integer maGiuong) {
-        if (maGiuong == null) return false;
-        
+        if (maGiuong == null) {
+            return false;
+        }
+
         try {
             List<DatLich> datLichHomNay = datLichService.getDatLichHomNay();
             LocalTime now = LocalTime.now();
-            
+
             for (DatLich datLich : datLichHomNay) {
-                if (maGiuong.equals(datLich.getMaGiuong()) && 
-                    datLich.isDaXacNhan() && 
-                    !datLich.isDaHuy() && 
-                    !datLich.isHoanThanh()) {
-                    
+                if (maGiuong.equals(datLich.getMaGiuong())
+                        && datLich.isDaXacNhan()
+                        && !datLich.isDaHuy()
+                        && !datLich.isHoanThanh()) {
+
                     // Kiểm tra xem có đang trong giờ sử dụng không
                     LocalTime gioBatDau = datLich.getGioDat();
                     LocalTime gioKetThuc = gioBatDau.plusMinutes(datLich.tinhTongThoiGian());
-                    
+
                     if (now.isAfter(gioBatDau) && now.isBefore(gioKetThuc)) {
                         return true;
                     }
@@ -98,22 +102,24 @@ public class GiuongService {
 
     // Kiểm tra giường đã được đặt cho hôm nay
     private boolean isGiuongDaDatHomNay(Integer maGiuong) {
-        if (maGiuong == null) return false;
-        
+        if (maGiuong == null) {
+            return false;
+        }
+
         try {
             List<DatLich> datLichHomNay = datLichService.getDatLichHomNay();
             LocalTime now = LocalTime.now();
-            
+
             for (DatLich datLich : datLichHomNay) {
-                if (maGiuong.equals(datLich.getMaGiuong()) && 
-                    datLich.isDaXacNhan() && 
-                    !datLich.isDaHuy() && 
-                    !datLich.isHoanThanh() &&
-                    !datLich.isQuaGio()) {
-                    
+                if (maGiuong.equals(datLich.getMaGiuong())
+                        && datLich.isDaXacNhan()
+                        && !datLich.isDaHuy()
+                        && !datLich.isHoanThanh()
+                        && !datLich.isQuaGio()) {
+
                     LocalTime gioBatDau = datLich.getGioDat();
                     LocalTime gioKetThuc = gioBatDau.plusMinutes(datLich.tinhTongThoiGian());
-                    
+
                     // Giường đã được đặt nhưng chưa đến giờ sử dụng hoặc đang trong tương lai
                     if (now.isBefore(gioBatDau) || (now.isAfter(gioBatDau) && now.isBefore(gioKetThuc))) {
                         return true;
@@ -195,9 +201,27 @@ public class GiuongService {
 
     public List<Giuong> getGiuongDangSuDung() {
         try {
-            return repository.getGiuongDangSuDung();
+            return repository.getGiuongDangSuDung(); // Sửa từ getGiuongDangPhucVu() thành getGiuongDangSuDung()
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi lấy giường đang sử dụng: " + e.getMessage(), e);
+        }
+    }
+
+    public List<Giuong> getGiuongAvailableForBooking() {
+        try {
+            List<Giuong> allGiuongs = repository.getAll();
+            List<Giuong> availableGiuongs = new ArrayList<>();
+
+            for (Giuong giuong : allGiuongs) {
+                // Chỉ hiển thị giường có trạng thái "Trống" hoặc "Đã đặt"
+                if (giuong.isTrong() || giuong.isDaDat()) {
+                    availableGiuongs.add(giuong);
+                }
+            }
+
+            return availableGiuongs;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lấy danh sách giường khả dụng: " + e.getMessage(), e);
         }
     }
 
@@ -208,5 +232,5 @@ public class GiuongService {
             throw new RuntimeException("Lỗi khi lấy giường bảo trì: " + e.getMessage(), e);
         }
     }
-    
+
 }

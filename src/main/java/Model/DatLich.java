@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatLich {
+
     private Integer maLich;
     private Integer maKhachHang;
     private LocalDate ngayDat;
@@ -19,7 +20,8 @@ public class DatLich {
     private LocalDateTime ngayTao;
     private LocalDateTime ngayCapNhat;
     private Integer maNhanVienTao;
-    
+    private Integer soLuongNguoi; // Thêm trường số lượng người
+
     // Danh sách dịch vụ chi tiết
     private List<DatLichChiTiet> danhSachDichVu;
 
@@ -27,20 +29,14 @@ public class DatLich {
         this.ngayDat = LocalDate.now();
         this.trangThai = "Chờ xác nhận";
         this.danhSachDichVu = new ArrayList<>();
+        this.soLuongNguoi = 1; // Mặc định 1 người
     }
 
-    public DatLich(Integer maKhachHang, LocalDate ngayDat, LocalTime gioDat) {
-        this();
-        this.maKhachHang = maKhachHang;
-        this.ngayDat = ngayDat;
-        this.gioDat = gioDat;
-    }
-
-    // Constructor đầy đủ
+    // Constructor đầy đủ - THÊM soLuongNguoi
     public DatLich(Integer maLich, Integer maKhachHang, LocalDate ngayDat, LocalTime gioDat,
-                  String trangThai, Integer maGiuong, Integer thoiGianDuKien, 
-                  String ghiChu, LocalDateTime ngayTao, LocalDateTime ngayCapNhat, 
-                  Integer maNhanVienTao) {
+            String trangThai, Integer maGiuong, Integer thoiGianDuKien,
+            String ghiChu, LocalDateTime ngayTao, LocalDateTime ngayCapNhat,
+            Integer maNhanVienTao, Integer soLuongNguoi) {
         this.maLich = maLich;
         this.maKhachHang = maKhachHang;
         this.ngayDat = ngayDat;
@@ -52,45 +48,115 @@ public class DatLich {
         this.ngayTao = ngayTao;
         this.ngayCapNhat = ngayCapNhat;
         this.maNhanVienTao = maNhanVienTao;
+        this.soLuongNguoi = soLuongNguoi != null ? soLuongNguoi : 1;
         this.danhSachDichVu = new ArrayList<>();
     }
 
+    // Getter và Setter cho soLuongNguoi
+    public Integer getSoLuongNguoi() {
+        return soLuongNguoi;
+    }
+
+    public void setSoLuongNguoi(Integer soLuongNguoi) {
+        this.soLuongNguoi = soLuongNguoi != null ? soLuongNguoi : 1;
+    }
+
     // Getter và Setter
-    public Integer getMaLich() { return maLich; }
-    public void setMaLich(Integer maLich) { this.maLich = maLich; }
+    public Integer getMaLich() {
+        return maLich;
+    }
 
-    public Integer getMaKhachHang() { return maKhachHang; }
-    public void setMaKhachHang(Integer maKhachHang) { this.maKhachHang = maKhachHang; }
+    public void setMaLich(Integer maLich) {
+        this.maLich = maLich;
+    }
 
-    public LocalDate getNgayDat() { return ngayDat; }
-    public void setNgayDat(LocalDate ngayDat) { this.ngayDat = ngayDat != null ? ngayDat : LocalDate.now(); }
+    public Integer getMaKhachHang() {
+        return maKhachHang;
+    }
 
-    public LocalTime getGioDat() { return gioDat; }
-    public void setGioDat(LocalTime gioDat) { this.gioDat = gioDat; }
+    public void setMaKhachHang(Integer maKhachHang) {
+        this.maKhachHang = maKhachHang;
+    }
 
-    public String getTrangThai() { return trangThai; }
-    public void setTrangThai(String trangThai) { this.trangThai = trangThai != null ? trangThai : "Chờ xác nhận"; }
+    public LocalDate getNgayDat() {
+        return ngayDat;
+    }
 
-    public Integer getMaGiuong() { return maGiuong; }
-    public void setMaGiuong(Integer maGiuong) { this.maGiuong = maGiuong; }
+    public void setNgayDat(LocalDate ngayDat) {
+        this.ngayDat = ngayDat != null ? ngayDat : LocalDate.now();
+    }
 
-    public Integer getThoiGianDuKien() { return thoiGianDuKien; }
-    public void setThoiGianDuKien(Integer thoiGianDuKien) { this.thoiGianDuKien = thoiGianDuKien; }
+    public LocalTime getGioDat() {
+        return gioDat;
+    }
 
-    public String getGhiChu() { return ghiChu; }
-    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
+    public void setGioDat(LocalTime gioDat) {
+        this.gioDat = gioDat;
+    }
 
-    public LocalDateTime getNgayTao() { return ngayTao; }
-    public void setNgayTao(LocalDateTime ngayTao) { this.ngayTao = ngayTao; }
+    public String getTrangThai() {
+        return trangThai;
+    }
 
-    public LocalDateTime getNgayCapNhat() { return ngayCapNhat; }
-    public void setNgayCapNhat(LocalDateTime ngayCapNhat) { this.ngayCapNhat = ngayCapNhat; }
+    public void setTrangThai(String trangThai) {
+        this.trangThai = trangThai != null ? trangThai : "Chờ xác nhận";
+    }
 
-    public Integer getMaNhanVienTao() { return maNhanVienTao; }
-    public void setMaNhanVienTao(Integer maNhanVienTao) { this.maNhanVienTao = maNhanVienTao; }
+    public Integer getMaGiuong() {
+        return maGiuong;
+    }
 
-    public List<DatLichChiTiet> getDanhSachDichVu() { return danhSachDichVu; }
-    public void setDanhSachDichVu(List<DatLichChiTiet> danhSachDichVu) { this.danhSachDichVu = danhSachDichVu; }
+    public void setMaGiuong(Integer maGiuong) {
+        this.maGiuong = maGiuong;
+    }
+
+    public Integer getThoiGianDuKien() {
+        return thoiGianDuKien;
+    }
+
+    public void setThoiGianDuKien(Integer thoiGianDuKien) {
+        this.thoiGianDuKien = thoiGianDuKien;
+    }
+
+    public String getGhiChu() {
+        return ghiChu;
+    }
+
+    public void setGhiChu(String ghiChu) {
+        this.ghiChu = ghiChu;
+    }
+
+    public LocalDateTime getNgayTao() {
+        return ngayTao;
+    }
+
+    public void setNgayTao(LocalDateTime ngayTao) {
+        this.ngayTao = ngayTao;
+    }
+
+    public LocalDateTime getNgayCapNhat() {
+        return ngayCapNhat;
+    }
+
+    public void setNgayCapNhat(LocalDateTime ngayCapNhat) {
+        this.ngayCapNhat = ngayCapNhat;
+    }
+
+    public Integer getMaNhanVienTao() {
+        return maNhanVienTao;
+    }
+
+    public void setMaNhanVienTao(Integer maNhanVienTao) {
+        this.maNhanVienTao = maNhanVienTao;
+    }
+
+    public List<DatLichChiTiet> getDanhSachDichVu() {
+        return danhSachDichVu;
+    }
+
+    public void setDanhSachDichVu(List<DatLichChiTiet> danhSachDichVu) {
+        this.danhSachDichVu = danhSachDichVu;
+    }
 
     // Phương thức tiện ích
     public boolean isValid() {
@@ -105,29 +171,58 @@ public class DatLich {
         return danhSachDichVu != null && !danhSachDichVu.isEmpty();
     }
 
-    public boolean isCho() { return "Chờ xác nhận".equals(trangThai); }
-    public boolean isDaXacNhan() { return "Đã xác nhận".equals(trangThai); }
-    public boolean isDaHuy() { return "Đã hủy".equals(trangThai); }
-    public boolean isHoanThanh() { return "Hoàn thành".equals(trangThai); }
-    public boolean isDangThucHien() { return "Đang thực hiện".equals(trangThai); }
+    public boolean isCho() {
+        return "Chờ xác nhận".equals(trangThai);
+    }
 
-    public void markDaXacNhan() { this.trangThai = "Đã xác nhận"; }
-    public void markDaHuy() { this.trangThai = "Đã hủy"; }
-    public void markHoanThanh() { this.trangThai = "Hoàn thành"; }
-    public void markDangThucHien() { this.trangThai = "Đang thực hiện"; }
+    public boolean isDaXacNhan() {
+        return "Đã xác nhận".equals(trangThai);
+    }
+
+    public boolean isDaHuy() {
+        return "Đã hủy".equals(trangThai);
+    }
+
+    public boolean isHoanThanh() {
+        return "Hoàn thành".equals(trangThai);
+    }
+
+    public boolean isDangThucHien() {
+        return "Đang thực hiện".equals(trangThai);
+    }
+
+    public void markDaXacNhan() {
+        this.trangThai = "Đã xác nhận";
+    }
+
+    public void markDaHuy() {
+        this.trangThai = "Đã hủy";
+    }
+
+    public void markHoanThanh() {
+        this.trangThai = "Hoàn thành";
+    }
+
+    public void markDangThucHien() {
+        this.trangThai = "Đang thực hiện";
+    }
 
     public boolean isInPast() {
-        if (ngayDat == null) return false;
+        if (ngayDat == null) {
+            return false;
+        }
         LocalDate today = LocalDate.now();
-        return ngayDat.isBefore(today) || 
-               (ngayDat.isEqual(today) && gioDat != null && gioDat.isBefore(LocalTime.now()));
+        return ngayDat.isBefore(today)
+                || (ngayDat.isEqual(today) && gioDat != null && gioDat.isBefore(LocalTime.now()));
     }
 
     public boolean isInFuture() {
-        if (ngayDat == null) return false;
+        if (ngayDat == null) {
+            return false;
+        }
         LocalDate today = LocalDate.now();
-        return ngayDat.isAfter(today) || 
-               (ngayDat.isEqual(today) && gioDat != null && gioDat.isAfter(LocalTime.now()));
+        return ngayDat.isAfter(today)
+                || (ngayDat.isEqual(today) && gioDat != null && gioDat.isAfter(LocalTime.now()));
     }
 
     public boolean isToday() {
@@ -135,7 +230,9 @@ public class DatLich {
     }
 
     public boolean isSapToiGio() {
-        if (ngayDat == null || gioDat == null) return false;
+        if (ngayDat == null || gioDat == null) {
+            return false;
+        }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime bookingDateTime = LocalDateTime.of(ngayDat, gioDat);
         LocalDateTime reminderTime = bookingDateTime.minusMinutes(10);
@@ -143,7 +240,9 @@ public class DatLich {
     }
 
     public boolean isQuaGio() {
-        if (ngayDat == null || gioDat == null) return false;
+        if (ngayDat == null || gioDat == null) {
+            return false;
+        }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime bookingDateTime = LocalDateTime.of(ngayDat, gioDat);
         return now.isAfter(bookingDateTime);
@@ -155,8 +254,8 @@ public class DatLich {
             return 60; // Mặc định 60 phút
         }
         return danhSachDichVu.stream()
-                .mapToInt(ct -> ct.getDichVu() != null && ct.getDichVu().getThoiGian() != null ? 
-                               ct.getDichVu().getThoiGian() : 0)
+                .mapToInt(ct -> ct.getDichVu() != null && ct.getDichVu().getThoiGian() != null
+                ? ct.getDichVu().getThoiGian() : 0)
                 .sum();
     }
 
@@ -164,8 +263,8 @@ public class DatLich {
     public String toString() {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        return "Lịch " + maLich + " - " + 
-               (ngayDat != null ? ngayDat.format(dateFormatter) : "") + " " + 
-               (gioDat != null ? gioDat.format(timeFormatter) : "") + " - " + trangThai;
+        return "Lịch " + maLich + " - "
+                + (ngayDat != null ? ngayDat.format(dateFormatter) : "") + " "
+                + (gioDat != null ? gioDat.format(timeFormatter) : "") + " - " + trangThai;
     }
 }

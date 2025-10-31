@@ -3,18 +3,22 @@ package Model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Model class cho bảng HoaDon
  */
 public class HoaDon {
+
+    private List<ChiTietHoaDon> chiTietHoaDon;
     private Integer maHoaDon;
     private Integer maKhachHang;
     private LocalDateTime ngayLap;
     private BigDecimal tongTien;
     private Integer maNhanVienLap;
     private String ghiChu;
-    
+
     // Reference objects (optional - for JOIN operations)
     private KhachHang khachHang;
     private NhanVien nhanVienLap;
@@ -25,8 +29,8 @@ public class HoaDon {
     }
 
     // Constructor với tất cả tham số
-    public HoaDon(Integer maHoaDon, Integer maKhachHang, LocalDateTime ngayLap, 
-                  BigDecimal tongTien, Integer maNhanVienLap, String ghiChu) {
+    public HoaDon(Integer maHoaDon, Integer maKhachHang, LocalDateTime ngayLap,
+            BigDecimal tongTien, Integer maNhanVienLap, String ghiChu) {
         this.maHoaDon = maHoaDon;
         this.maKhachHang = maKhachHang;
         this.ngayLap = ngayLap != null ? ngayLap : LocalDateTime.now();
@@ -36,8 +40,8 @@ public class HoaDon {
     }
 
     // Constructor không có ID (dùng khi insert)
-    public HoaDon(Integer maKhachHang, LocalDateTime ngayLap, BigDecimal tongTien, 
-                  Integer maNhanVienLap, String ghiChu) {
+    public HoaDon(Integer maKhachHang, LocalDateTime ngayLap, BigDecimal tongTien,
+            Integer maNhanVienLap, String ghiChu) {
         this.maKhachHang = maKhachHang;
         this.ngayLap = ngayLap != null ? ngayLap : LocalDateTime.now();
         this.tongTien = tongTien;
@@ -51,6 +55,30 @@ public class HoaDon {
         this.ngayLap = LocalDateTime.now();
         this.tongTien = tongTien;
         this.maNhanVienLap = maNhanVienLap;
+    }
+
+    public List<ChiTietHoaDon> getChiTietHoaDon() {
+        if (chiTietHoaDon == null) {
+            chiTietHoaDon = new ArrayList<>();
+        }
+        return chiTietHoaDon;
+    }
+
+    public void setChiTietHoaDon(List<ChiTietHoaDon> chiTietHoaDon) {
+        this.chiTietHoaDon = chiTietHoaDon;
+    }
+
+// Thêm phương thức kiểm tra có chi tiết không
+    public boolean hasChiTiet() {
+        return chiTietHoaDon != null && !chiTietHoaDon.isEmpty();
+    }
+
+// Thêm phương thức thêm chi tiết
+    public void addChiTiet(ChiTietHoaDon chiTiet) {
+        if (chiTietHoaDon == null) {
+            chiTietHoaDon = new ArrayList<>();
+        }
+        chiTietHoaDon.add(chiTiet);
     }
 
     // Getters and Setters
@@ -120,28 +148,32 @@ public class HoaDon {
 
     // Validation method
     public boolean isValid() {
-        return ngayLap != null && 
-               tongTien != null && tongTien.compareTo(BigDecimal.ZERO) >= 0;
+        return ngayLap != null
+                && tongTien != null && tongTien.compareTo(BigDecimal.ZERO) >= 0;
     }
 
     // Helper method để format ngày
     public String getNgayLapFormatted() {
-        return ngayLap != null ? 
-            ngayLap.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
+        return ngayLap != null
+                ? ngayLap.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "";
     }
 
     // equals và hashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         HoaDon hoaDon = (HoaDon) o;
-        return Objects.equals(maHoaDon, hoaDon.maHoaDon) &&
-               Objects.equals(maKhachHang, hoaDon.maKhachHang) &&
-               Objects.equals(ngayLap, hoaDon.ngayLap) &&
-               Objects.equals(tongTien, hoaDon.tongTien) &&
-               Objects.equals(maNhanVienLap, hoaDon.maNhanVienLap) &&
-               Objects.equals(ghiChu, hoaDon.ghiChu);
+        return Objects.equals(maHoaDon, hoaDon.maHoaDon)
+                && Objects.equals(maKhachHang, hoaDon.maKhachHang)
+                && Objects.equals(ngayLap, hoaDon.ngayLap)
+                && Objects.equals(tongTien, hoaDon.tongTien)
+                && Objects.equals(maNhanVienLap, hoaDon.maNhanVienLap)
+                && Objects.equals(ghiChu, hoaDon.ghiChu);
     }
 
     @Override
@@ -152,13 +184,13 @@ public class HoaDon {
     // toString
     @Override
     public String toString() {
-        return "HoaDon{" +
-                "maHoaDon=" + maHoaDon +
-                ", maKhachHang=" + maKhachHang +
-                ", ngayLap=" + ngayLap +
-                ", tongTien=" + tongTien +
-                ", maNhanVienLap=" + maNhanVienLap +
-                ", ghiChu='" + ghiChu + '\'' +
-                '}';
+        return "HoaDon{"
+                + "maHoaDon=" + maHoaDon
+                + ", maKhachHang=" + maKhachHang
+                + ", ngayLap=" + ngayLap
+                + ", tongTien=" + tongTien
+                + ", maNhanVienLap=" + maNhanVienLap
+                + ", ghiChu='" + ghiChu + '\''
+                + '}';
     }
 }

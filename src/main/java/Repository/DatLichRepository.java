@@ -114,8 +114,9 @@ public class DatLichRepository {
     }
     
     public boolean insert(DatLich datLich) throws SQLException {
-        String sql = "INSERT INTO DatLich (MaKhachHang, NgayDat, GioDat, TrangThai, MaGiuong, ThoiGianDuKien, GhiChu, MaNhanVienTao) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        // Cập nhật SQL để thêm SoLuongNguoi
+        String sql = "INSERT INTO DatLich (MaKhachHang, NgayDat, GioDat, TrangThai, MaGiuong, ThoiGianDuKien, GhiChu, MaNhanVienTao, SoLuongNguoi) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -142,6 +143,9 @@ public class DatLichRepository {
             
             // TODO: Set MaNhanVienTao từ session hiện tại
             stmt.setNull(8, Types.INTEGER);
+            
+            // Thêm SoLuongNguoi
+            stmt.setInt(9, datLich.getSoLuongNguoi());
             
             int affectedRows = stmt.executeUpdate();
             
@@ -187,8 +191,9 @@ public class DatLichRepository {
     }
     
     public boolean update(DatLich datLich) throws SQLException {
+        // Cập nhật SQL để thêm SoLuongNguoi
         String sql = "UPDATE DatLich SET MaKhachHang=?, NgayDat=?, GioDat=?, TrangThai=?, " +
-                    "MaGiuong=?, ThoiGianDuKien=?, GhiChu=?, NgayCapNhat=SYSUTCDATETIME() WHERE MaLich=?";
+                    "MaGiuong=?, ThoiGianDuKien=?, GhiChu=?, NgayCapNhat=SYSUTCDATETIME(), SoLuongNguoi=? WHERE MaLich=?";
         
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -211,7 +216,9 @@ public class DatLichRepository {
             
             stmt.setInt(6, datLich.tinhTongThoiGian());
             stmt.setString(7, datLich.getGhiChu());
-            stmt.setInt(8, datLich.getMaLich());
+            // Thêm SoLuongNguoi
+            stmt.setInt(8, datLich.getSoLuongNguoi());
+            stmt.setInt(9, datLich.getMaLich());
             
             int affectedRows = stmt.executeUpdate();
             
@@ -289,6 +296,9 @@ public class DatLichRepository {
         
         datLich.setThoiGianDuKien(rs.getInt("ThoiGianDuKien"));
         datLich.setGhiChu(rs.getString("GhiChu"));
+        
+        // Thêm SoLuongNguoi
+        datLich.setSoLuongNguoi(rs.getInt("SoLuongNguoi"));
         
         Timestamp ngayTao = rs.getTimestamp("NgayTao");
         if (ngayTao != null) {

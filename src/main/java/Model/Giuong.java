@@ -93,4 +93,8 @@ public class Giuong {
         }
         return getSoHieu() + " - " + getTrangThai();
     }
+
+    public boolean isDangPhucVu() {
+        return "Đang phục vụ".equals(trangThai);
+    }
 }
