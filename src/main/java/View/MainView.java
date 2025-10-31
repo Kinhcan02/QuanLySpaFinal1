@@ -383,44 +383,66 @@ public class MainView extends JFrame {
             DatLichService datLichService = new DatLichService();
         }
     }
-public void showThongBao() {
-    try {
-        // Kiểm tra nếu thongBaoView đã tồn tại nhưng bị dispose
-        if (thongBaoView != null && thongBaoView.isDisplayable()) {
-            // Nếu đang hiển thị thì đưa lên trước
-            thongBaoView.toFront();
-            try {
-                thongBaoView.setSelected(true);
-            } catch (java.beans.PropertyVetoException e) {
-                e.printStackTrace();
+
+    public void showThongBao() {
+        try {
+            // Kiểm tra nếu thongBaoView đã tồn tại nhưng bị dispose
+            if (thongBaoView != null && thongBaoView.isDisplayable()) {
+                // Nếu đang hiển thị thì đưa lên trước
+                thongBaoView.toFront();
+                try {
+                    thongBaoView.setSelected(true);
+                } catch (java.beans.PropertyVetoException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                // Tạo mới nếu chưa có hoặc đã bị dispose
+                thongBaoView = new ThongBaoView();
+                thongBaoController = new ThongBaoController(thongBaoView);
+
+                // Thêm thongBaoView vào desktopPane
+                desktopPane.add(thongBaoView);
+
+                // Đặt vị trí ở góc trên bên phải
+                Dimension desktopSize = desktopPane.getSize();
+                Dimension frameSize = thongBaoView.getSize();
+                thongBaoView.setLocation(
+                        desktopSize.width - frameSize.width - 20,
+                        20
+                );
             }
-        } else {
-            // Tạo mới nếu chưa có hoặc đã bị dispose
-            thongBaoView = new ThongBaoView();
-            thongBaoController = new ThongBaoController(thongBaoView);
-            
-            // Thêm thongBaoView vào desktopPane
-            desktopPane.add(thongBaoView);
-            
-            // Đặt vị trí ở góc trên bên phải
-            Dimension desktopSize = desktopPane.getSize();
-            Dimension frameSize = thongBaoView.getSize();
-            thongBaoView.setLocation(
-                desktopSize.width - frameSize.width - 20,
-                20
-            );
+
+            // Đảm bảo hiển thị
+            thongBaoView.setVisible(true);
+            thongBaoView.toFront();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở thông báo: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-        
-        // Đảm bảo hiển thị
-        thongBaoView.setVisible(true);
-        thongBaoView.toFront();
-        
-    } catch (Exception e) {
-        e.printStackTrace();
-        hienThiThongBao("Lỗi khi mở thông báo: " + e.getMessage(),
-                "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
-}
+
+    public void showDatDichVu() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Đặt Dịch Vụ",
+                    true, true, true, true
+            );
+
+            DatDichVuView datDichVuView = new DatDichVuView();
+            DatDichVuController datDichVuController = new DatDichVuController(datDichVuView);
+
+            internalFrame.setContentPane(datDichVuView);
+            internalFrame.pack();
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở đặt dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void showQuanLyDatLich() {
         try {
             JInternalFrame internalFrame = new JInternalFrame(

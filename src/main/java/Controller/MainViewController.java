@@ -34,7 +34,7 @@ public class MainViewController implements ActionListener {
             mainView.showQuanLyDatLich(); // Mở quản lý đặt lịch
         }
         else if (source == mainView.getBtnDatDichVu()) {
-            hienThiThongBao("Tính năng Đặt dịch vụ đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            mainView.showDatDichVu();
         } 
         else if (source == mainView.getBtnQuanLyCaLam()) {
             mainView.showQuanLyCaLam();
