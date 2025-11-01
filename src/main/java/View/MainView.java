@@ -25,7 +25,7 @@ public class MainView extends JFrame {
     private JButton btnThongBao, btnDatLich, btnQuanLyNguyenLieu,
             btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam,
             btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe,
-            btnQuanLyTaiKhoan, btnThoat;
+            btnQuanLyTaiKhoan, btnThoat, btnQuanLyThuChi;
     private JLabel lblUserInfo, lblVersion;
     private QuanLyDichVuView quanLyDichVuView;
     private QuanLyDichVuController quanLyDichVuController;
@@ -36,6 +36,10 @@ public class MainView extends JFrame {
     private QuanLyNhapNguyenLieuView quanLyNhapNguyenLieuView;
     private ThongBaoView thongBaoView;
     private ThongBaoController thongBaoController;
+    private ThongKeView thongKeView;
+    private ThongKeController thongKeController;
+    private QuanLyThuChiView quanLyThuChiView;
+    private QuanLyThuChiController quanLyThuChiController;
     // Màu sắc
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
     private final Color COLOR_MENU = new Color(0x4D, 0x8A, 0x57);
@@ -163,7 +167,7 @@ public class MainView extends JFrame {
         btnQuanLyDichVu = createMenuButton("QUẢN LÝ DỊCH VỤ");
         btnThongKe = createMenuButton("THỐNG KÊ");
         btnQuanLyTaiKhoan = createMenuButton("QUẢN LÝ TÀI KHOẢN");
-
+        btnQuanLyThuChi = createMenuButton("QUẢN LÝ THU CHI");
         // Thêm các component vào navPanel theo đúng thứ tự
         navPanel.add(btnThongBao);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -186,7 +190,8 @@ public class MainView extends JFrame {
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnQuanLyTaiKhoan);
         navPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-
+        navPanel.add(btnQuanLyThuChi); // THÊM DÒNG NÀY
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         // Separator
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setBackground(COLOR_MENU_LIGHT);
@@ -348,11 +353,11 @@ public class MainView extends JFrame {
         btnQuanLyCaLam.addActionListener(mainViewController);
         btnQuanLyKhachHang.addActionListener(mainViewController);
         btnQuanLyDichVu.addActionListener(mainViewController);
-        btnThongKe.addActionListener(mainViewController);
+        btnThongKe.addActionListener(e -> showThongKe());
         btnQuanLyTaiKhoan.addActionListener(mainViewController);
         btnThoat.addActionListener(mainViewController);
         btnDatLich.addActionListener(e -> showQuanLyDatLich());
-
+        btnQuanLyThuChi.addActionListener(mainViewController);
         // Nút mở rộng menu Nguyên liệu
         btnQuanLyNguyenLieu.addActionListener(e -> toggleNguyenLieuMenu());
 
@@ -608,6 +613,46 @@ public class MainView extends JFrame {
         }
     }
 
+    public void showThongKe() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Thống Kê",
+                    true, true, true, true
+            );
+
+            thongKeView = new ThongKeView();
+            thongKeController = new ThongKeController(thongKeView);
+
+            internalFrame.setContentPane(thongKeView);
+            internalFrame.pack();
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở thống kê: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void showQuanLyThuChi() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "QUẢN LÝ THU CHI - SPA/BEAUTY",
+                    true, true, true, true
+            );
+
+            quanLyThuChiView = new QuanLyThuChiView();
+            quanLyThuChiController = new QuanLyThuChiController(quanLyThuChiView);
+
+            internalFrame.setContentPane(quanLyThuChiView);
+            internalFrame.pack();
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở quản lý thu chi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void showInternalFrame(JInternalFrame internalFrame) {
         SwingUtilities.invokeLater(() -> {
             try {
@@ -830,10 +875,6 @@ public class MainView extends JFrame {
         return btnQuanLyDichVu;
     }
 
-    public JButton getBtnThongKe() {
-        return btnThongKe;
-    }
-
     public JButton getBtnQuanLyTaiKhoan() {
         return btnQuanLyTaiKhoan;
     }
@@ -848,6 +889,14 @@ public class MainView extends JFrame {
 
     public JButton getBtnDatLich() {
         return btnDatLich;
+    }
+
+    public JButton getBtnThongKe() {
+        return btnThongKe;
+    }
+
+    public JButton getBtnQuanLyThuChi() {
+        return btnQuanLyThuChi;
     }
 
     public void capNhatThongTinNguoiDung(String tenDangNhap, String vaiTro) {
@@ -879,4 +928,5 @@ public class MainView extends JFrame {
     public static void main(String[] args) {
         System.out.println("Vui lòng sử dụng phương thức khoiChayUngDung() từ lớp Login");
     }
+
 }

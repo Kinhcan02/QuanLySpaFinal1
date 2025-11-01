@@ -29,36 +29,28 @@ public class MainViewController implements ActionListener {
 
         if (source == mainView.getBtnThongBao()) {
             mainView.showThongBao();
-        } 
-        else if (source == mainView.getBtnDatLich()) {
+        } else if (source == mainView.getBtnDatLich()) {
             mainView.showQuanLyDatLich(); // Mở quản lý đặt lịch
-        }
-        else if (source == mainView.getBtnDatDichVu()) {
+        } else if (source == mainView.getBtnDatDichVu()) {
             mainView.showDatDichVu();
-        } 
-        else if (source == mainView.getBtnQuanLyCaLam()) {
+        } else if (source == mainView.getBtnQuanLyCaLam()) {
             mainView.showQuanLyCaLam();
-        } 
-        else if (source == mainView.getBtnQuanLyDichVu()) {
+        } else if (source == mainView.getBtnQuanLyDichVu()) {
             mainView.showQuanLyDichVu();
-        } 
-        else if (source == mainView.getBtnQuanLyNhanVien()) {
+        } else if (source == mainView.getBtnQuanLyNhanVien()) {
             mainView.showQuanLyNhanVien();
-        } 
-        else if (source == mainView.getBtnQuanLyKhachHang()) {
+        } else if (source == mainView.getBtnQuanLyKhachHang()) {
             mainView.showQuanLyKhachHang();
-        } 
-        else if (source == mainView.getBtnThongBao()) {
+        } else if (source == mainView.getBtnThongBao()) {
             mainView.showThongBao();
-        } 
-        else if (source == mainView.getBtnThongKe()) {
-            hienThiThongBao("Tính năng Thống kê đang phát triển", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-        } 
-        else if (source == mainView.getBtnQuanLyTaiKhoan()) {
-                        mainView.showQuanLyTaiKhoan();
-        } 
-        else if (source == mainView.getBtnThoat()) {
+        } else if (source == mainView.getBtnThongKe()) {
+            mainView.showThongKe();
+        } else if (source == mainView.getBtnQuanLyTaiKhoan()) {
+            mainView.showQuanLyTaiKhoan();
+        } else if (source == mainView.getBtnThoat()) {
             xacNhanThoatChuongTrinh();
+        } else if (source == mainView.getBtnQuanLyThuChi()) { // THÊM ĐOẠN NÀY
+            mainView.showQuanLyThuChi();
         }
         // Các nút có menu accordion đã được xử lý trực tiếp trong MainView
         // nên không cần xử lý ở đây
@@ -74,7 +66,7 @@ public class MainViewController implements ActionListener {
             } else if (mainWindow instanceof JDialog) {
                 ((JDialog) mainWindow).setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
             }
-            
+
             // Thêm WindowListener để xử lý nút "X"
             mainWindow.addWindowListener(new WindowAdapter() {
                 @Override
@@ -96,10 +88,10 @@ public class MainViewController implements ActionListener {
     private boolean hienThiXacNhan(String message) {
         JDialog dialog = createConfirmationDialog(message);
         final boolean[] result = {false};
-        
+
         // Đợi dialog đóng
         dialog.setVisible(true);
-        
+
         return result[0];
     }
 
@@ -176,7 +168,7 @@ public class MainViewController implements ActionListener {
         // Tạo custom buttons
         JButton btnCo = createStyledButton("Có", COLOR_BUTTON);
         JButton btnKhong = createStyledButton("Không", new Color(149, 165, 166)); // Màu xám cho nút "Không"
-        
+
         // Tạo panel chứa nội dung với màu nền xanh tràn viền
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(COLOR_BACKGROUND);
@@ -271,7 +263,7 @@ public class MainViewController implements ActionListener {
     // PHƯƠNG THỨC XÁC NHẬN THOÁT CHƯƠNG TRÌNH
     private void xacNhanThoatChuongTrinh() {
         boolean confirmed = hienThiXacNhan("Bạn có chắc muốn thoát chương trình không?");
-        
+
         if (confirmed) {
             System.exit(0);
         }
