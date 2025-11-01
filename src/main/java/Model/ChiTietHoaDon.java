@@ -91,7 +91,6 @@ public class ChiTietHoaDon {
 
     public void setSoLuong(Integer soLuong) {
         this.soLuong = soLuong != null ? soLuong : 1;
-        this.thanhTien = calculateThanhTien(); // Recalculate when quantity changes
     }
 
     public BigDecimal getDonGia() {
@@ -100,7 +99,6 @@ public class ChiTietHoaDon {
 
     public void setDonGia(BigDecimal donGia) {
         this.donGia = donGia;
-        this.thanhTien = calculateThanhTien(); // Recalculate when price changes
     }
 
     public BigDecimal getThanhTien() {

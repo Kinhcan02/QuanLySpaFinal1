@@ -1,5 +1,6 @@
 package Controller;
 
+import Model.ChiTietHoaDon;
 import View.QuanLyDatLichView;
 import Service.DatLichService;
 import Service.KhachHangService;
@@ -10,6 +11,8 @@ import Model.DatLichChiTiet;
 import Model.KhachHang;
 import Model.DichVu;
 import Model.Giuong;
+import Model.HoaDon;
+import Service.HoaDonService;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
@@ -211,34 +214,61 @@ public class QuanLyDatLichController implements ActionListener {
                 return;
             }
 
+            // Tính tổng tiền hóa đơn (KHÔNG tính phí giường)
+            BigDecimal tongTien = tinhTongTienHoaDon(selectedAppointment);
+
+            // Tính điểm tích lũy (100.000 VND = 1 điểm)
+            int diemThuong = tongTien.divideToIntegralValue(BigDecimal.valueOf(100000)).intValue();
+
             int confirm = JOptionPane.showConfirmDialog(view,
                     "Hoàn thành lịch hẹn này?\nKhách hàng: "
                     + khachHangService.getKhachHangById(selectedAppointment.getMaKhachHang()).getHoTen()
                     + "\nThời gian: " + selectedAppointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm"))
+                    + "\nTổng tiền: " + String.format("%,.0f", tongTien) + " VND"
+                    + (diemThuong > 0 ? "\nĐiểm tích lũy: +" + diemThuong + " điểm" : "")
                     + "\n\nSau khi hoàn thành sẽ:\n- Lưu hóa đơn\n- In PDF hóa đơn\n- Xóa form",
                     "Xác nhận hoàn thành", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
+                // Cập nhật trạng thái lịch hẹn thành "Hoàn thành"
                 boolean success = datLichService.updateTrangThai(selectedAppointment.getMaLich(), "Hoàn thành");
 
-                if (success && selectedAppointment.getMaGiuong() != null) {
-                    giuongService.updateTrangThaiGiuong(selectedAppointment.getMaGiuong(), "Trống");
-                    view.refreshGiuongComboBox();
-                }
-
                 if (success) {
-                    // Thực hiện 3 chức năng: lưu hóa đơn, in PDF, clear form
-                    luuHoaDon(selectedAppointment);
-                    inHoaDonPDF(selectedAppointment); // Gọi in hóa đơn
-                    clearForm();
+                    // LƯU HÓA ĐƠN VÀO DATABASE
+                    boolean luuHoaDonThanhCong = luuHoaDon(selectedAppointment);
 
-                    JOptionPane.showMessageDialog(view,
-                            "Hoàn thành lịch hẹn thành công!\n"
-                            + "- Đã lưu hóa đơn\n"
-                            + "- Đã in PDF\n"
-                            + "- Đã xóa form",
-                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    view.updateTimeline();
+                    if (luuHoaDonThanhCong) {
+                        // CẬP NHẬT ĐIỂM TÍCH LŨY CHO KHÁCH HÀNG
+                        if (diemThuong > 0) {
+                            capNhatDiemTichLuy(selectedAppointment.getMaKhachHang(), diemThuong);
+                        }
+
+                        // In hóa đơn PDF
+                        inHoaDonPDF(selectedAppointment);
+
+                        // Cập nhật trạng thái giường
+                        if (selectedAppointment.getMaGiuong() != null) {
+                            giuongService.updateTrangThaiGiuong(selectedAppointment.getMaGiuong(), "Trống");
+                            view.refreshGiuongComboBox();
+                        }
+
+                        clearForm();
+
+                        JOptionPane.showMessageDialog(view,
+                                "Hoàn thành lịch hẹn thành công!\n"
+                                + "- Đã lưu hóa đơn vào database\n"
+                                + (diemThuong > 0 ? "- Đã thưởng " + diemThuong + " điểm tích lũy cho khách hàng\n" : "")
+                                + "- Đã in PDF\n"
+                                + "- Đã xóa form",
+                                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                        view.updateTimeline();
+                    } else {
+                        JOptionPane.showMessageDialog(view,
+                                "Hoàn thành lịch hẹn nhưng LỖI khi lưu hóa đơn!",
+                                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(view, "Cập nhật trạng thái lịch hẹn thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         } catch (Exception ex) {
@@ -246,70 +276,94 @@ public class QuanLyDatLichController implements ActionListener {
         }
     }
 
-    // Phương thức lưu hóa đơn
-    private void luuHoaDon(DatLich datLich) {
+// Thêm phương thức cập nhật điểm tích lũy
+    private void capNhatDiemTichLuy(Integer maKhachHang, int diemThuong) {
         try {
-            // Lấy thông tin cần thiết cho hóa đơn
-            KhachHang khachHang = khachHangService.getKhachHangById(datLich.getMaKhachHang());
-            Giuong giuong = datLich.getMaGiuong() != null ? giuongService.getGiuongById(datLich.getMaGiuong()) : null;
+            KhachHang khachHang = khachHangService.getKhachHangById(maKhachHang);
+            if (khachHang != null) {
+                int diemHienTai = khachHang.getDiemTichLuy();
+                int diemMoi = diemHienTai + diemThuong;
+                khachHang.setDiemTichLuy(diemMoi);
+                khachHangService.updateKhachHang(khachHang);
 
-            // Tính tổng tiền
-            double tongTien = tinhTongTienHoaDon(datLich);
-
-            // Tạo thông tin hóa đơn
-            Map<String, Object> hoaDonInfo = new HashMap<>();
-            hoaDonInfo.put("maDatLich", datLich.getMaLich());
-            hoaDonInfo.put("maKhachHang", datLich.getMaKhachHang());
-            hoaDonInfo.put("tenKhachHang", khachHang != null ? khachHang.getHoTen() : "Không xác định");
-            hoaDonInfo.put("soLuongNguoi", datLich.getSoLuongNguoi());
-            hoaDonInfo.put("maGiuong", datLich.getMaGiuong());
-            hoaDonInfo.put("soHieuGiuong", giuong != null ? giuong.getSoHieu() : "Không có");
-            hoaDonInfo.put("tongTien", tongTien);
-            hoaDonInfo.put("ngayTao", new java.util.Date());
-            hoaDonInfo.put("trangThai", "Đã thanh toán");
-
-            // Thêm thông tin dịch vụ
-            List<Map<String, Object>> dichVuList = new ArrayList<>();
-            if (datLich.hasDichVu()) {
-                for (DatLichChiTiet chiTiet : datLich.getDanhSachDichVu()) {
-                    Map<String, Object> dichVuInfo = new HashMap<>();
-                    dichVuInfo.put("maDichVu", chiTiet.getMaDichVu());
-                    dichVuInfo.put("tenDichVu", chiTiet.getDichVu().getTenDichVu());
-                    dichVuInfo.put("gia", chiTiet.getDichVu().getGia());
-                    dichVuList.add(dichVuInfo);
-                }
+                System.out.println("Đã cập nhật điểm tích lũy cho khách hàng " + khachHang.getHoTen()
+                        + ": " + diemHienTai + " + " + diemThuong + " = " + diemMoi + " điểm");
             }
-            hoaDonInfo.put("dichVu", dichVuList);
-
-            // Gọi service để lưu hóa đơn
-            // Giả sử có service hoaDonService
-            // int maHoaDon = hoaDonService.luuHoaDon(hoaDonInfo);
-            System.out.println("Đã lưu hóa đơn: " + hoaDonInfo);
-
         } catch (Exception e) {
-            System.err.println("Lỗi khi lưu hóa đơn: " + e.getMessage());
-            throw new RuntimeException("Lỗi lưu hóa đơn: " + e.getMessage());
+            System.err.println("Lỗi khi cập nhật điểm tích lũy: " + e.getMessage());
         }
     }
 
-    // Phương thức tính tổng tiền hóa đơn - ĐÃ SỬA LỖI
-    private double tinhTongTienHoaDon(DatLich datLich) {
-        double tongTien = 0.0;
+// Sửa đổi phương thức luuHoaDon - BỎ phần phí giường
+    private boolean luuHoaDon(DatLich datLich) {
+        try {
+            // Lấy thông tin cần thiết
+            KhachHang khachHang = khachHangService.getKhachHangById(datLich.getMaKhachHang());
+
+            // Tính tổng tiền (KHÔNG tính phí giường)
+            BigDecimal tongTien = tinhTongTienHoaDon(datLich);
+
+            // Tạo đối tượng HoaDon
+            HoaDon hoaDon = new HoaDon();
+            hoaDon.setMaKhachHang(datLich.getMaKhachHang());
+            hoaDon.setNgayLap(java.time.LocalDateTime.now());
+            hoaDon.setTongTien(tongTien);
+            hoaDon.setMaNhanVienLap(1); // TODO: Lấy từ session đăng nhập thực tế
+            hoaDon.setGhiChu("Hóa đơn từ lịch hẹn #" + datLich.getMaLich());
+
+            // Tạo danh sách chi tiết hóa đơn
+            List<ChiTietHoaDon> chiTietList = new ArrayList<>();
+
+            // Thêm dịch vụ vào chi tiết hóa đơn
+            if (datLich.hasDichVu()) {
+                for (DatLichChiTiet chiTiet : datLich.getDanhSachDichVu()) {
+                    if (chiTiet.getDichVu() != null) {
+                        ChiTietHoaDon cthd = new ChiTietHoaDon();
+                        cthd.setMaDichVu(chiTiet.getMaDichVu());
+                        cthd.setSoLuong(1);
+                        cthd.setDonGia(chiTiet.getDichVu().getGia());
+                        cthd.recalculateThanhTien(); // Tính thành tiền
+                        chiTietList.add(cthd);
+                    }
+                }
+            }
+
+            // ĐÃ BỎ phần thêm phí giường
+            // Gán danh sách chi tiết vào hóa đơn
+            hoaDon.setChiTietHoaDon(chiTietList);
+
+            // Lưu hóa đơn vào database
+            HoaDonService hoaDonService = new HoaDonService();
+            boolean success = hoaDonService.addHoaDon(hoaDon);
+
+            if (success) {
+                System.out.println("Đã lưu hóa đơn thành công: " + hoaDon.getMaHoaDon());
+                return true;
+            } else {
+                System.err.println("Lỗi khi lưu hóa đơn");
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.err.println("Lỗi khi lưu hóa đơn: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+// Phương thức tính tổng tiền hóa đơn - ĐÃ SỬA để trả về BigDecimal
+    private BigDecimal tinhTongTienHoaDon(DatLich datLich) {
+        BigDecimal tongTien = BigDecimal.ZERO;
 
         // Tính tiền dịch vụ
         if (datLich.hasDichVu()) {
             for (DatLichChiTiet chiTiet : datLich.getDanhSachDichVu()) {
-                if (chiTiet.getDichVu() != null) {
-                    // Sửa lỗi: Chuyển đổi BigDecimal sang double
-                    BigDecimal giaDichVu = chiTiet.getDichVu().getGia();
-                    if (giaDichVu != null) {
-                        tongTien += giaDichVu.doubleValue();
-                    }
+                if (chiTiet.getDichVu() != null && chiTiet.getDichVu().getGia() != null) {
+                    tongTien = tongTien.add(chiTiet.getDichVu().getGia());
                 }
             }
         }
 
-        // Có thể thêm các chi phí khác ở đây (phí giường, phí khác...)
         return tongTien;
     }
 
@@ -319,7 +373,9 @@ public class QuanLyDatLichController implements ActionListener {
             // Lấy thông tin cần thiết
             KhachHang khachHang = khachHangService.getKhachHangById(datLich.getMaKhachHang());
             Giuong giuong = datLich.getMaGiuong() != null ? giuongService.getGiuongById(datLich.getMaGiuong()) : null;
-            double tongTien = tinhTongTienHoaDon(datLich);
+
+            BigDecimal tongTienBigDecimal = tinhTongTienHoaDon(datLich);
+            double tongTien = tongTienBigDecimal.doubleValue();
 
             // Xác nhận in hóa đơn
             int confirm = JOptionPane.showConfirmDialog(
@@ -346,6 +402,7 @@ public class QuanLyDatLichController implements ActionListener {
         }
     }
 
+// Sửa đổi phương thức inHoaDonPDFDetail - Thêm hiển thị điểm tích lũy
     public void inHoaDonPDFDetail(DatLich datLich, KhachHang khachHang, Giuong giuong, double tongTien, String tenNV) {
         FileOutputStream fos = null;
         try {
@@ -377,12 +434,27 @@ public class QuanLyDatLichController implements ActionListener {
             Font fontBold = new Font(baseFont, 12, Font.BOLD);
             Font fontTitle = new Font(baseFont, 18, Font.BOLD);
             Font fontHeader = new Font(baseFont, 10, Font.BOLD);
+            Font fontSmall = new Font(baseFont, 10, Font.NORMAL);
 
             // Tiêu đề
             Paragraph title = new Paragraph("HOÁ ĐƠN DỊCH VỤ SPA", fontTitle);
             title.setAlignment(Element.ALIGN_CENTER);
             doc.add(title);
+            // Thông tin cửa hàng
+            Paragraph storeInfo = new Paragraph("SWEET HOME", fontBold);
+            storeInfo.setAlignment(Element.ALIGN_CENTER);
+            doc.add(storeInfo);
 
+            Paragraph storeAddress = new Paragraph("43 Đ. Lý Tự Trọng, P, Ninh Kiều, Cần Thơ 94100, Việt Nam", fontSmall);
+            storeAddress.setAlignment(Element.ALIGN_CENTER);
+            doc.add(storeAddress);
+
+            Paragraph storePhone = new Paragraph("Điện thoại: 097 3791 643", fontSmall);
+            storePhone.setAlignment(Element.ALIGN_CENTER);
+            doc.add(storePhone);
+
+            doc.add(new Paragraph(" "));
+            doc.add(new Paragraph("---------------------------------------------", fontNormal));
             doc.add(new Paragraph(" "));
             doc.add(new Paragraph("Ngày lập: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()), fontNormal));
             doc.add(new Paragraph("Nhân viên lập: " + tenNV, fontNormal));
@@ -392,6 +464,9 @@ public class QuanLyDatLichController implements ActionListener {
             if (khachHang.getSoDienThoai() != null && !khachHang.getSoDienThoai().isEmpty()) {
                 doc.add(new Paragraph("SĐT: " + khachHang.getSoDienThoai(), fontNormal));
             }
+
+            // Hiển thị điểm tích lũy hiện tại
+            doc.add(new Paragraph("Điểm tích lũy hiện tại: " + khachHang.getDiemTichLuy() + " điểm", fontNormal));
 
             doc.add(new Paragraph("---------------------------------------------", fontNormal));
 
@@ -433,24 +508,16 @@ public class QuanLyDatLichController implements ActionListener {
                 }
             }
 
-            // Thêm thông tin giường nếu có
-            if (giuong != null) {
-                table.addCell(new Phrase(String.valueOf(stt++), fontNormal));
-                table.addCell(new Phrase("Thuê giường " + giuong.getSoHieu(), fontNormal));
-                table.addCell(new Phrase("Theo giờ", fontNormal));
-                table.addCell(new Phrase(String.valueOf(datLich.getSoLuongNguoi()), fontNormal));
-
-                // Tính phí giường (có thể điều chỉnh theo logic của bạn)
-                double phiGiuong = datLich.getSoLuongNguoi() * 50000; // Ví dụ: 50k/người
-                table.addCell(new Phrase(String.format("%,.0f", phiGiuong) + " VND", fontNormal));
-                table.addCell(new Phrase(String.format("%,.0f", phiGiuong) + " VND", fontNormal));
-
-                tongCong += phiGiuong;
-            }
-
+            // ĐÃ BỎ phần thêm thông tin giường
             doc.add(table);
             doc.add(new Paragraph("---------------------------------------------", fontNormal));
             doc.add(new Paragraph(String.format("Tổng cộng: %s VND", String.format("%,.0f", tongCong)), fontBold));
+
+            // Hiển thị điểm tích lũy được thưởng
+            int diemThuong = (int) (tongCong / 100000);
+            if (diemThuong > 0) {
+                doc.add(new Paragraph("Điểm tích lũy được thưởng: +" + diemThuong + " điểm", fontBold));
+            }
 
             // Thêm QR Code thanh toán
             if (tongCong > 0) {

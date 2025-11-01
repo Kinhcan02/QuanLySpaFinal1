@@ -35,6 +35,8 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.Font;
+import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -148,7 +150,7 @@ public class DatDichVuController {
             model.addElement("-- Chọn nhân viên --");
 
             for (NhanVien nv : dsNhanVien) {
-                model.addElement(nv.getHoTen() + " - " + nv.getChucVu());
+                model.addElement(nv.getHoTen() + " - " + nv.getChucVu() + " - " + nv.getMaNhanVien());
             }
 
             view.getCboNhanVien().setModel(model);
@@ -443,6 +445,15 @@ public class DatDichVuController {
                 return;
             }
 
+            // LƯU HÓA ĐƠN VÀO CƠ SỞ DỮ LIỆU TRƯỚC KHI IN
+            boolean savedToDB = luuHoaDonVaoDatabase();
+
+            if (!savedToDB) {
+                JOptionPane.showMessageDialog(view, "Lỗi khi lưu hóa đơn vào cơ sở dữ liệu!",
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             // Tạo và in hóa đơn PDF
             boolean success = inHoaDonPDF();
 
@@ -472,6 +483,108 @@ public class DatDichVuController {
             JOptionPane.showMessageDialog(view, "Lỗi khi xử lý hóa đơn: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+// PHƯƠNG THỨC LƯU HÓA ĐƠN VÀO DATABASE
+
+// PHƯƠNG THỨC LƯU HÓA ĐƠN VÀO DATABASE
+    private boolean luuHoaDonVaoDatabase() {
+        try {
+            // 1. Tạo đối tượng HoaDon
+            HoaDon hoaDon = new HoaDon();
+            hoaDon.setMaKhachHang(khachHangHienTai.getMaKhachHang());
+            hoaDon.setNgayLap(java.time.LocalDateTime.now());
+            hoaDon.setTongTien(tongTien);
+
+            // Lấy mã nhân viên từ combobox
+            String selectedNhanVien = (String) view.getCboNhanVien().getSelectedItem();
+            if (selectedNhanVien != null && !selectedNhanVien.equals("-- Chọn nhân viên --")) {
+                Integer maNhanVien = getMaNhanVienTheoTen(selectedNhanVien.split(" - ")[0]);
+                hoaDon.setMaNhanVienLap(maNhanVien);
+            }
+
+            hoaDon.setGhiChu("Hóa đơn dịch vụ spa - " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()));
+
+            // 2. Tạo danh sách chi tiết hóa đơn
+            List<ChiTietHoaDon> chiTietList = new ArrayList<>();
+            DefaultTableModel model = view.getTableModel();
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String tenDichVu = model.getValueAt(i, 1).toString();
+
+                // Bỏ qua dịch vụ "Vé gọi đầu" khi lưu database
+                if (tenDichVu.contains("Vé gọi đầu")) {
+                    continue;
+                }
+
+                int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
+
+                // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
+                String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
+                BigDecimal donGia = new BigDecimal(donGiaStr);
+
+                // Tìm mã dịch vụ theo tên
+                Integer maDichVu = getMaDichVuTheoTen(tenDichVu);
+                if (maDichVu != null) {
+                    ChiTietHoaDon chiTiet = new ChiTietHoaDon();
+                    chiTiet.setMaDichVu(maDichVu);
+                    chiTiet.setSoLuong(soLuong);
+                    chiTiet.setDonGia(donGia);
+                    // KHÔNG gọi recalculateThanhTien() vì không cần lưu vào database
+
+                    chiTietList.add(chiTiet);
+                }
+            }
+
+            // Đặt danh sách chi tiết vào hóa đơn
+            hoaDon.setChiTietHoaDon(chiTietList);
+
+            // 3. Lưu hóa đơn vào database thông qua service
+            boolean success = hoaDonService.addHoaDon(hoaDon);
+
+            if (success) {
+                System.out.println("Đã lưu hóa đơn vào database thành công! Mã hóa đơn: " + hoaDon.getMaHoaDon());
+                return true;
+            } else {
+                System.out.println("Lỗi khi lưu hóa đơn vào database!");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(view, "Lỗi khi lưu hóa đơn: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+// PHƯƠNG THỨC HỖ TRỢ - LẤY MÃ NHÂN VIÊN THEO TÊN
+    private Integer getMaNhanVienTheoTen(String tenNhanVien) {
+        try {
+            List<NhanVien> dsNhanVien = nhanVienService.getAllNhanVien();
+            for (NhanVien nv : dsNhanVien) {
+                if (nv.getHoTen().equals(tenNhanVien)) {
+                    return nv.getMaNhanVien();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 1; // Trả về mã mặc định nếu không tìm thấy
+    }
+
+// PHƯƠNG THỨC HỖ TRỢ - LẤY MÃ DỊCH VỤ THEO TÊN
+    private Integer getMaDichVuTheoTen(String tenDichVu) {
+        try {
+            List<DichVu> dsDichVu = dichVuService.getAllDichVu();
+            for (DichVu dv : dsDichVu) {
+                if (dv.getTenDichVu().equals(tenDichVu)) {
+                    return dv.getMaDichVu();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // Phương thức in hóa đơn PDF chi tiết

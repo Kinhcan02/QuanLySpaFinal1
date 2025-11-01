@@ -580,6 +580,10 @@ public class QuanLyDatLichView extends JPanel {
         StringBuilder details = new StringBuilder();
         details.append("Chi tiết lịch hẹn:\n");
         details.append("Khách hàng: ").append(getTenKhachHang(appointment.getMaKhachHang())).append("\n");
+        KhachHang kh = khachHangService.getKhachHangById(appointment.getMaKhachHang());
+        if (kh != null) {
+            details.append("Điểm tích lũy: ").append(kh.getDiemTichLuy()).append(" điểm\n");
+        }
         details.append("Số lượng người: ").append(appointment.getSoLuongNguoi()).append("\n"); // THÊM DÒNG NÀY
         details.append("Thời gian: ").append(appointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm"))).append("\n");
         details.append("Trạng thái: ").append(appointment.getTrangThai()).append("\n");
