@@ -3,71 +3,44 @@ package Model;
 import java.math.BigDecimal;
 import java.util.Objects;
 
-/**
- * Model class cho bảng ChiTietHoaDon
- */
 public class ChiTietHoaDon {
     private Integer maCTHD;
     private Integer maHoaDon;
     private Integer maDichVu;
-    private Integer maNhanVien;
     private Integer soLuong;
-    private BigDecimal donGiaDichVu;
-    private BigDecimal tienLuong;
-    private BigDecimal donGiaBan;
-    private BigDecimal tienTip;
+    private BigDecimal donGia; // THÊM TRƯỜNG NÀY
     private BigDecimal thanhTien;
     
-    // Reference objects (optional - for JOIN operations)
+    // Reference objects
     private HoaDon hoaDon;
     private DichVu dichVu;
-    private NhanVien nhanVien;
 
     // Constructor mặc định
     public ChiTietHoaDon() {
-        this.soLuong = 1; // Default value
-        this.tienTip = BigDecimal.ZERO;
+        this.soLuong = 1;
     }
 
-    // Constructor với tất cả tham số
-    public ChiTietHoaDon(Integer maCTHD, Integer maHoaDon, Integer maDichVu, Integer maNhanVien,
-                        Integer soLuong, BigDecimal donGiaDichVu, BigDecimal tienLuong,
-                        BigDecimal donGiaBan, BigDecimal tienTip) {
+    // Constructor với tham số
+    public ChiTietHoaDon(Integer maCTHD, Integer maHoaDon, Integer maDichVu, 
+                        Integer soLuong, BigDecimal donGia, BigDecimal thanhTien) {
         this.maCTHD = maCTHD;
         this.maHoaDon = maHoaDon;
         this.maDichVu = maDichVu;
-        this.maNhanVien = maNhanVien;
         this.soLuong = soLuong != null ? soLuong : 1;
-        this.donGiaDichVu = donGiaDichVu;
-        this.tienLuong = tienLuong != null ? tienLuong : BigDecimal.ZERO;
-        this.donGiaBan = donGiaBan;
-        this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO;
-        this.thanhTien = calculateThanhTien();
+        this.donGia = donGia;
+        this.thanhTien = thanhTien;
     }
 
-    // Constructor không có ID (dùng khi insert)
-    public ChiTietHoaDon(Integer maHoaDon, Integer maDichVu, Integer maNhanVien, 
-                        Integer soLuong, BigDecimal donGiaDichVu) {
-        this.maHoaDon = maHoaDon;
-        this.maDichVu = maDichVu;
-        this.maNhanVien = maNhanVien;
-        this.soLuong = soLuong != null ? soLuong : 1;
-        this.donGiaDichVu = donGiaDichVu;
-        this.tienLuong = BigDecimal.ZERO;
-        this.donGiaBan = BigDecimal.ZERO;
-        this.tienTip = BigDecimal.ZERO;
-        this.thanhTien = calculateThanhTien();
+    // THÊM GETTER VÀ SETTER CHO donGia
+    public BigDecimal getDonGia() {
+        return donGia;
     }
 
-    // Method tính thành tiền
-    private BigDecimal calculateThanhTien() {
-        if (soLuong != null && donGiaBan != null) {
-            return donGiaBan.multiply(BigDecimal.valueOf(soLuong));
-        }
-        return BigDecimal.ZERO;
+    public void setDonGia(BigDecimal donGia) {
+        this.donGia = donGia;
     }
 
-    // Getters and Setters
+    // Giữ nguyên các getter/setter khác...
     public Integer getMaCTHD() {
         return maCTHD;
     }
@@ -92,14 +65,6 @@ public class ChiTietHoaDon {
         this.maDichVu = maDichVu;
     }
 
-    public Integer getMaNhanVien() {
-        return maNhanVien;
-    }
-
-    public void setMaNhanVien(Integer maNhanVien) {
-        this.maNhanVien = maNhanVien;
-    }
-
     public Integer getSoLuong() {
         return soLuong;
     }
@@ -108,40 +73,8 @@ public class ChiTietHoaDon {
         this.soLuong = soLuong != null ? soLuong : 1;
     }
 
-    public BigDecimal getDonGiaDichVu() {
-        return donGiaDichVu;
-    }
-
-    public void setDonGiaDichVu(BigDecimal donGiaDichVu) {
-        this.donGiaDichVu = donGiaDichVu;
-    }
-
-    public BigDecimal getTienLuong() {
-        return tienLuong != null ? tienLuong : BigDecimal.ZERO;
-    }
-
-    public void setTienLuong(BigDecimal tienLuong) {
-        this.tienLuong = tienLuong;
-    }
-
-    public BigDecimal getDonGiaBan() {
-        return donGiaBan;
-    }
-
-    public void setDonGiaBan(BigDecimal donGiaBan) {
-        this.donGiaBan = donGiaBan;
-    }
-
-    public BigDecimal getTienTip() {
-        return tienTip != null ? tienTip : BigDecimal.ZERO;
-    }
-
-    public void setTienTip(BigDecimal tienTip) {
-        this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO;
-    }
-
     public BigDecimal getThanhTien() {
-        return thanhTien != null ? thanhTien : calculateThanhTien();
+        return thanhTien != null ? thanhTien : BigDecimal.ZERO;
     }
 
     public void setThanhTien(BigDecimal thanhTien) {
@@ -164,12 +97,13 @@ public class ChiTietHoaDon {
         this.dichVu = dichVu;
     }
 
-    public NhanVien getNhanVien() {
-        return nhanVien;
-    }
-
-    public void setNhanVien(NhanVien nhanVien) {
-        this.nhanVien = nhanVien;
+    // Phương thức tính lại thành tiền
+    public void recalculateThanhTien() {
+        if (soLuong != null && donGia != null) {
+            this.thanhTien = donGia.multiply(BigDecimal.valueOf(soLuong));
+        } else {
+            this.thanhTien = BigDecimal.ZERO;
+        }
     }
 
     // Validation method
@@ -177,15 +111,9 @@ public class ChiTietHoaDon {
         return maHoaDon != null && 
                maDichVu != null && 
                soLuong != null && soLuong > 0 &&
-               donGiaDichVu != null && donGiaDichVu.compareTo(BigDecimal.ZERO) >= 0;
+               donGia != null && donGia.compareTo(BigDecimal.ZERO) >= 0;
     }
 
-    // Helper method để cập nhật thành tiền
-    public void recalculateThanhTien() {
-        this.thanhTien = calculateThanhTien();
-    }
-
-    // equals và hashCode
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -194,33 +122,23 @@ public class ChiTietHoaDon {
         return Objects.equals(maCTHD, that.maCTHD) &&
                Objects.equals(maHoaDon, that.maHoaDon) &&
                Objects.equals(maDichVu, that.maDichVu) &&
-               Objects.equals(maNhanVien, that.maNhanVien) &&
                Objects.equals(soLuong, that.soLuong) &&
-               Objects.equals(donGiaDichVu, that.donGiaDichVu) &&
-               Objects.equals(tienLuong, that.tienLuong) &&
-               Objects.equals(donGiaBan, that.donGiaBan) &&
-               Objects.equals(tienTip, that.tienTip);
+               Objects.equals(donGia, that.donGia);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maCTHD, maHoaDon, maDichVu, maNhanVien, soLuong, 
-                           donGiaDichVu, tienLuong, donGiaBan, tienTip);
+        return Objects.hash(maCTHD, maHoaDon, maDichVu, soLuong, donGia);
     }
 
-    // toString
     @Override
     public String toString() {
         return "ChiTietHoaDon{" +
                 "maCTHD=" + maCTHD +
                 ", maHoaDon=" + maHoaDon +
                 ", maDichVu=" + maDichVu +
-                ", maNhanVien=" + maNhanVien +
                 ", soLuong=" + soLuong +
-                ", donGiaDichVu=" + donGiaDichVu +
-                ", tienLuong=" + tienLuong +
-                ", donGiaBan=" + donGiaBan +
-                ", tienTip=" + tienTip +
+                ", donGia=" + donGia +
                 ", thanhTien=" + thanhTien +
                 '}';
     }

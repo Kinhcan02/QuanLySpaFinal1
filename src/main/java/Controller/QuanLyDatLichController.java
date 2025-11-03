@@ -12,7 +12,9 @@ import Model.KhachHang;
 import Model.DichVu;
 import Model.Giuong;
 import Model.HoaDon;
+import Model.NhanVien;
 import Service.HoaDonService;
+import Service.NhanVienService;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
@@ -29,6 +31,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.imageio.ImageIO;
@@ -48,6 +51,7 @@ import java.math.BigDecimal;
 
 public class QuanLyDatLichController implements ActionListener {
 
+    private NhanVienService nhanVienService;
     private QuanLyDatLichView view;
     private DatLichService datLichService;
     private KhachHangService khachHangService;
@@ -63,7 +67,7 @@ public class QuanLyDatLichController implements ActionListener {
         this.khachHangService = new KhachHangService();
         this.dichVuService = new DichVuService();
         this.giuongService = new GiuongService();
-
+        this.nhanVienService = new NhanVienService();
         setupEventListeners();
     }
 
@@ -76,6 +80,7 @@ public class QuanLyDatLichController implements ActionListener {
         view.getBtnThemDichVu().addActionListener(this);
         view.getBtnXoaDichVu().addActionListener(this);
         view.getBtnHoanThanh().addActionListener(this);
+        view.getBtnPhanCongNV().addActionListener(this);
     }
 
     @Override
@@ -98,7 +103,40 @@ public class QuanLyDatLichController implements ActionListener {
             handleXoaDichVu();
         } else if (source == view.getBtnHoanThanh()) {
             handleHoanThanh();
+        } else if (source == view.getBtnPhanCongNV()) {
+            handlePhanCongNhanVien();
         }
+    }
+
+    // CẬP NHẬT PHƯƠNG THỨC XỬ LÝ PHÂN CÔNG NHÂN VIÊN
+    private void handlePhanCongNhanVien() {
+        int selectedIndex = view.getListDichVu().getSelectedIndex();
+        if (selectedIndex == -1) {
+            JOptionPane.showMessageDialog(view, "Vui lòng chọn dịch vụ trong danh sách để phân công nhân viên",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        NhanVien selectedNhanVien = (NhanVien) view.getCbNhanVienDichVu().getSelectedItem();
+        if (selectedNhanVien == null || selectedNhanVien.getMaNhanVien() == null) {
+            JOptionPane.showMessageDialog(view, "Vui lòng chọn nhân viên",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Lấy dịch vụ được chọn
+        DichVu selectedDichVu = view.getListModelDichVu().getElementAt(selectedIndex);
+
+        // Lưu phân công vào map
+        view.themPhanCongNhanVien(selectedDichVu, selectedNhanVien);
+
+        // Hiển thị thông báo thành công
+        JOptionPane.showMessageDialog(view,
+                "Đã phân công nhân viên " + selectedNhanVien.getHoTen()
+                + " cho dịch vụ " + selectedDichVu.getTenDichVu()
+                + "\n\nBạn có thể phân công nhân viên khác cho dịch vụ khác."
+                + "\nThông tin phân công sẽ được lưu khi bạn nhấn 'Thêm mới' hoặc 'Sửa'",
+                "Thành công", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleThemMoi() {
@@ -728,15 +766,34 @@ public class QuanLyDatLichController implements ActionListener {
         }
     }
 
+    // CẬP NHẬT PHƯƠNG THỨC XÓA DỊCH VỤ ĐỂ XÓA CẢ PHÂN CÔNG
     private void handleXoaDichVu() {
         int selectedIndex = view.getListDichVu().getSelectedIndex();
-        if (selectedIndex != -1) {
-            view.getListModelDichVu().remove(selectedIndex);
-        } else {
+        if (selectedIndex == -1) {
             JOptionPane.showMessageDialog(view, "Vui lòng chọn dịch vụ để xóa", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            // Lấy dịch vụ sẽ xóa
+            DichVu dichVuSeXoa = view.getListModelDichVu().getElementAt(selectedIndex);
+
+            // Xóa dịch vụ khỏi danh sách
+            view.getListModelDichVu().remove(selectedIndex);
+
+            // Xóa phân công nhân viên cho dịch vụ này (nếu có)
+            view.xoaPhanCongNhanVien(dichVuSeXoa);
+
+            JOptionPane.showMessageDialog(view, "Đã xóa dịch vụ và phân công nhân viên (nếu có)",
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Lỗi khi xóa dịch vụ: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    // CẬP NHẬT PHƯƠNG THỨC validateAndGetFormData() ĐỂ SỬ DỤNG PHÂN CÔNG
     private DatLich validateAndGetFormData() {
         // Validate khách hàng
         KhachHang selectedKhachHang = (KhachHang) view.getCbKhachHang().getSelectedItem();
@@ -773,7 +830,7 @@ public class QuanLyDatLichController implements ActionListener {
             return null;
         }
 
-        // Lấy thông tin giường (không kiểm tra trùng lịch)
+        // Lấy thông tin giường
         Giuong selectedGiuong = (Giuong) view.getCbGiuong().getSelectedItem();
         Integer maGiuong = (selectedGiuong != null && selectedGiuong.getMaGiuong() != null)
                 ? selectedGiuong.getMaGiuong() : null;
@@ -781,7 +838,7 @@ public class QuanLyDatLichController implements ActionListener {
         // Lấy số lượng người từ spinner
         Integer soLuongNguoi = (Integer) view.getSpinnerSoLuongNguoi().getValue();
         if (soLuongNguoi == null || soLuongNguoi < 1) {
-            soLuongNguoi = 1; // Mặc định 1 người
+            soLuongNguoi = 1;
         }
 
         String ghiChu = view.getTxtGhiChu().getText().trim();
@@ -801,14 +858,24 @@ public class QuanLyDatLichController implements ActionListener {
         datLich.setGhiChu(ghiChu);
         datLich.setSoLuongNguoi(soLuongNguoi);
 
-        // Thêm TẤT CẢ dịch vụ từ danh sách
+        // Thêm TẤT CẢ dịch vụ từ danh sách VỚI PHÂN CÔNG NHÂN VIÊN
         List<DatLichChiTiet> danhSachDichVu = new ArrayList<>();
+        Map<DichVu, NhanVien> phanCong = view.getPhanCongNhanVien();
+
         for (int i = 0; i < view.getListModelDichVu().size(); i++) {
             DichVu dichVu = view.getListModelDichVu().getElementAt(i);
             if (dichVu != null && dichVu.getMaDichVu() != null) {
                 DatLichChiTiet chiTiet = new DatLichChiTiet();
                 chiTiet.setMaDichVu(dichVu.getMaDichVu());
                 chiTiet.setDichVu(dichVu);
+
+                // Lấy nhân viên từ map phân công (nếu có)
+                NhanVien nhanVienPhanCong = phanCong.get(dichVu);
+                if (nhanVienPhanCong != null && nhanVienPhanCong.getMaNhanVien() != null) {
+                    chiTiet.setMaNhanVien(nhanVienPhanCong.getMaNhanVien());
+                    chiTiet.setNhanVien(nhanVienPhanCong);
+                }
+
                 danhSachDichVu.add(chiTiet);
             }
         }
@@ -817,6 +884,7 @@ public class QuanLyDatLichController implements ActionListener {
         return datLich;
     }
 
+    // CẬP NHẬT PHƯƠNG THỨC FILL FORM DATA ĐỂ KHÔI PHỤC PHÂN CÔNG
     private void fillFormData(DatLich datLich) {
         // Điền thông tin khách hàng
         for (int i = 0; i < view.getCbKhachHang().getItemCount(); i++) {
@@ -852,12 +920,19 @@ public class QuanLyDatLichController implements ActionListener {
             view.getSpinnerSoLuongNguoi().setValue(1);
         }
 
-        // Điền danh sách dịch vụ
+        // Điền danh sách dịch vụ VÀ PHÂN CÔNG NHÂN VIÊN
         view.getListModelDichVu().clear();
+        view.clearPhanCongNhanVien(); // Xóa phân công cũ
+
         if (datLich.hasDichVu()) {
             for (DatLichChiTiet chiTiet : datLich.getDanhSachDichVu()) {
                 if (chiTiet.getDichVu() != null) {
                     view.getListModelDichVu().addElement(chiTiet.getDichVu());
+
+                    // Khôi phục phân công nhân viên nếu có
+                    if (chiTiet.getNhanVien() != null) {
+                        view.themPhanCongNhanVien(chiTiet.getDichVu(), chiTiet.getNhanVien());
+                    }
                 }
             }
         }
@@ -870,7 +945,8 @@ public class QuanLyDatLichController implements ActionListener {
         view.getTxtGioDat().setText("");
         view.getTxtGhiChu().setText("");
         view.getListModelDichVu().clear();
-        view.getSpinnerSoLuongNguoi().setValue(1); // Reset về 1 người
+        view.getSpinnerSoLuongNguoi().setValue(1);
+        view.clearPhanCongNhanVien(); // XÓA TẤT CẢ PHÂN CÔNG
 
         // Reset edit mode
         isEditMode = false;

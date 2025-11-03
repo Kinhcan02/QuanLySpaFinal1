@@ -1,10 +1,16 @@
 package Model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate; // THAY ĐỔI TỪ LocalDateTime SANG LocalDate
 import java.time.LocalDateTime;
 
 public class ThuNhap {
     private Integer maThu;
+    private LocalDate ngayThu; // THÊM TRƯỜNG NÀY
+    private BigDecimal soTien; // THÊM TRƯỜNG NÀY
+    private String noiDung; // THÊM TRƯỜNG NÀY
+    
+    // Các trường cũ
     private Integer thang;
     private Integer nam;
     private BigDecimal tongDoanhThuDichVu;
@@ -15,10 +21,26 @@ public class ThuNhap {
 
     // Constructor mặc định
     public ThuNhap() {
+        this.ngayThu = LocalDate.now();
+        this.soTien = BigDecimal.ZERO;
         this.tongDoanhThuDichVu = BigDecimal.ZERO;
         this.tongLuongNhanVien = BigDecimal.ZERO;
         this.thuNhapThuc = BigDecimal.ZERO;
         this.ngayTinhThuNhap = LocalDateTime.now();
+    }
+
+    // Constructor cho thu nhập đơn giản - THÊM CONSTRUCTOR NÀY
+    public ThuNhap(LocalDate ngayThu, BigDecimal soTien, String noiDung) {
+        this();
+        this.ngayThu = ngayThu;
+        this.soTien = soTien;
+        this.noiDung = noiDung;
+    }
+
+    // Constructor đầy đủ cho thu nhập đơn giản - THÊM CONSTRUCTOR NÀY
+    public ThuNhap(Integer maThu, LocalDate ngayThu, BigDecimal soTien, String noiDung) {
+        this(ngayThu, soTien, noiDung);
+        this.maThu = maThu;
     }
 
     // Constructor với tháng, năm
@@ -42,7 +64,32 @@ public class ThuNhap {
         this.ghiChu = ghiChu;
     }
 
-    // Getter và Setter
+    // THÊM GETTER VÀ SETTER CHO CÁC TRƯỜNG MỚI
+    public LocalDate getNgayThu() {
+        return ngayThu;
+    }
+
+    public void setNgayThu(LocalDate ngayThu) {
+        this.ngayThu = ngayThu;
+    }
+
+    public BigDecimal getSoTien() {
+        return soTien;
+    }
+
+    public void setSoTien(BigDecimal soTien) {
+        this.soTien = soTien;
+    }
+
+    public String getNoiDung() {
+        return noiDung;
+    }
+
+    public void setNoiDung(String noiDung) {
+        this.noiDung = noiDung;
+    }
+
+    // Giữ nguyên các getter/setter cũ
     public Integer getMaThu() { return maThu; }
     public void setMaThu(Integer maThu) { this.maThu = maThu; }
 
@@ -91,6 +138,9 @@ public class ThuNhap {
     public String toString() {
         return "ThuNhap{" +
                 "maThu=" + maThu +
+                ", ngayThu=" + ngayThu +
+                ", soTien=" + soTien +
+                ", noiDung='" + noiDung + '\'' +
                 ", thang=" + thang +
                 ", nam=" + nam +
                 ", tongDoanhThuDichVu=" + tongDoanhThuDichVu +
