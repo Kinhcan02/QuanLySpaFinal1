@@ -10,52 +10,59 @@ public class ChiTietHoaDon {
     private Integer maCTHD;
     private Integer maHoaDon;
     private Integer maDichVu;
+    private Integer maNhanVien;
     private Integer soLuong;
-    private BigDecimal donGia;
+    private BigDecimal donGiaDichVu;
+    private BigDecimal tienLuong;
+    private BigDecimal donGiaBan;
+    private BigDecimal tienTip;
     private BigDecimal thanhTien;
     
     // Reference objects (optional - for JOIN operations)
     private HoaDon hoaDon;
     private DichVu dichVu;
+    private NhanVien nhanVien;
 
     // Constructor mặc định
     public ChiTietHoaDon() {
         this.soLuong = 1; // Default value
+        this.tienTip = BigDecimal.ZERO;
     }
 
     // Constructor với tất cả tham số
-    public ChiTietHoaDon(Integer maCTHD, Integer maHoaDon, Integer maDichVu, 
-                        Integer soLuong, BigDecimal donGia) {
+    public ChiTietHoaDon(Integer maCTHD, Integer maHoaDon, Integer maDichVu, Integer maNhanVien,
+                        Integer soLuong, BigDecimal donGiaDichVu, BigDecimal tienLuong,
+                        BigDecimal donGiaBan, BigDecimal tienTip) {
         this.maCTHD = maCTHD;
         this.maHoaDon = maHoaDon;
         this.maDichVu = maDichVu;
+        this.maNhanVien = maNhanVien;
         this.soLuong = soLuong != null ? soLuong : 1;
-        this.donGia = donGia;
+        this.donGiaDichVu = donGiaDichVu;
+        this.tienLuong = tienLuong != null ? tienLuong : BigDecimal.ZERO;
+        this.donGiaBan = donGiaBan;
+        this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO;
         this.thanhTien = calculateThanhTien();
     }
 
     // Constructor không có ID (dùng khi insert)
-    public ChiTietHoaDon(Integer maHoaDon, Integer maDichVu, Integer soLuong, BigDecimal donGia) {
+    public ChiTietHoaDon(Integer maHoaDon, Integer maDichVu, Integer maNhanVien, 
+                        Integer soLuong, BigDecimal donGiaDichVu) {
         this.maHoaDon = maHoaDon;
         this.maDichVu = maDichVu;
+        this.maNhanVien = maNhanVien;
         this.soLuong = soLuong != null ? soLuong : 1;
-        this.donGia = donGia;
-        this.thanhTien = calculateThanhTien();
-    }
-
-    // Constructor đơn giản
-    public ChiTietHoaDon(Integer maHoaDon, Integer maDichVu, BigDecimal donGia) {
-        this.maHoaDon = maHoaDon;
-        this.maDichVu = maDichVu;
-        this.donGia = donGia;
-        this.soLuong = 1;
+        this.donGiaDichVu = donGiaDichVu;
+        this.tienLuong = BigDecimal.ZERO;
+        this.donGiaBan = BigDecimal.ZERO;
+        this.tienTip = BigDecimal.ZERO;
         this.thanhTien = calculateThanhTien();
     }
 
     // Method tính thành tiền
     private BigDecimal calculateThanhTien() {
-        if (soLuong != null && donGia != null) {
-            return donGia.multiply(BigDecimal.valueOf(soLuong));
+        if (soLuong != null && donGiaBan != null) {
+            return donGiaBan.multiply(BigDecimal.valueOf(soLuong));
         }
         return BigDecimal.ZERO;
     }
@@ -85,6 +92,14 @@ public class ChiTietHoaDon {
         this.maDichVu = maDichVu;
     }
 
+    public Integer getMaNhanVien() {
+        return maNhanVien;
+    }
+
+    public void setMaNhanVien(Integer maNhanVien) {
+        this.maNhanVien = maNhanVien;
+    }
+
     public Integer getSoLuong() {
         return soLuong;
     }
@@ -93,19 +108,42 @@ public class ChiTietHoaDon {
         this.soLuong = soLuong != null ? soLuong : 1;
     }
 
-    public BigDecimal getDonGia() {
-        return donGia;
+    public BigDecimal getDonGiaDichVu() {
+        return donGiaDichVu;
     }
 
-    public void setDonGia(BigDecimal donGia) {
-        this.donGia = donGia;
+    public void setDonGiaDichVu(BigDecimal donGiaDichVu) {
+        this.donGiaDichVu = donGiaDichVu;
+    }
+
+    public BigDecimal getTienLuong() {
+        return tienLuong != null ? tienLuong : BigDecimal.ZERO;
+    }
+
+    public void setTienLuong(BigDecimal tienLuong) {
+        this.tienLuong = tienLuong;
+    }
+
+    public BigDecimal getDonGiaBan() {
+        return donGiaBan;
+    }
+
+    public void setDonGiaBan(BigDecimal donGiaBan) {
+        this.donGiaBan = donGiaBan;
+    }
+
+    public BigDecimal getTienTip() {
+        return tienTip != null ? tienTip : BigDecimal.ZERO;
+    }
+
+    public void setTienTip(BigDecimal tienTip) {
+        this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO;
     }
 
     public BigDecimal getThanhTien() {
         return thanhTien != null ? thanhTien : calculateThanhTien();
     }
 
-    // Setter for thanhTien - chỉ để đọc từ database, không set thủ công
     public void setThanhTien(BigDecimal thanhTien) {
         this.thanhTien = thanhTien;
     }
@@ -126,12 +164,20 @@ public class ChiTietHoaDon {
         this.dichVu = dichVu;
     }
 
+    public NhanVien getNhanVien() {
+        return nhanVien;
+    }
+
+    public void setNhanVien(NhanVien nhanVien) {
+        this.nhanVien = nhanVien;
+    }
+
     // Validation method
     public boolean isValid() {
         return maHoaDon != null && 
                maDichVu != null && 
                soLuong != null && soLuong > 0 &&
-               donGia != null && donGia.compareTo(BigDecimal.ZERO) >= 0;
+               donGiaDichVu != null && donGiaDichVu.compareTo(BigDecimal.ZERO) >= 0;
     }
 
     // Helper method để cập nhật thành tiền
@@ -148,14 +194,18 @@ public class ChiTietHoaDon {
         return Objects.equals(maCTHD, that.maCTHD) &&
                Objects.equals(maHoaDon, that.maHoaDon) &&
                Objects.equals(maDichVu, that.maDichVu) &&
+               Objects.equals(maNhanVien, that.maNhanVien) &&
                Objects.equals(soLuong, that.soLuong) &&
-               Objects.equals(donGia, that.donGia) &&
-               Objects.equals(thanhTien, that.thanhTien);
+               Objects.equals(donGiaDichVu, that.donGiaDichVu) &&
+               Objects.equals(tienLuong, that.tienLuong) &&
+               Objects.equals(donGiaBan, that.donGiaBan) &&
+               Objects.equals(tienTip, that.tienTip);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maCTHD, maHoaDon, maDichVu, soLuong, donGia, thanhTien);
+        return Objects.hash(maCTHD, maHoaDon, maDichVu, maNhanVien, soLuong, 
+                           donGiaDichVu, tienLuong, donGiaBan, tienTip);
     }
 
     // toString
@@ -165,8 +215,12 @@ public class ChiTietHoaDon {
                 "maCTHD=" + maCTHD +
                 ", maHoaDon=" + maHoaDon +
                 ", maDichVu=" + maDichVu +
+                ", maNhanVien=" + maNhanVien +
                 ", soLuong=" + soLuong +
-                ", donGia=" + donGia +
+                ", donGiaDichVu=" + donGiaDichVu +
+                ", tienLuong=" + tienLuong +
+                ", donGiaBan=" + donGiaBan +
+                ", tienTip=" + tienTip +
                 ", thanhTien=" + thanhTien +
                 '}';
     }

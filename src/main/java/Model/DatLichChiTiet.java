@@ -6,18 +6,26 @@ public class DatLichChiTiet {
     private Integer maCTDL;
     private Integer maLich;
     private Integer maDichVu;
+    private Integer maNhanVien;
+    private Integer soLuongNguoi;
     private String ghiChu;
     private LocalDateTime ngayTao;
     
-    // Reference to DichVu for easy access
+    // Reference objects
     private DichVu dichVu;
+    private NhanVien nhanVien;
 
-    public DatLichChiTiet() {}
+    public DatLichChiTiet() {
+        this.soLuongNguoi = 1;
+    }
 
-    public DatLichChiTiet(Integer maCTDL, Integer maLich, Integer maDichVu, String ghiChu, LocalDateTime ngayTao) {
+    public DatLichChiTiet(Integer maCTDL, Integer maLich, Integer maDichVu, Integer maNhanVien,
+                         Integer soLuongNguoi, String ghiChu, LocalDateTime ngayTao) {
         this.maCTDL = maCTDL;
         this.maLich = maLich;
         this.maDichVu = maDichVu;
+        this.maNhanVien = maNhanVien;
+        this.soLuongNguoi = soLuongNguoi != null ? soLuongNguoi : 1;
         this.ghiChu = ghiChu;
         this.ngayTao = ngayTao;
     }
@@ -32,6 +40,14 @@ public class DatLichChiTiet {
     public Integer getMaDichVu() { return maDichVu; }
     public void setMaDichVu(Integer maDichVu) { this.maDichVu = maDichVu; }
 
+    public Integer getMaNhanVien() { return maNhanVien; }
+    public void setMaNhanVien(Integer maNhanVien) { this.maNhanVien = maNhanVien; }
+
+    public Integer getSoLuongNguoi() { return soLuongNguoi; }
+    public void setSoLuongNguoi(Integer soLuongNguoi) { 
+        this.soLuongNguoi = soLuongNguoi != null ? soLuongNguoi : 1; 
+    }
+
     public String getGhiChu() { return ghiChu; }
     public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
@@ -40,4 +56,25 @@ public class DatLichChiTiet {
 
     public DichVu getDichVu() { return dichVu; }
     public void setDichVu(DichVu dichVu) { this.dichVu = dichVu; }
+
+    public NhanVien getNhanVien() { return nhanVien; }
+    public void setNhanVien(NhanVien nhanVien) { this.nhanVien = nhanVien; }
+
+    // Validation method
+    public boolean isValid() {
+        return maLich != null && maDichVu != null;
+    }
+
+    @Override
+    public String toString() {
+        return "DatLichChiTiet{" +
+                "maCTDL=" + maCTDL +
+                ", maLich=" + maLich +
+                ", maDichVu=" + maDichVu +
+                ", maNhanVien=" + maNhanVien +
+                ", soLuongNguoi=" + soLuongNguoi +
+                ", ghiChu='" + ghiChu + '\'' +
+                ", ngayTao=" + ngayTao +
+                '}';
+    }
 }

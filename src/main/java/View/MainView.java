@@ -561,7 +561,8 @@ public class MainView extends JFrame {
 
             QuanLyCaLamView quanLyCaLamView = new QuanLyCaLamView();
             CaLamService caLamService = new CaLamService();
-            QuanLyCaLamController quanLyCaLamController = new QuanLyCaLamController(quanLyCaLamView, caLamService);
+            NhanVienService nhanVienService = new NhanVienService();
+            QuanLyCaLamController quanLyCaLamController = new QuanLyCaLamController(quanLyCaLamView, caLamService,nhanVienService);
 
             internalFrame.setContentPane(quanLyCaLamView);
             internalFrame.pack();
