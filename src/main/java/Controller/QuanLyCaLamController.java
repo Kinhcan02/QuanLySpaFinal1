@@ -15,7 +15,6 @@ import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
@@ -26,11 +25,6 @@ public class QuanLyCaLamController {
     private CaLamService caLamService;
     private NhanVienService nhanVienService;
 
-    // Colors
-    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
-    private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);
-    private final Color COLOR_TEXT = Color.WHITE;
-
     public QuanLyCaLamController(QuanLyCaLamView view, CaLamService caLamService, NhanVienService nhanVienService) {
         this.view = view;
         this.caLamService = caLamService;
@@ -38,23 +32,18 @@ public class QuanLyCaLamController {
         initController();
         loadNhanVienData();
         loadDataForSelectedDate();
-        setInitialState();
-        setupAutoFeatures();
+        setCurrentDate(LocalDate.now());
     }
 
     private void initController() {
-        // Calendar navigation
-        view.getBtnThangTruoc().addActionListener(e -> navigateMonth(-1));
-        view.getBtnThangSau().addActionListener(e -> navigateMonth(1));
-
-        // Date selection callback
-        view.setOnDateSelected(this::onDateSelected);
-
         // Table selection listener
         view.getTblCaLam().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                selectCaLamFromTable();
+                int selectedRow = view.getTblCaLam().getSelectedRow();
+                if (selectedRow >= 0) {
+                    fillFormFromTable(selectedRow);
+                }
             }
         });
 
@@ -62,58 +51,220 @@ public class QuanLyCaLamController {
         view.getBtnThem().addActionListener(e -> themCaLam());
         view.getBtnSua().addActionListener(e -> suaCaLam());
         view.getBtnXoa().addActionListener(e -> xoaCaLam());
-        view.getBtnLamMoi().addActionListener(e -> lamMoi());
+        view.getBtnLamMoi().addActionListener(e -> lamMoiForm());
         view.getBtnThemTip().addActionListener(e -> themTip());
-        view.getBtnXemLichSuTip().addActionListener(e -> xemLichSuTip());
 
-        // Enter key listeners for quick input
-        addEnterKeyListener(view.getTxtGioBatDau(), () -> view.getTxtGioKetThuc().requestFocus());
-        addEnterKeyListener(view.getTxtGioKetThuc(), () -> autoCalculateHours());
-        addEnterKeyListener(view.getTxtSoGioTangCa(), () -> view.getTxtSoLuongKhach().requestFocus());
-        addEnterKeyListener(view.getTxtSoLuongKhach(), () -> view.getTxtTienTip().requestFocus());
-        addEnterKeyListener(view.getTxtTienTip(), () -> {
-            if (view.getCboNhanVien().getSelectedItem() != null) {
-                themCaLam();
-            }
+        // Calendar navigation
+        view.getBtnThangTruoc().addActionListener(e -> navigateMonth(-1));
+        view.getBtnThangSau().addActionListener(e -> navigateMonth(1));
+
+        // Date selection callback
+        view.setOnDateSelected(selectedDate -> {
+            view.setSelectedDate(selectedDate);
+            loadDataForSelectedDate();
         });
-    }
 
-    private void addEnterKeyListener(JTextField textField, Runnable action) {
-        textField.addActionListener(e -> action.run());
-    }
-
-    private void setupAutoFeatures() {
-        // Auto calculate hours when start/end time changes
-        view.getTxtGioBatDau().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                autoCalculateHours();
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                autoCalculateHours();
-            }
-
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                autoCalculateHours();
+        // Date text field change
+        view.getTxtNgayLam().addActionListener(e -> {
+            try {
+                LocalDate selectedDate = LocalDate.parse(view.getTxtNgayLam().getText());
+                view.setSelectedDate(selectedDate);
+                loadDataForSelectedDate();
+            } catch (Exception ex) {
+                showMessage("Định dạng ngày không hợp lệ (yyyy-MM-dd)", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        view.getTxtGioKetThuc().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                autoCalculateHours();
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                autoCalculateHours();
-            }
-
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                autoCalculateHours();
-            }
-        });
+        // Auto calculate hours
+        view.getTxtGioBatDau().addActionListener(e -> tinhSoGioLam());
+        view.getTxtGioKetThuc().addActionListener(e -> tinhSoGioLam());
     }
 
-    private void autoCalculateHours() {
+    private void loadNhanVienData() {
+        try {
+            List<NhanVien> nhanViens = nhanVienService.getAllNhanVien();
+            view.loadNhanVienList(nhanViens);
+        } catch (Exception e) {
+            showMessage("Lỗi khi tải danh sách nhân viên: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void loadDataForSelectedDate() {
+        try {
+            LocalDate selectedDate = view.getSelectedDate();
+            List<CaLam> caLams = caLamService.getCaLamByNgay(selectedDate);
+            updateTable(caLams);
+        } catch (Exception e) {
+            showMessage("Lỗi khi tải dữ liệu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void updateTable(List<CaLam> caLams) {
+        DefaultTableModel model = view.getTableModel();
+        model.setRowCount(0);
+
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        for (CaLam caLam : caLams) {
+            String tenNhanVien = getTenNhanVien(caLam.getMaNhanVien());
+            String ngayLam = caLam.getNgayLam().format(dateFormatter);
+            String gioBatDau = caLam.getGioBatDau().format(timeFormatter);
+            String gioKetThuc = caLam.getGioKetThuc().format(timeFormatter);
+            String soGioLam = String.format("%.1f", caLam.getSoGioLam());
+            String soGioTangCa = caLam.getSoGioTangCa() != null ? 
+                String.format("%.1f", caLam.getSoGioTangCa()) : "0";
+            String tienTip = formatCurrency(caLam.getTienTip());
+
+            model.addRow(new Object[]{
+                tenNhanVien, ngayLam, gioBatDau, gioKetThuc,
+                soGioLam, soGioTangCa, tienTip
+            });
+        }
+    }
+
+    private void themCaLam() {
+        try {
+            CaLam caLam = getCaLamFromForm();
+            if (caLam == null) return;
+
+            if (caLamService.addCaLam(caLam)) {
+                showMessage("Thêm ca làm thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadDataForSelectedDate();
+                lamMoiForm();
+            } else {
+                showMessage("Thêm ca làm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            showMessage("Lỗi khi thêm ca làm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void suaCaLam() {
+        int selectedRow = view.getTblCaLam().getSelectedRow();
+        if (selectedRow < 0) {
+            showMessage("Vui lòng chọn ca làm cần sửa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            CaLam caLam = getCaLamFromForm();
+            if (caLam == null) return;
+
+            // Get original CaLam to preserve ID
+            LocalDate selectedDate = view.getSelectedDate();
+            List<CaLam> caLams = caLamService.getCaLamByNgay(selectedDate);
+            CaLam originalCaLam = caLams.get(selectedRow);
+            caLam.setMaCa(originalCaLam.getMaCa());
+
+            if (caLamService.updateCaLam(caLam)) {
+                showMessage("Cập nhật ca làm thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                loadDataForSelectedDate();
+                lamMoiForm();
+            } else {
+                showMessage("Cập nhật ca làm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            showMessage("Lỗi khi cập nhật ca làm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void xoaCaLam() {
+        int selectedRow = view.getTblCaLam().getSelectedRow();
+        if (selectedRow < 0) {
+            showMessage("Vui lòng chọn ca làm cần xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+            view,
+            "Bạn có chắc chắn muốn xóa ca làm này?",
+            "Xác nhận xóa",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                LocalDate selectedDate = view.getSelectedDate();
+                List<CaLam> caLams = caLamService.getCaLamByNgay(selectedDate);
+                CaLam caLam = caLams.get(selectedRow);
+
+                if (caLamService.deleteCaLam(caLam.getMaCa())) {
+                    showMessage("Xóa ca làm thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    loadDataForSelectedDate();
+                    lamMoiForm();
+                } else {
+                    showMessage("Xóa ca làm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                showMessage("Lỗi khi xóa ca làm: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void themTip() {
+        int selectedRow = view.getTblCaLam().getSelectedRow();
+        if (selectedRow < 0) {
+            showMessage("Vui lòng chọn ca làm để thêm tip!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            LocalDate selectedDate = view.getSelectedDate();
+            List<CaLam> caLams = caLamService.getCaLamByNgay(selectedDate);
+            CaLam caLam = caLams.get(selectedRow);
+            
+            String tenNhanVien = getTenNhanVien(caLam.getMaNhanVien());
+            String currentTip = formatCurrency(caLam.getTienTip());
+
+            String tienTipStr = JOptionPane.showInputDialog(
+                view,
+                "Nhân viên: " + tenNhanVien + 
+                "\nNgày làm: " + caLam.getNgayLam() +
+                "\nTip hiện tại: " + currentTip +
+                "\n\nNhập số tiền tip mới (sẽ cộng dồn):",
+                "Thêm Tip",
+                JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (tienTipStr != null && !tienTipStr.trim().isEmpty()) {
+                BigDecimal tienTipMoi = new BigDecimal(tienTipStr.trim());
+                
+                // Cộng dồn tip mới vào tip hiện tại
+                BigDecimal tienTipTong = caLam.getTienTip().add(tienTipMoi);
+
+                if (caLamService.updateTienTip(caLam.getMaCa(), tienTipTong)) {
+                    showMessage("Thêm tip thành công!\nTổng tip hiện tại: " + formatCurrency(tienTipTong), 
+                               "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    loadDataForSelectedDate();
+                } else {
+                    showMessage("Thêm tip thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (NumberFormatException e) {
+            showMessage("Số tiền tip không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            showMessage("Lỗi khi thêm tip: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void lamMoiForm() {
+        view.clearForm();
+        tinhSoGioLam();
+    }
+
+    private void navigateMonth(int months) {
+        LocalDate currentDate = view.getCurrentDate();
+        view.setCurrentDate(currentDate.plusMonths(months));
+        loadDataForSelectedDate();
+    }
+
+    private void setCurrentDate(LocalDate date) {
+        view.setCurrentDate(date);
+        view.setSelectedDate(date);
+    }
+
+    private void tinhSoGioLam() {
         try {
             String gioBatDauStr = view.getTxtGioBatDau().getText().trim();
             String gioKetThucStr = view.getTxtGioKetThuc().getText().trim();
@@ -122,316 +273,105 @@ public class QuanLyCaLamController {
                 LocalTime gioBatDau = LocalTime.parse(gioBatDauStr);
                 LocalTime gioKetThuc = LocalTime.parse(gioKetThucStr);
 
-                if (gioBatDau.isBefore(gioKetThuc)) {
-                    long minutes = java.time.Duration.between(gioBatDau, gioKetThuc).toMinutes();
-                    double hours = minutes / 60.0;
-                    view.showAutoCalculatedHours(hours);
+                if (gioBatDau.isAfter(gioKetThuc)) {
+                    view.getTxtSoGioLam().setText("");
+                    return;
                 }
+
+                long minutes = java.time.Duration.between(gioBatDau, gioKetThuc).toMinutes();
+                double hours = minutes / 60.0;
+                view.getTxtSoGioLam().setText(String.format("%.2f", hours));
             }
-        } catch (Exception e) {
-            // Ignore parsing errors during typing
+        } catch (DateTimeParseException e) {
+            // Ignore parse errors during typing
         }
     }
 
-    private void setInitialState() {
-        view.setFormEditable(true);
-        view.setButtonState(true, false, false);
-        view.clearForm();
-    }
-
-    private void loadNhanVienData() {
+    private CaLam getCaLamFromForm() {
         try {
-            List<NhanVien> nhanVienList = nhanVienService.getAllNhanVien();
-            view.loadNhanVienList(nhanVienList);
+            NhanVien selectedNV = (NhanVien) view.getCboNhanVien().getSelectedItem();
+            if (selectedNV == null) {
+                showMessage("Vui lòng chọn nhân viên!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return null;
+            }
+
+            LocalDate ngayLam = LocalDate.parse(view.getTxtNgayLam().getText());
+            LocalTime gioBatDau = LocalTime.parse(view.getTxtGioBatDau().getText());
+            LocalTime gioKetThuc = LocalTime.parse(view.getTxtGioKetThuc().getText());
+
+            if (gioBatDau.isAfter(gioKetThuc)) {
+                showMessage("Giờ bắt đầu phải trước giờ kết thúc!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+
+            BigDecimal soGioLam = new BigDecimal(view.getTxtSoGioLam().getText());
+            BigDecimal soGioTangCa = new BigDecimal(view.getTxtSoGioTangCa().getText());
+            BigDecimal tienTip = new BigDecimal(view.getTxtTienTip().getText());
+
+            CaLam caLam = new CaLam();
+            caLam.setMaNhanVien(selectedNV.getMaNhanVien());
+            caLam.setNgayLam(ngayLam);
+            caLam.setGioBatDau(gioBatDau);
+            caLam.setGioKetThuc(gioKetThuc);
+            caLam.setSoGioLam(soGioLam);
+            caLam.setSoGioTangCa(soGioTangCa);
+            caLam.setTienTip(tienTip);
+
+            return caLam;
         } catch (Exception e) {
-            showError("Lỗi khi tải danh sách nhân viên: " + e.getMessage());
+            showMessage("Dữ liệu không hợp lệ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return null;
         }
     }
 
-    private void loadDataForSelectedDate() {
+    private void fillFormFromTable(int row) {
         try {
-            List<CaLam> danhSachCaLam = caLamService.getCaLamByNgay(view.getSelectedDate());
-            updateTable(danhSachCaLam);
-        } catch (Exception e) {
-            showError("Lỗi khi tải dữ liệu: " + e.getMessage());
-        }
-    }
+            LocalDate selectedDate = view.getSelectedDate();
+            List<CaLam> caLams = caLamService.getCaLamByNgay(selectedDate);
+            CaLam caLam = caLams.get(row);
 
-    private void onDateSelected(LocalDate selectedDate) {
-        loadDataForSelectedDate();
-    }
-
-    private void navigateMonth(int months) {
-        LocalDate newDate = view.getCurrentDate().plusMonths(months);
-        view.setCurrentDate(newDate);
-        loadDataForSelectedDate();
-    }
-
-    private void updateTable(List<CaLam> danhSachCaLam) {
-        DefaultTableModel model = view.getTableModel();
-        model.setRowCount(0);
-
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-
-        for (CaLam caLam : danhSachCaLam) {
-            model.addRow(new Object[]{
-                caLam.getMaCa(),
-                getTenNhanVien(caLam.getMaNhanVien()),
-                caLam.getNgayLam().format(dateFormatter),
-                caLam.getGioBatDau().format(timeFormatter),
-                caLam.getGioKetThuc().format(timeFormatter),
-                String.format("%.1f", caLam.getSoGioLam()),
-                caLam.getSoGioTangCa() != null ? String.format("%.1f", caLam.getSoGioTangCa()) : "0",
-                caLam.getSoLuongKhachPhucVu(),
-                caLam.getTienTip() != null ? String.format("%,d", caLam.getTienTip().intValue()) : "0"
-            });
-        }
-    }
-
-    private String getTenNhanVien(int maNhanVien) {
-        try {
-            NhanVien nv = nhanVienService.getNhanVienById(maNhanVien);
-            return nv != null ? nv.getHoTen() : "N/A";
-        } catch (Exception e) {
-            return "N/A";
-        }
-    }
-
-    private void selectCaLamFromTable() {
-        int selectedRow = view.getTblCaLam().getSelectedRow();
-        if (selectedRow >= 0) {
-            DefaultTableModel model = view.getTableModel();
-
-            view.getTxtMaCa().setText(model.getValueAt(selectedRow, 0).toString());
-
-            // Find and select the correct employee in combobox
-            String tenNhanVien = model.getValueAt(selectedRow, 1).toString();
+            // Select nhân viên trong combobox
             for (int i = 0; i < view.getCboNhanVien().getItemCount(); i++) {
                 NhanVien nv = view.getCboNhanVien().getItemAt(i);
-                if (nv.getHoTen().equals(tenNhanVien)) {
+                if (nv.getMaNhanVien() == caLam.getMaNhanVien()) {
                     view.getCboNhanVien().setSelectedIndex(i);
                     break;
                 }
             }
 
-            // Parse date from display format
-            String displayDate = model.getValueAt(selectedRow, 2).toString();
-            try {
-                LocalDate date = LocalDate.parse(displayDate, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                view.getTxtNgayLam().setText(date.toString());
-            } catch (Exception e) {
-                view.getTxtNgayLam().setText(displayDate);
-            }
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
-            view.getTxtGioBatDau().setText(model.getValueAt(selectedRow, 3).toString());
-            view.getTxtGioKetThuc().setText(model.getValueAt(selectedRow, 4).toString());
-            view.getTxtSoGioLam().setText(model.getValueAt(selectedRow, 5).toString());
-            view.getTxtSoGioTangCa().setText(model.getValueAt(selectedRow, 6).toString());
-            view.getTxtSoLuongKhach().setText(model.getValueAt(selectedRow, 7).toString());
-
-            // Remove formatting from tip for editing
-            String tipValue = model.getValueAt(selectedRow, 8).toString().replace(",", "");
-            view.getTxtTienTip().setText(tipValue);
-
-            view.setButtonState(true, true, true);
-        }
-    }
-
-    private void themCaLam() {
-        try {
-            if (!validateForm()) {
-                return;
-            }
-
-            CaLam caLam = getCaLamFromForm();
-            boolean success = caLamService.addCaLam(caLam);
-
-            if (success) {
-                showMessage("Đã thêm ca làm mới thành công");
-                loadDataForSelectedDate();
-                view.clearForm();
-            } else {
-                showError("Thêm ca làm thất bại");
-            }
-
+            view.getTxtNgayLam().setText(caLam.getNgayLam().toString());
+            view.getTxtGioBatDau().setText(caLam.getGioBatDau().format(timeFormatter));
+            view.getTxtGioKetThuc().setText(caLam.getGioKetThuc().format(timeFormatter));
+            view.getTxtSoGioLam().setText(String.format("%.2f", caLam.getSoGioLam()));
+            view.getTxtSoGioTangCa().setText(String.format("%.2f", caLam.getSoGioTangCa()));
+            view.getTxtTienTip().setText(caLam.getTienTip().toString());
         } catch (Exception e) {
-            showError("Lỗi khi thêm ca làm: " + e.getMessage());
+            showMessage("Lỗi khi điền form: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void suaCaLam() {
-        if (view.getTxtMaCa().getText().isEmpty()) {
-            showError("Vui lòng chọn ca làm cần sửa");
-            return;
-        }
-
+    private String getTenNhanVien(int maNhanVien) {
         try {
-            if (!validateForm()) {
-                return;
-            }
-
-            CaLam caLam = getCaLamFromForm();
-            boolean success = caLamService.updateCaLam(caLam);
-
-            if (success) {
-                showMessage("Đã cập nhật ca làm thành công");
-                loadDataForSelectedDate();
-                setInitialState();
-            } else {
-                showError("Cập nhật ca làm thất bại");
-            }
-
-        } catch (Exception e) {
-            showError("Lỗi khi cập nhật ca làm: " + e.getMessage());
-        }
-    }
-
-    private void xoaCaLam() {
-        if (view.getTxtMaCa().getText().isEmpty()) {
-            showError("Vui lòng chọn ca làm cần xóa");
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(
-                view,
-                "Bạn có chắc chắn muốn xóa ca làm này?",
-                "Xác nhận xóa",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                int maCa = Integer.parseInt(view.getTxtMaCa().getText());
-                boolean success = caLamService.deleteCaLam(maCa);
-
-                if (success) {
-                    showMessage("Đã xóa ca làm thành công");
-                    loadDataForSelectedDate();
-                    setInitialState();
-                } else {
-                    showError("Xóa ca làm thất bại");
+            List<NhanVien> nhanViens = nhanVienService.getAllNhanVien();
+            for (NhanVien nv : nhanViens) {
+                if (nv.getMaNhanVien() == maNhanVien) {
+                    return nv.getHoTen();
                 }
-            } catch (Exception e) {
-                showError("Lỗi khi xóa ca làm: " + e.getMessage());
             }
-        }
-    }
-
-    private void themTip() {
-        if (view.getTxtMaCa().getText().isEmpty()) {
-            showError("Vui lòng chọn ca làm để thêm tip");
-            return;
-        }
-
-        try {
-            String tienTipStr = view.getTxtTienTip().getText().trim();
-            String ghiChu = view.getTxtGhiChuTip().getText().trim();
-
-            if (tienTipStr.isEmpty()) {
-                showError("Vui lòng nhập số tiền tip");
-                return;
-            }
-
-            BigDecimal tienTip = new BigDecimal(tienTipStr);
-            if (tienTip.compareTo(BigDecimal.ZERO) <= 0) {
-                showError("Số tiền tip phải lớn hơn 0");
-                return;
-            }
-
-            int maCa = Integer.parseInt(view.getTxtMaCa().getText());
-
-            // Get current ca lam to calculate new total
-            CaLam caLam = caLamService.getCaLamById(maCa);
-            BigDecimal tongTipMoi = caLam.getTienTip().add(tienTip);
-
-            // Update tip in database
-            boolean success = caLamService.updateTienTip(maCa, tongTipMoi);
-
-            if (success) {
-                showMessage("Đã thêm tip " + String.format("%,d", tienTip.intValue()) + " VND thành công");
-                loadDataForSelectedDate();
-                view.getTxtTienTip().setText("0");
-                view.getTxtGhiChuTip().setText("");
-            } else {
-                showError("Thêm tip thất bại");
-            }
-
         } catch (Exception e) {
-            showError("Lỗi khi thêm tip: " + e.getMessage());
+            // Ignore
         }
+        return "Unknown";
     }
 
-    private void xemLichSuTip() {
-        // This would show a dialog with tip history
-        // For now, just show a message
-        showMessage("Tính năng xem lịch sử tip đang được phát triển");
+    private String formatCurrency(BigDecimal amount) {
+        if (amount == null) return "0";
+        return String.format("%,.0f VND", amount);
     }
 
-    private void lamMoi() {
-        loadDataForSelectedDate();
-        setInitialState();
-    }
-
-    private boolean validateForm() {
-        if (view.getCboNhanVien().getSelectedItem() == null) {
-            showError("Vui lòng chọn nhân viên");
-            view.getCboNhanVien().requestFocus();
-            return false;
-        }
-
-        if (view.getTxtNgayLam().getText().trim().isEmpty()) {
-            showError("Vui lòng nhập ngày làm");
-            view.getTxtNgayLam().requestFocus();
-            return false;
-        }
-
-        if (view.getTxtGioBatDau().getText().trim().isEmpty()) {
-            showError("Vui lòng nhập giờ bắt đầu");
-            view.getTxtGioBatDau().requestFocus();
-            return false;
-        }
-
-        if (view.getTxtGioKetThuc().getText().trim().isEmpty()) {
-            showError("Vui lòng nhập giờ kết thúc");
-            view.getTxtGioKetThuc().requestFocus();
-            return false;
-        }
-
-        return true;
-    }
-
-    private CaLam getCaLamFromForm() throws Exception {
-        NhanVien selectedNV = (NhanVien) view.getCboNhanVien().getSelectedItem();
-        int maNhanVien = selectedNV.getMaNhanVien();
-
-        LocalDate ngayLam = LocalDate.parse(view.getTxtNgayLam().getText().trim());
-        LocalTime gioBatDau = LocalTime.parse(view.getTxtGioBatDau().getText().trim());
-        LocalTime gioKetThuc = LocalTime.parse(view.getTxtGioKetThuc().getText().trim());
-
-        BigDecimal soGioLam = new BigDecimal(view.getTxtSoGioLam().getText().trim());
-        BigDecimal soGioTangCa = new BigDecimal(view.getTxtSoGioTangCa().getText().trim());
-        int soLuongKhach = Integer.parseInt(view.getTxtSoLuongKhach().getText().trim());
-        BigDecimal tienTip = new BigDecimal(view.getTxtTienTip().getText().trim());
-
-        // If has maCa (editing), create CaLam with maCa
-        if (!view.getTxtMaCa().getText().isEmpty()) {
-            int maCa = Integer.parseInt(view.getTxtMaCa().getText());
-            return new CaLam(maCa, maNhanVien, ngayLam, gioBatDau, gioKetThuc,
-                    soGioLam, soGioTangCa, soLuongKhach, tienTip, null, null);
-        } else {
-            // If no maCa (adding new)
-            return new CaLam(null, maNhanVien, ngayLam, gioBatDau, gioKetThuc,
-                    soGioLam, soGioTangCa, soLuongKhach, tienTip, null, null);
-        }
-    }
-
-    private void showMessage(String message) {
-        JOptionPane.showMessageDialog(view, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void showError(String message) {
-        JOptionPane.showMessageDialog(view, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+    private void showMessage(String message, String title, int messageType) {
+        JOptionPane.showMessageDialog(view, message, title, messageType);
     }
 }

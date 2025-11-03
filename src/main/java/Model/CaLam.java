@@ -15,24 +15,19 @@ public class CaLam {
     private LocalTime gioKetThuc;
     private BigDecimal soGioLam;
     private BigDecimal soGioTangCa;
-    private Integer soLuongKhachPhucVu;
     private BigDecimal tienTip;
     private LocalDateTime ngayTao;
     private LocalDateTime ngayCapNhat;
-
-    // Danh sách lịch sử tip
-    private List<TipHistory> lichSuTip;
 
     // Reference object
     private NhanVien nhanVien;
 
     // Constructor mặc định
     public CaLam() {
-        this.soLuongKhachPhucVu = 0;
         this.tienTip = BigDecimal.ZERO;
+        this.soGioTangCa = BigDecimal.ZERO;
         this.ngayTao = LocalDateTime.now();
         this.ngayCapNhat = LocalDateTime.now();
-        this.lichSuTip = new ArrayList<>();
     }
 
     // Constructor với thông tin cơ bản
@@ -48,38 +43,17 @@ public class CaLam {
     // Constructor đầy đủ
     public CaLam(Integer maCa, Integer maNhanVien, LocalDate ngayLam, LocalTime gioBatDau,
                 LocalTime gioKetThuc, BigDecimal soGioLam, BigDecimal soGioTangCa,
-                Integer soLuongKhachPhucVu, BigDecimal tienTip, 
-                LocalDateTime ngayTao, LocalDateTime ngayCapNhat) {
+                BigDecimal tienTip, LocalDateTime ngayTao, LocalDateTime ngayCapNhat) {
         this.maCa = maCa;
         this.maNhanVien = maNhanVien;
         this.ngayLam = ngayLam;
         this.gioBatDau = gioBatDau;
         this.gioKetThuc = gioKetThuc;
         this.soGioLam = soGioLam;
-        this.soGioTangCa = soGioTangCa;
-        this.soLuongKhachPhucVu = soLuongKhachPhucVu != null ? soLuongKhachPhucVu : 0;
+        this.soGioTangCa = soGioTangCa != null ? soGioTangCa : BigDecimal.ZERO;
         this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO;
         this.ngayTao = ngayTao;
         this.ngayCapNhat = ngayCapNhat;
-        this.lichSuTip = new ArrayList<>();
-    }
-
-    // Inner class cho lịch sử tip
-    public static class TipHistory {
-        private LocalDateTime thoiGian;
-        private BigDecimal soTien;
-        private String ghiChu;
-
-        public TipHistory(BigDecimal soTien, String ghiChu) {
-            this.thoiGian = LocalDateTime.now();
-            this.soTien = soTien;
-            this.ghiChu = ghiChu;
-        }
-
-        // Getters
-        public LocalDateTime getThoiGian() { return thoiGian; }
-        public BigDecimal getSoTien() { return soTien; }
-        public String getGhiChu() { return ghiChu; }
     }
 
     // Getter và Setter
@@ -102,11 +76,8 @@ public class CaLam {
     public void setSoGioLam(BigDecimal soGioLam) { this.soGioLam = soGioLam; }
 
     public BigDecimal getSoGioTangCa() { return soGioTangCa; }
-    public void setSoGioTangCa(BigDecimal soGioTangCa) { this.soGioTangCa = soGioTangCa; }
-
-    public Integer getSoLuongKhachPhucVu() { return soLuongKhachPhucVu; }
-    public void setSoLuongKhachPhucVu(Integer soLuongKhachPhucVu) { 
-        this.soLuongKhachPhucVu = soLuongKhachPhucVu != null ? soLuongKhachPhucVu : 0; 
+    public void setSoGioTangCa(BigDecimal soGioTangCa) { 
+        this.soGioTangCa = soGioTangCa != null ? soGioTangCa : BigDecimal.ZERO; 
     }
 
     public BigDecimal getTienTip() { return tienTip; }
@@ -120,28 +91,8 @@ public class CaLam {
     public LocalDateTime getNgayCapNhat() { return ngayCapNhat; }
     public void setNgayCapNhat(LocalDateTime ngayCapNhat) { this.ngayCapNhat = ngayCapNhat; }
 
-    public List<TipHistory> getLichSuTip() { return lichSuTip; }
-    public void setLichSuTip(List<TipHistory> lichSuTip) { this.lichSuTip = lichSuTip; }
-
     public NhanVien getNhanVien() { return nhanVien; }
     public void setNhanVien(NhanVien nhanVien) { this.nhanVien = nhanVien; }
-
-    // Phương thức thêm tip mới
-    public void themTip(BigDecimal soTien, String ghiChu) {
-        if (soTien != null && soTien.compareTo(BigDecimal.ZERO) > 0) {
-            TipHistory tipMoi = new TipHistory(soTien, ghiChu);
-            this.lichSuTip.add(tipMoi);
-            this.tienTip = this.tienTip.add(soTien);
-            this.ngayCapNhat = LocalDateTime.now();
-        }
-    }
-
-    // Phương thức tính tổng tip từ lịch sử
-    public BigDecimal tinhTongTipTuLichSu() {
-        return lichSuTip.stream()
-                .map(TipHistory::getSoTien)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 
     // Phương thức tính số giờ làm tự động
     public void tinhSoGioLam() {
@@ -180,7 +131,6 @@ public class CaLam {
                 ", gioKetThuc=" + gioKetThuc +
                 ", soGioLam=" + soGioLam +
                 ", soGioTangCa=" + soGioTangCa +
-                ", soLuongKhachPhucVu=" + soLuongKhachPhucVu +
                 ", tienTip=" + tienTip +
                 ", ngayTao=" + ngayTao +
                 ", ngayCapNhat=" + ngayCapNhat +

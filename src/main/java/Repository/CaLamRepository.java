@@ -93,8 +93,8 @@ public class CaLamRepository {
     }
     
     public boolean insert(CaLam caLam) throws SQLException {
-        String sql = "INSERT INTO CaLam (MaNhanVien, NgayLam, GioBatDau, GioKetThuc, SoGioLam, SoGioTangCa, SoLuongKhachPhucVu, TienTip) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO CaLam (MaNhanVien, NgayLam, GioBatDau, GioKetThuc, SoGioLam, SoGioTangCa, TienTip) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -116,13 +116,13 @@ public class CaLamRepository {
     
     public boolean update(CaLam caLam) throws SQLException {
         String sql = "UPDATE CaLam SET MaNhanVien=?, NgayLam=?, GioBatDau=?, GioKetThuc=?, SoGioLam=?, " +
-                    "SoGioTangCa=?, SoLuongKhachPhucVu=?, TienTip=? WHERE MaCa=?";
+                    "SoGioTangCa=?, TienTip=? WHERE MaCa=?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             setCaLamParameters(stmt, caLam);
-            stmt.setInt(9, caLam.getMaCa());
+            stmt.setInt(8, caLam.getMaCa());
             
             return stmt.executeUpdate() > 0;
         }
@@ -153,27 +153,29 @@ public class CaLamRepository {
     }
     
     public boolean exists(int maNhanVien, Date ngayLam, Time gioBatDau, Time gioKetThuc) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM CaLam WHERE MaNhanVien = ? AND NgayLam = ? AND " +
-                    "((GioBatDau <= ? AND GioKetThuc >= ?) OR (GioBatDau <= ? AND GioKetThuc >= ?))";
+    String sql = "SELECT COUNT(*) FROM CaLam " +
+                "WHERE MaNhanVien = ? AND NgayLam = ? " +
+                "AND ((CAST(GioBatDau AS TIME) <= CAST(? AS TIME) AND CAST(GioKetThuc AS TIME) >= CAST(? AS TIME)) " +
+                "OR (CAST(GioBatDau AS TIME) <= CAST(? AS TIME) AND CAST(GioKetThuc AS TIME) >= CAST(? AS TIME)))";
+    
+    try (Connection conn = DataConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
         
-        try (Connection conn = DataConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setInt(1, maNhanVien);
-            stmt.setDate(2, ngayLam);
-            stmt.setTime(3, gioBatDau);
-            stmt.setTime(4, gioBatDau);
-            stmt.setTime(5, gioKetThuc);
-            stmt.setTime(6, gioKetThuc);
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
+        stmt.setInt(1, maNhanVien);
+        stmt.setDate(2, ngayLam);
+        stmt.setTime(3, gioBatDau);
+        stmt.setTime(4, gioBatDau);
+        stmt.setTime(5, gioKetThuc);
+        stmt.setTime(6, gioKetThuc);
+        
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
             }
         }
-        return false;
     }
+    return false;
+}
     
     private void setCaLamParameters(PreparedStatement stmt, CaLam caLam) throws SQLException {
         stmt.setInt(1, caLam.getMaNhanVien());
@@ -182,8 +184,7 @@ public class CaLamRepository {
         stmt.setTime(4, Time.valueOf(caLam.getGioKetThuc()));
         stmt.setBigDecimal(5, caLam.getSoGioLam());
         stmt.setBigDecimal(6, caLam.getSoGioTangCa());
-        stmt.setInt(7, caLam.getSoLuongKhachPhucVu());
-        stmt.setBigDecimal(8, caLam.getTienTip());
+        stmt.setBigDecimal(7, caLam.getTienTip());
     }
     
     private CaLam mapResultSetToCaLam(ResultSet rs) throws SQLException {
@@ -195,7 +196,6 @@ public class CaLamRepository {
             rs.getTime("GioKetThuc").toLocalTime(),
             rs.getBigDecimal("SoGioLam"),
             rs.getBigDecimal("SoGioTangCa"),
-            rs.getInt("SoLuongKhachPhucVu"),
             rs.getBigDecimal("TienTip"),
             rs.getTimestamp("NgayTao").toLocalDateTime(),
             rs.getTimestamp("NgayCapNhat") != null ? 

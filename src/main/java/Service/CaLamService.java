@@ -157,9 +157,6 @@ public class CaLamService {
         if (caLam.getSoGioLam() == null || caLam.getSoGioLam().doubleValue() < 0) {
             throw new IllegalArgumentException("Số giờ làm không hợp lệ");
         }
-        if (caLam.getSoLuongKhachPhucVu() < 0) {
-            throw new IllegalArgumentException("Số lượng khách phục vụ không được âm");
-        }
         if (caLam.getTienTip() != null && caLam.getTienTip().doubleValue() < 0) {
             throw new IllegalArgumentException("Tiền tip không được âm");
         }

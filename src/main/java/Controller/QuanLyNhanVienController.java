@@ -4,38 +4,31 @@ import Model.NhanVien;
 import Service.NhanVienService;
 import View.QuanLyNhanVienView;
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class QuanLyNhanVienController {
-    private QuanLyNhanVienView view;
-    private NhanVienService service;
-    private DateTimeFormatter dateFormatter;
+    private final QuanLyNhanVienView view;
+    private final NhanVienService service;
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    // Màu sắc
-    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
-    private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);
-    private final Color COLOR_TEXT = Color.WHITE;
-
-    public QuanLyNhanVienController(QuanLyNhanVienView view, NhanVienService service) {
+    public QuanLyNhanVienController(QuanLyNhanVienView view) {
         this.view = view;
-        this.service = service;
-        this.dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        
+        this.service = new NhanVienService();
         initController();
         loadAllNhanVien();
     }
 
     private void initController() {
-        // Xử lý sự kiện button Thêm
+        // Sự kiện cho nút Thêm mới
         view.getBtnThem().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -43,7 +36,7 @@ public class QuanLyNhanVienController {
             }
         });
 
-        // Xử lý sự kiện button Sửa
+        // Sự kiện cho nút Sửa
         view.getBtnSua().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -51,7 +44,7 @@ public class QuanLyNhanVienController {
             }
         });
 
-        // Xử lý sự kiện button Xóa
+        // Sự kiện cho nút Xóa
         view.getBtnXoa().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -59,7 +52,16 @@ public class QuanLyNhanVienController {
             }
         });
 
-        // Xử lý sự kiện button Tìm kiếm
+        // Sự kiện cho nút Làm mới
+        view.getBtnLamMoi().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                lamMoiForm();
+                loadAllNhanVien();
+            }
+        });
+
+        // Sự kiện cho nút Tìm kiếm
         view.getBtnTimKiem().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -67,234 +69,29 @@ public class QuanLyNhanVienController {
             }
         });
 
-        // Xử lý sự kiện button Làm mới
-        view.getBtnLamMoi().addActionListener(new ActionListener() {
+        // Sự kiện click trên bảng
+        view.getTblNhanVien().addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                lamMoi();
+            public void mouseClicked(MouseEvent e) {
+                hienThiThongTinNhanVien();
             }
         });
-
-        // Xử lý sự kiện chọn hàng trong table
-        view.getTblNhanVien().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    hienThiThongTinNhanVienDuocChon();
-                }
-            }
-        });
-
-        // Xử lý sự kiện filter chức vụ
-        view.getCboChucVuFilter().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                locTheoChucVu();
-            }
-        });
-    }
-
-    private void themNhanVien() {
-        try {
-            NhanVien nhanVien = layThongTinNhanVienTuForm();
-            if (nhanVien == null) return;
-            
-            boolean success = service.addNhanVien(nhanVien);
-            if (success) {
-                hienThiThongBao("Thêm nhân viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                loadAllNhanVien();
-                view.clearForm();
-            } else {
-                hienThiThongBao("Thêm nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (Exception ex) {
-            hienThiThongBao("Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void suaNhanVien() {
-        try {
-            String maNVText = view.getTxtMaNhanVien().getText();
-            if (maNVText.isEmpty()) {
-                hienThiThongBao("Vui lòng chọn nhân viên cần sửa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            NhanVien nhanVien = layThongTinNhanVienTuForm();
-            if (nhanVien == null) return;
-            
-            nhanVien.setMaNhanVien(Integer.parseInt(maNVText));
-            
-            boolean success = service.updateNhanVien(nhanVien);
-            if (success) {
-                hienThiThongBao("Cập nhật nhân viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                loadAllNhanVien();
-                view.clearForm();
-            } else {
-                hienThiThongBao("Cập nhật nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (Exception ex) {
-            hienThiThongBao("Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void xoaNhanVien() {
-        try {
-            String maNVText = view.getTxtMaNhanVien().getText();
-            if (maNVText.isEmpty()) {
-                hienThiThongBao("Vui lòng chọn nhân viên cần xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            
-            int maNhanVien = Integer.parseInt(maNVText);
-            
-            boolean confirmed = hienThiXacNhan("Bạn có chắc chắn muốn xóa nhân viên này?");
-            
-            if (confirmed) {
-                boolean success = service.deleteNhanVien(maNhanVien);
-                if (success) {
-                    hienThiThongBao("Xóa nhân viên thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                    loadAllNhanVien();
-                    view.clearForm();
-                } else {
-                    hienThiThongBao("Xóa nhân viên thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        } catch (Exception ex) {
-            hienThiThongBao("Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void timKiemNhanVien() {
-        try {
-            String tuKhoa = view.getTxtTimKiem().getText().trim();
-            if (tuKhoa.isEmpty()) {
-                loadAllNhanVien();
-                return;
-            }
-            
-            List<NhanVien> dsNhanVien = service.searchNhanVienByHoTen(tuKhoa);
-            hienThiDanhSachNhanVien(dsNhanVien);
-            
-        } catch (Exception ex) {
-            hienThiThongBao("Lỗi tìm kiếm: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void locTheoChucVu() {
-        try {
-            String chucVu = (String) view.getCboChucVuFilter().getSelectedItem();
-            if ("Tất cả".equals(chucVu)) {
-                loadAllNhanVien();
-            } else {
-                List<NhanVien> dsNhanVien = service.getNhanVienByChucVu(chucVu);
-                hienThiDanhSachNhanVien(dsNhanVien);
-            }
-        } catch (Exception ex) {
-            hienThiThongBao("Lỗi lọc dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void lamMoi() {
-        view.clearForm();
-        loadAllNhanVien();
-    }
-
-    private void hienThiThongTinNhanVienDuocChon() {
-        int selectedRow = view.getTblNhanVien().getSelectedRow();
-        if (selectedRow != -1) {
-            DefaultTableModel model = view.getModel();
-            
-            view.getTxtMaNhanVien().setText(model.getValueAt(selectedRow, 0).toString());
-            view.getTxtHoTen().setText(model.getValueAt(selectedRow, 1).toString());
-            
-            Object ngaySinh = model.getValueAt(selectedRow, 2);
-            view.getTxtNgaySinh().setText(ngaySinh != null ? ngaySinh.toString() : "");
-            
-            view.getTxtSoDienThoai().setText(model.getValueAt(selectedRow, 3).toString());
-            
-            Object diaChi = model.getValueAt(selectedRow, 4);
-            view.getTxtDiaChi().setText(diaChi != null ? diaChi.toString() : "");
-            
-            view.getCboChucVu().setSelectedItem(model.getValueAt(selectedRow, 5));
-            
-            Object ngayVaoLam = model.getValueAt(selectedRow, 6);
-            view.getTxtNgayVaoLam().setText(ngayVaoLam != null ? ngayVaoLam.toString() : "");
-        }
-    }
-
-    private NhanVien layThongTinNhanVienTuForm() {
-        try {
-            String hoTen = view.getTxtHoTen().getText().trim();
-            String ngaySinhText = view.getTxtNgaySinh().getText().trim();
-            String soDienThoai = view.getTxtSoDienThoai().getText().trim();
-            String diaChi = view.getTxtDiaChi().getText().trim();
-            String chucVu = (String) view.getCboChucVu().getSelectedItem();
-            String ngayVaoLamText = view.getTxtNgayVaoLam().getText().trim();
-            
-            // Validate dữ liệu
-            if (hoTen.isEmpty()) {
-                hienThiThongBao("Họ tên không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return null;
-            }
-            
-            if (soDienThoai.isEmpty()) {
-                hienThiThongBao("Số điện thoại không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return null;
-            }
-            
-            if (diaChi.isEmpty()) {
-                hienThiThongBao("Địa chỉ không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return null;
-            }
-            
-            if (chucVu == null || chucVu.isEmpty()) {
-                hienThiThongBao("Chức vụ không được để trống!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return null;
-            }
-            
-            LocalDate ngaySinh = null;
-            if (!ngaySinhText.isEmpty()) {
-                try {
-                    ngaySinh = LocalDate.parse(ngaySinhText, dateFormatter);
-                } catch (DateTimeParseException e) {
-                    hienThiThongBao("Định dạng ngày sinh không hợp lệ! Sử dụng yyyy-MM-dd", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return null;
-                }
-            }
-            
-            LocalDate ngayVaoLam = LocalDate.now(); // Mặc định là ngày hiện tại
-            if (!ngayVaoLamText.isEmpty()) {
-                try {
-                    ngayVaoLam = LocalDate.parse(ngayVaoLamText, dateFormatter);
-                } catch (DateTimeParseException e) {
-                    hienThiThongBao("Định dạng ngày vào làm không hợp lệ! Sử dụng yyyy-MM-dd", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return null;
-                }
-            }
-            
-            return new NhanVien(hoTen, ngaySinh, soDienThoai, diaChi, chucVu, ngayVaoLam);
-            
-        } catch (Exception ex) {
-            hienThiThongBao("Lỗi nhập liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return null;
-        }
     }
 
     private void loadAllNhanVien() {
         try {
-            List<NhanVien> dsNhanVien = service.getAllNhanVien();
-            hienThiDanhSachNhanVien(dsNhanVien);
-        } catch (Exception ex) {
-            hienThiThongBao("Lỗi tải dữ liệu: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            List<NhanVien> list = service.getAllNhanVien();
+            hienThiDanhSachNhanVien(list);
+        } catch (Exception e) {
+            showError("Lỗi khi tải danh sách nhân viên: " + e.getMessage());
         }
     }
 
-    private void hienThiDanhSachNhanVien(List<NhanVien> dsNhanVien) {
+    private void hienThiDanhSachNhanVien(List<NhanVien> list) {
         DefaultTableModel model = view.getModel();
         model.setRowCount(0);
-        
-        for (NhanVien nv : dsNhanVien) {
+
+        for (NhanVien nv : list) {
             Object[] row = {
                 nv.getMaNhanVien(),
                 nv.getHoTen(),
@@ -303,119 +100,199 @@ public class QuanLyNhanVienController {
                 nv.getDiaChi(),
                 nv.getChucVu(),
                 nv.getNgayVaoLam() != null ? nv.getNgayVaoLam().format(dateFormatter) : "",
-                nv.getThamNien() + " năm"
+                nv.getHeSoLuong(),
+                nv.getThamNien()
             };
             model.addRow(row);
         }
     }
 
-    // Các phương thức hiển thị thông báo custom (giống QuanLyKhachHangController)
-    private void hienThiThongBao(String message, String title, int messageType) {
-        JDialog dialog = createCustomDialog(message, title, messageType);
-        dialog.setVisible(true);
-    }
+    private void themNhanVien() {
+        try {
+            NhanVien nv = layThongTinNhanVienTuForm();
+            if (nv == null) return;
 
-    private boolean hienThiXacNhan(String message) {
-        JDialog dialog = createConfirmationDialog(message);
-        final boolean[] result = {false};
-        
-        dialog.setVisible(true);
-        
-        return result[0];
-    }
-
-    private JDialog createCustomDialog(String message, String title, int messageType) {
-        JButton okButton = createStyledButton("OK", COLOR_BUTTON);
-        okButton.addActionListener(e -> {
-            Window window = SwingUtilities.getWindowAncestor(okButton);
-            if (window != null) window.dispose();
-        });
-
-        JPanel panel = createDialogPanel(message, messageType);
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(COLOR_BACKGROUND);
-        buttonPanel.add(okButton);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        return createDialog(panel, title);
-    }
-
-    private JDialog createConfirmationDialog(String message) {
-        JButton btnCo = createStyledButton("Có", COLOR_BUTTON);
-        JButton btnKhong = createStyledButton("Không", new Color(149, 165, 166));
-        
-        JPanel panel = createDialogPanel(message, JOptionPane.QUESTION_MESSAGE);
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        buttonPanel.setBackground(COLOR_BACKGROUND);
-        buttonPanel.add(btnCo);
-        buttonPanel.add(btnKhong);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        JDialog dialog = createDialog(panel, "Xác nhận");
-        final boolean[] result = {false};
-
-        btnCo.addActionListener(e -> { result[0] = true; dialog.dispose(); });
-        btnKhong.addActionListener(e -> { result[0] = false; dialog.dispose(); });
-
-        return dialog;
-    }
-
-    private JPanel createDialogPanel(String message, int messageType) {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(COLOR_BACKGROUND);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel messageLabel = new JLabel(message);
-        messageLabel.setForeground(COLOR_TEXT);
-        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        Icon icon = getIconForMessageType(messageType);
-        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        contentPanel.setBackground(COLOR_BACKGROUND);
-        if (icon != null) contentPanel.add(new JLabel(icon));
-        contentPanel.add(messageLabel);
-        panel.add(contentPanel, BorderLayout.CENTER);
-
-        return panel;
-    }
-
-    private JDialog createDialog(JPanel contentPanel, String title) {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), title, true);
-        dialog.setContentPane(contentPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(view);
-        dialog.setResizable(false);
-        return dialog;
-    }
-
-    private Icon getIconForMessageType(int messageType) {
-        switch (messageType) {
-            case JOptionPane.ERROR_MESSAGE: return UIManager.getIcon("OptionPane.errorIcon");
-            case JOptionPane.INFORMATION_MESSAGE: return UIManager.getIcon("OptionPane.informationIcon");
-            case JOptionPane.WARNING_MESSAGE: return UIManager.getIcon("OptionPane.warningIcon");
-            case JOptionPane.QUESTION_MESSAGE: return UIManager.getIcon("OptionPane.questionIcon");
-            default: return null;
+            if (service.addNhanVien(nv)) {
+                showSuccess("Thêm nhân viên thành công!");
+                lamMoiForm();
+                loadAllNhanVien();
+            } else {
+                showError("Thêm nhân viên thất bại!");
+            }
+        } catch (Exception e) {
+            showError("Lỗi khi thêm nhân viên: " + e.getMessage());
         }
     }
 
-    private JButton createStyledButton(String text, Color backgroundColor) {
-        JButton button = new JButton(text);
-        button.setBackground(backgroundColor);
-        button.setForeground(COLOR_TEXT);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(backgroundColor.darker());
+    private void suaNhanVien() {
+        try {
+            String maNVStr = view.getTxtMaNhanVien().getText().trim();
+            if (maNVStr.isEmpty()) {
+                showError("Vui lòng chọn nhân viên cần sửa!");
+                return;
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(backgroundColor);
-            }
-        });
 
-        return button;
+            int maNhanVien = Integer.parseInt(maNVStr);
+            NhanVien nv = layThongTinNhanVienTuForm();
+            if (nv == null) return;
+
+            nv.setMaNhanVien(maNhanVien);
+
+            if (service.updateNhanVien(nv)) {
+                showSuccess("Cập nhật nhân viên thành công!");
+                lamMoiForm();
+                loadAllNhanVien();
+            } else {
+                showError("Cập nhật nhân viên thất bại!");
+            }
+        } catch (Exception e) {
+            showError("Lỗi khi cập nhật nhân viên: " + e.getMessage());
+        }
+    }
+
+    private void xoaNhanVien() {
+        try {
+            String maNVStr = view.getTxtMaNhanVien().getText().trim();
+            if (maNVStr.isEmpty()) {
+                showError("Vui lòng chọn nhân viên cần xóa!");
+                return;
+            }
+
+            int maNhanVien = Integer.parseInt(maNVStr);
+            int confirm = JOptionPane.showConfirmDialog(
+                view,
+                "Bạn có chắc chắn muốn xóa nhân viên này?",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (service.deleteNhanVien(maNhanVien)) {
+                    showSuccess("Xóa nhân viên thành công!");
+                    lamMoiForm();
+                    loadAllNhanVien();
+                } else {
+                    showError("Xóa nhân viên thất bại!");
+                }
+            }
+        } catch (Exception e) {
+            showError("Lỗi khi xóa nhân viên: " + e.getMessage());
+        }
+    }
+
+    private void timKiemNhanVien() {
+        try {
+            String tuKhoa = view.getTxtTimKiem().getText().trim();
+            String chucVu = (String) view.getCboChucVuFilter().getSelectedItem();
+
+            List<NhanVien> ketQua;
+
+            if ("Tất cả".equals(chucVu)) {
+                if (tuKhoa.isEmpty()) {
+                    ketQua = service.getAllNhanVien();
+                } else {
+                    ketQua = service.searchNhanVienByHoTen(tuKhoa);
+                }
+            } else {
+                if (tuKhoa.isEmpty()) {
+                    ketQua = service.getNhanVienByChucVu(chucVu);
+                } else {
+                    // Tìm kiếm kết hợp
+                    List<NhanVien> theoHoTen = service.searchNhanVienByHoTen(tuKhoa);
+                    ketQua = theoHoTen.stream()
+                            .filter(nv -> chucVu.equals(nv.getChucVu()))
+                            .toList();
+                }
+            }
+
+            hienThiDanhSachNhanVien(ketQua);
+            if (ketQua.isEmpty()) {
+                showInfo("Không tìm thấy nhân viên phù hợp!");
+            }
+        } catch (Exception e) {
+            showError("Lỗi khi tìm kiếm: " + e.getMessage());
+        }
+    }
+
+    private void hienThiThongTinNhanVien() {
+        int selectedRow = view.getTblNhanVien().getSelectedRow();
+        if (selectedRow >= 0) {
+            DefaultTableModel model = view.getModel();
+            view.getTxtMaNhanVien().setText(model.getValueAt(selectedRow, 0).toString());
+            view.getTxtHoTen().setText(model.getValueAt(selectedRow, 1).toString());
+            view.getTxtNgaySinh().setText(model.getValueAt(selectedRow, 2).toString());
+            view.getTxtSoDienThoai().setText(model.getValueAt(selectedRow, 3).toString());
+            view.getTxtDiaChi().setText(model.getValueAt(selectedRow, 4).toString());
+            view.getCboChucVu().setSelectedItem(model.getValueAt(selectedRow, 5).toString());
+            view.getTxtNgayVaoLam().setText(model.getValueAt(selectedRow, 6).toString());
+            view.getTxtHeSoLuong().setText(model.getValueAt(selectedRow, 7).toString());
+        }
+    }
+
+    private NhanVien layThongTinNhanVienTuForm() {
+        try {
+            String hoTen = view.getTxtHoTen().getText().trim();
+            String ngaySinhStr = view.getTxtNgaySinh().getText().trim();
+            String soDienThoai = view.getTxtSoDienThoai().getText().trim();
+            String diaChi = view.getTxtDiaChi().getText().trim();
+            String chucVu = (String) view.getCboChucVu().getSelectedItem();
+            String ngayVaoLamStr = view.getTxtNgayVaoLam().getText().trim();
+            String heSoLuongStr = view.getTxtHeSoLuong().getText().trim();
+
+            // Parse dates
+            LocalDate ngaySinh = null;
+            if (!ngaySinhStr.isEmpty()) {
+                ngaySinh = LocalDate.parse(ngaySinhStr, dateFormatter);
+            }
+
+            LocalDate ngayVaoLam = LocalDate.parse(ngayVaoLamStr, dateFormatter);
+
+            // Parse hệ số lương
+            BigDecimal heSoLuong = new BigDecimal("1.0");
+            if (!heSoLuongStr.isEmpty()) {
+                heSoLuong = new BigDecimal(heSoLuongStr);
+                if (heSoLuong.compareTo(BigDecimal.ZERO) < 0) {
+                    throw new IllegalArgumentException("Hệ số lương phải >= 0");
+                }
+            }
+
+            return new NhanVien(null, hoTen, ngaySinh, soDienThoai, diaChi, chucVu, ngayVaoLam, heSoLuong);
+
+        } catch (DateTimeParseException e) {
+            showError("Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng yyyy-MM-dd");
+            return null;
+        } catch (NumberFormatException e) {
+            showError("Hệ số lương phải là số hợp lệ");
+            return null;
+        } catch (Exception e) {
+            showError("Lỗi dữ liệu: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void lamMoiForm() {
+        view.getTxtMaNhanVien().setText("");
+        view.getTxtHoTen().setText("");
+        view.getTxtNgaySinh().setText("");
+        view.getTxtSoDienThoai().setText("");
+        view.getTxtDiaChi().setText("");
+        view.getCboChucVu().setSelectedIndex(0);
+        view.getTxtNgayVaoLam().setText("");
+        view.getTxtHeSoLuong().setText("1.0");
+        view.getTxtTimKiem().setText("");
+        view.getCboChucVuFilter().setSelectedIndex(0);
+        view.getTblNhanVien().clearSelection();
+    }
+
+    private void showSuccess(String message) {
+        JOptionPane.showMessageDialog(view, message, "Thành công", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(view, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void showInfo(String message) {
+        JOptionPane.showMessageDialog(view, message, "Thông tin", JOptionPane.INFORMATION_MESSAGE);
     }
 }

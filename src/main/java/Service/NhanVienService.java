@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class NhanVienService {
+
     private final NhanVienRepository repository;
     private static final Logger logger = Logger.getLogger(NhanVienService.class.getName());
 
@@ -74,6 +75,10 @@ public class NhanVienService {
     public boolean addNhanVien(NhanVien nhanVien) {
         validateNhanVien(nhanVien);
         try {
+            // Kiểm tra số điện thoại đã tồn tại chưa
+            if (repository.isSoDienThoaiExists(nhanVien.getSoDienThoai(), null)) {
+                throw new IllegalArgumentException("Số điện thoại đã tồn tại trong hệ thống");
+            }
             return repository.insert(nhanVien);
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi thêm nhân viên: " + nhanVien.getHoTen(), e);
@@ -83,10 +88,14 @@ public class NhanVienService {
 
     public boolean updateNhanVien(NhanVien nhanVien) {
         validateNhanVien(nhanVien);
-        if (nhanVien.getMaNhanVien() <= 0) {
+        if (nhanVien.getMaNhanVien() == null || nhanVien.getMaNhanVien() <= 0) {
             throw new IllegalArgumentException("Mã nhân viên không hợp lệ");
         }
         try {
+            // Kiểm tra số điện thoại đã tồn tại chưa (trừ nhân viên hiện tại)
+            if (repository.isSoDienThoaiExists(nhanVien.getSoDienThoai(), nhanVien.getMaNhanVien())) {
+                throw new IllegalArgumentException("Số điện thoại đã tồn tại trong hệ thống");
+            }
             return repository.update(nhanVien);
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi cập nhật nhân viên: " + nhanVien.getMaNhanVien(), e);
@@ -120,14 +129,18 @@ public class NhanVienService {
         if (nhanVien.getChucVu() == null || nhanVien.getChucVu().trim().isEmpty()) {
             throw new IllegalArgumentException("Chức vụ không được để trống");
         }
+        if (nhanVien.getNgayVaoLam() == null) {
+            throw new IllegalArgumentException("Ngày vào làm không được để trống");
+        }
     }
 
     private void validateSoDienThoai(String soDienThoai) {
         if (soDienThoai == null || soDienThoai.trim().isEmpty()) {
             throw new IllegalArgumentException("Số điện thoại không được để trống");
         }
+        // Kiểm tra định dạng số điện thoại (10-11 chữ số)
         if (!soDienThoai.matches("\\d{10,11}")) {
-            throw new IllegalArgumentException("Số điện thoại không hợp lệ");
+            throw new IllegalArgumentException("Số điện thoại phải có 10-11 chữ số");
         }
     }
 }

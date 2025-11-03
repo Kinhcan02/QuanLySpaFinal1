@@ -1,4 +1,3 @@
-// NhanVienRepository.java
 package Repository;
 
 import Data.DataConnection;
@@ -11,7 +10,7 @@ public class NhanVienRepository {
     
     public List<NhanVien> getAll() throws SQLException {
         List<NhanVien> list = new ArrayList<>();
-        String sql = "SELECT * FROM NhanVien";
+        String sql = "SELECT * FROM NhanVien ORDER BY MaNhanVien DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -58,7 +57,7 @@ public class NhanVienRepository {
     
     public List<NhanVien> searchByHoTen(String hoTen) throws SQLException {
         List<NhanVien> list = new ArrayList<>();
-        String sql = "SELECT * FROM NhanVien WHERE HoTen LIKE ?";
+        String sql = "SELECT * FROM NhanVien WHERE HoTen LIKE ? ORDER BY MaNhanVien DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -75,7 +74,7 @@ public class NhanVienRepository {
     
     public List<NhanVien> getByChucVu(String chucVu) throws SQLException {
         List<NhanVien> list = new ArrayList<>();
-        String sql = "SELECT * FROM NhanVien WHERE ChucVu = ?";
+        String sql = "SELECT * FROM NhanVien WHERE ChucVu = ? ORDER BY MaNhanVien DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -91,13 +90,15 @@ public class NhanVienRepository {
     }
     
     public boolean insert(NhanVien nhanVien) throws SQLException {
-        String sql = "INSERT INTO NhanVien (HoTen, NgaySinh, SoDienThoai, DiaChi, ChucVu, NgayVaoLam) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO NhanVien (HoTen, NgaySinh, SoDienThoai, DiaChi, ChucVu, NgayVaoLam, HeSoLuong) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
             setNhanVienParameters(stmt, nhanVien);
+            stmt.setBigDecimal(7, nhanVien.getHeSoLuong());
+            
             int affectedRows = stmt.executeUpdate();
             
             if (affectedRows > 0) {
@@ -113,14 +114,15 @@ public class NhanVienRepository {
     }
     
     public boolean update(NhanVien nhanVien) throws SQLException {
-        String sql = "UPDATE NhanVien SET HoTen=?, NgaySinh=?, SoDienThoai=?, DiaChi=?, ChucVu=?, NgayVaoLam=? " +
+        String sql = "UPDATE NhanVien SET HoTen=?, NgaySinh=?, SoDienThoai=?, DiaChi=?, ChucVu=?, NgayVaoLam=?, HeSoLuong=? " +
                     "WHERE MaNhanVien=?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             setNhanVienParameters(stmt, nhanVien);
-            stmt.setInt(7, nhanVien.getMaNhanVien());
+            stmt.setBigDecimal(7, nhanVien.getHeSoLuong());
+            stmt.setInt(8, nhanVien.getMaNhanVien());
             
             return stmt.executeUpdate() > 0;
         }
@@ -135,6 +137,24 @@ public class NhanVienRepository {
             stmt.setInt(1, maNhanVien);
             return stmt.executeUpdate() > 0;
         }
+    }
+    
+    public boolean isSoDienThoaiExists(String soDienThoai, Integer excludeMaNhanVien) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM NhanVien WHERE SoDienThoai = ? AND MaNhanVien != ?";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, soDienThoai);
+            stmt.setInt(2, excludeMaNhanVien != null ? excludeMaNhanVien : -1);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
     }
     
     private void setNhanVienParameters(PreparedStatement stmt, NhanVien nhanVien) throws SQLException {
@@ -158,14 +178,16 @@ public class NhanVienRepository {
     }
     
     private NhanVien mapResultSetToNhanVien(ResultSet rs) throws SQLException {
-        return new NhanVien(
+        NhanVien nv = new NhanVien(
             rs.getInt("MaNhanVien"),
             rs.getString("HoTen"),
             rs.getDate("NgaySinh") != null ? rs.getDate("NgaySinh").toLocalDate() : null,
             rs.getString("SoDienThoai"),
             rs.getString("DiaChi"),
             rs.getString("ChucVu"),
-            rs.getDate("NgayVaoLam") != null ? rs.getDate("NgayVaoLam").toLocalDate() : null
+            rs.getDate("NgayVaoLam") != null ? rs.getDate("NgayVaoLam").toLocalDate() : null,
+            rs.getBigDecimal("HeSoLuong")
         );
+        return nv;
     }
 }

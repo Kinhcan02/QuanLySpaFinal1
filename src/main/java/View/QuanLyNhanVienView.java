@@ -20,11 +20,12 @@ public class QuanLyNhanVienView extends JPanel {
     private JTextArea txtDiaChi;
     private JComboBox<String> cboChucVu;
     private JTextField txtNgayVaoLam;
+    private JTextField txtHeSoLuong;
 
     // Màu sắc
-    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80); // Màu nền #8cc980
-    private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);     // Màu nút #4d8a57
-    private final Color COLOR_TEXT = Color.WHITE;                       // Màu chữ #ffffff
+    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
+    private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);
+    private final Color COLOR_TEXT = Color.WHITE;
 
     public QuanLyNhanVienView() {
         initUI();
@@ -61,12 +62,12 @@ public class QuanLyNhanVienView extends JPanel {
         createTable();
         JScrollPane sp = new JScrollPane(tblNhanVien);
         sp.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(COLOR_BUTTON, 1), 
-            "Danh sách nhân viên",
-            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-            javax.swing.border.TitledBorder.DEFAULT_POSITION,
-            new Font("Arial", Font.BOLD, 12),
-            COLOR_BUTTON
+                BorderFactory.createLineBorder(COLOR_BUTTON, 1),
+                "Danh sách nhân viên",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Arial", Font.BOLD, 12),
+                COLOR_BUTTON
         ));
         sp.setBackground(COLOR_BACKGROUND);
         sp.setPreferredSize(new Dimension(800, 300));
@@ -97,23 +98,24 @@ public class QuanLyNhanVienView extends JPanel {
         JPanel pnForm = new JPanel(new GridBagLayout());
         pnForm.setBackground(COLOR_BACKGROUND);
         pnForm.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(COLOR_BUTTON, 1), 
-            "Thông tin nhân viên",
-            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-            javax.swing.border.TitledBorder.DEFAULT_POSITION,
-            new Font("Arial", Font.BOLD, 12),
-            COLOR_BUTTON
+                BorderFactory.createLineBorder(COLOR_BUTTON, 1),
+                "Thông tin nhân viên",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Arial", Font.BOLD, 12),
+                COLOR_BUTTON
         ));
-        pnForm.setPreferredSize(new Dimension(getWidth(), 180));
+        pnForm.setPreferredSize(new Dimension(getWidth(), 200));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Dòng 1: Mã NV và Họ tên
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         pnForm.add(createStyledLabel("Mã NV:"), gbc);
-        
+
         gbc.gridx = 1;
         txtMaNhanVien = createStyledTextField(8);
         txtMaNhanVien.setEditable(false);
@@ -121,16 +123,18 @@ public class QuanLyNhanVienView extends JPanel {
 
         gbc.gridx = 2;
         pnForm.add(createStyledLabel("Họ tên:"), gbc);
-        
-        gbc.gridx = 3; gbc.gridwidth = 3;
+
+        gbc.gridx = 3;
+        gbc.gridwidth = 3;
         txtHoTen = createStyledTextField(20);
         pnForm.add(txtHoTen, gbc);
 
         // Dòng 2: Ngày sinh và Số điện thoại
         gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         pnForm.add(createStyledLabel("Ngày sinh:"), gbc);
-        
+
         gbc.gridx = 1;
         txtNgaySinh = createStyledTextField(10);
         txtNgaySinh.setToolTipText("Định dạng: yyyy-MM-dd");
@@ -138,16 +142,18 @@ public class QuanLyNhanVienView extends JPanel {
 
         gbc.gridx = 2;
         pnForm.add(createStyledLabel("Số điện thoại:"), gbc);
-        
-        gbc.gridx = 3; gbc.gridwidth = 3;
+
+        gbc.gridx = 3;
+        gbc.gridwidth = 3;
         txtSoDienThoai = createStyledTextField(12);
         pnForm.add(txtSoDienThoai, gbc);
 
         // Dòng 3: Chức vụ và Ngày vào làm
         gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         pnForm.add(createStyledLabel("Chức vụ:"), gbc);
-        
+
         gbc.gridx = 1;
         cboChucVu = new JComboBox<>(new String[]{"Quản lý", "Nhân viên", "Kỹ thuật viên", "Lễ tân", "Thu ngân"});
         styleComboBox(cboChucVu);
@@ -155,17 +161,27 @@ public class QuanLyNhanVienView extends JPanel {
 
         gbc.gridx = 2;
         pnForm.add(createStyledLabel("Ngày vào làm:"), gbc);
-        
-        gbc.gridx = 3; gbc.gridwidth = 3;
+
+        gbc.gridx = 3;
         txtNgayVaoLam = createStyledTextField(10);
         txtNgayVaoLam.setToolTipText("Định dạng: yyyy-MM-dd");
         pnForm.add(txtNgayVaoLam, gbc);
 
+        gbc.gridx = 4;
+        pnForm.add(createStyledLabel("Hệ số lương:"), gbc);
+
+        gbc.gridx = 5;
+        txtHeSoLuong = createStyledTextField(5);
+        txtHeSoLuong.setText("1.0");
+        pnForm.add(txtHeSoLuong, gbc);
+
         // Dòng 4: Địa chỉ
-        gbc.gridx = 0; gbc.gridy = 3;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         pnForm.add(createStyledLabel("Địa chỉ:"), gbc);
-        
-        gbc.gridx = 1; gbc.gridwidth = 5;
+
+        gbc.gridx = 1;
+        gbc.gridwidth = 5;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
         txtDiaChi = new JTextArea(2, 20);
@@ -205,7 +221,7 @@ public class QuanLyNhanVienView extends JPanel {
     }
 
     private void createTable() {
-        String[] cols = {"Mã NV", "Họ tên", "Ngày sinh", "Số điện thoại", "Địa chỉ", "Chức vụ", "Ngày vào làm", "Thâm niên"};
+        String[] cols = {"Mã NV", "Họ tên", "Ngày sinh", "Số điện thoại", "Địa chỉ", "Chức vụ", "Ngày vào làm", "Hệ số lương", "Thâm niên"};
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -249,7 +265,8 @@ public class QuanLyNhanVienView extends JPanel {
         tblNhanVien.getColumnModel().getColumn(4).setPreferredWidth(200);  // Địa chỉ
         tblNhanVien.getColumnModel().getColumn(5).setPreferredWidth(100);  // Chức vụ
         tblNhanVien.getColumnModel().getColumn(6).setPreferredWidth(80);   // Ngày vào làm
-        tblNhanVien.getColumnModel().getColumn(7).setPreferredWidth(60);   // Thâm niên
+        tblNhanVien.getColumnModel().getColumn(7).setPreferredWidth(70);   // Hệ số lương
+        tblNhanVien.getColumnModel().getColumn(8).setPreferredWidth(60);   // Thâm niên
     }
 
     private JPanel createButtonPanel() {
@@ -289,8 +306,8 @@ public class QuanLyNhanVienView extends JPanel {
         JTextField textField = new JTextField(columns);
         textField.setFont(new Font("Arial", Font.PLAIN, 11));
         textField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BUTTON),
-            BorderFactory.createEmptyBorder(3, 5, 3, 5)
+                BorderFactory.createLineBorder(COLOR_BUTTON),
+                BorderFactory.createEmptyBorder(3, 5, 3, 5)
         ));
         return textField;
     }
@@ -300,8 +317,8 @@ public class QuanLyNhanVienView extends JPanel {
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BUTTON),
-            BorderFactory.createEmptyBorder(3, 5, 3, 5)
+                BorderFactory.createLineBorder(COLOR_BUTTON),
+                BorderFactory.createEmptyBorder(3, 5, 3, 5)
         ));
     }
 
@@ -312,59 +329,98 @@ public class QuanLyNhanVienView extends JPanel {
         comboBox.setPreferredSize(new Dimension(120, 25));
     }
 
-    private JButton createStyledButton(String text, Color backgroundColor) {
+    private JButton createStyledButton(String text, Color bgColor) {
         JButton button = new JButton(text);
-        button.setBackground(backgroundColor);
-        button.setForeground(COLOR_TEXT);
         button.setFont(new Font("Arial", Font.BOLD, 11));
+        button.setBackground(bgColor);
+        button.setForeground(COLOR_TEXT);
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(bgColor.darker()),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+        // Hiệu ứng hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(backgroundColor.darker());
+                button.setBackground(bgColor.darker());
             }
 
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(backgroundColor);
+                button.setBackground(bgColor);
             }
         });
 
         return button;
     }
 
-    // Getter methods
-    public JTable getTblNhanVien() { return tblNhanVien; }
-    public DefaultTableModel getModel() { return model; }
-    public JTextField getTxtTimKiem() { return txtTimKiem; }
-    public JComboBox<String> getCboChucVuFilter() { return cboChucVuFilter; }
-    public JButton getBtnThem() { return btnThem; }
-    public JButton getBtnSua() { return btnSua; }
-    public JButton getBtnXoa() { return btnXoa; }
-    public JButton getBtnLamMoi() { return btnLamMoi; }
-    public JButton getBtnTimKiem() { return btnTimKiem; }
+    // Getter methods for controller
+    public JTable getTblNhanVien() {
+        return tblNhanVien;
+    }
 
-    // Form field getters
-    public JTextField getTxtMaNhanVien() { return txtMaNhanVien; }
-    public JTextField getTxtHoTen() { return txtHoTen; }
-    public JTextField getTxtNgaySinh() { return txtNgaySinh; }
-    public JTextField getTxtSoDienThoai() { return txtSoDienThoai; }
-    public JTextArea getTxtDiaChi() { return txtDiaChi; }
-    public JComboBox<String> getCboChucVu() { return cboChucVu; }
-    public JTextField getTxtNgayVaoLam() { return txtNgayVaoLam; }
+    public DefaultTableModel getModel() {
+        return model;
+    }
 
-    // Phương thức làm mới form
-    public void clearForm() {
-        txtMaNhanVien.setText("");
-        txtHoTen.setText("");
-        txtNgaySinh.setText("");
-        txtSoDienThoai.setText("");
-        txtDiaChi.setText("");
-        cboChucVu.setSelectedIndex(0);
-        txtNgayVaoLam.setText("");
-        txtTimKiem.setText("");
-        cboChucVuFilter.setSelectedIndex(0);
-        tblNhanVien.clearSelection();
+    public JTextField getTxtTimKiem() {
+        return txtTimKiem;
+    }
+
+    public JButton getBtnThem() {
+        return btnThem;
+    }
+
+    public JButton getBtnSua() {
+        return btnSua;
+    }
+
+    public JButton getBtnXoa() {
+        return btnXoa;
+    }
+
+    public JButton getBtnLamMoi() {
+        return btnLamMoi;
+    }
+
+    public JButton getBtnTimKiem() {
+        return btnTimKiem;
+    }
+
+    public JComboBox<String> getCboChucVuFilter() {
+        return cboChucVuFilter;
+    }
+
+    public JTextField getTxtMaNhanVien() {
+        return txtMaNhanVien;
+    }
+
+    public JTextField getTxtHoTen() {
+        return txtHoTen;
+    }
+
+    public JTextField getTxtNgaySinh() {
+        return txtNgaySinh;
+    }
+
+    public JTextField getTxtSoDienThoai() {
+        return txtSoDienThoai;
+    }
+
+    public JTextArea getTxtDiaChi() {
+        return txtDiaChi;
+    }
+
+    public JComboBox<String> getCboChucVu() {
+        return cboChucVu;
+    }
+
+    public JTextField getTxtNgayVaoLam() {
+        return txtNgayVaoLam;
+    }
+
+    public JTextField getTxtHeSoLuong() {
+        return txtHeSoLuong;
     }
 }
