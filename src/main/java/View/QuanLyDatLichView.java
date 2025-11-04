@@ -104,7 +104,7 @@ public class QuanLyDatLichView extends JPanel {
 
         // Main content - Split pane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setDividerLocation(400);
+        splitPane.setDividerLocation(500);
         splitPane.setLeftComponent(createCalendarPanel());
         splitPane.setRightComponent(createTimelinePanel());
 
@@ -148,11 +148,11 @@ public class QuanLyDatLichView extends JPanel {
         JPanel navPanel = new JPanel(new BorderLayout());
         navPanel.setBackground(Color.WHITE);
 
-        btnThangTruoc = createStyledButton("◀", COLOR_PRIMARY);
+        btnThangTruoc = createStyledButton("<<", COLOR_PRIMARY);
         btnThangTruoc.setPreferredSize(new Dimension(40, 30));
         btnThangTruoc.addActionListener(e -> previousMonth());
 
-        btnThangSau = createStyledButton("▶", COLOR_PRIMARY);
+        btnThangSau = createStyledButton(">>", COLOR_PRIMARY);
         btnThangSau.setPreferredSize(new Dimension(40, 30));
         btnThangSau.addActionListener(e -> nextMonth());
 
@@ -201,7 +201,7 @@ public class QuanLyDatLichView extends JPanel {
         formPanel.setVisible(true);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(2, 5, 2, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
