@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 
 public class HoaDonService {
+
     private final HoaDonRepository repository;
     private final DichVuService dichVuService;
 
@@ -53,11 +54,11 @@ public class HoaDonService {
         }
     }
 
-    public boolean addHoaDon(HoaDon hoaDon) {
+    public HoaDon getHoaDonById(Integer maHoaDon) {
         try {
-            return repository.insert(hoaDon);
+            return repository.getById(maHoaDon);
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi thêm hóa đơn: " + e.getMessage(), e);
+            throw new RuntimeException("Lỗi khi lấy thông tin hóa đơn: " + e.getMessage(), e);
         }
     }
 
@@ -66,6 +67,14 @@ public class HoaDonService {
             return repository.update(hoaDon);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi cập nhật hóa đơn: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean addHoaDon(HoaDon hoaDon) {
+        try {
+            return repository.insert(hoaDon);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi thêm hóa đơn: " + e.getMessage(), e);
         }
     }
 
@@ -89,37 +98,36 @@ public class HoaDonService {
     public HoaDon createHoaDonFromDatLich(Map<String, Object> datLichInfo) {
         try {
             HoaDon hoaDon = new HoaDon();
-            
+
             // Thiết lập thông tin cơ bản
             hoaDon.setMaKhachHang((Integer) datLichInfo.get("maKhachHang"));
             hoaDon.setNgayLap(LocalDateTime.now());
             hoaDon.setGhiChu("Hóa đơn từ lịch hẹn - Giường: " + datLichInfo.get("soHieuGiuong"));
-            
+
             // TODO: Set mã nhân viên từ session hiện tại
             // hoaDon.setMaNhanVienLap(currentUser.getMaNhanVien());
-            
             // Tính tổng tiền từ danh sách dịch vụ
             BigDecimal tongTien = BigDecimal.ZERO;
             List<ChiTietHoaDon> chiTietList = new ArrayList<>();
-            
+
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> dichVuList = (List<Map<String, Object>>) datLichInfo.get("dichVu");
-            
+
             if (dichVuList != null && !dichVuList.isEmpty()) {
                 for (Map<String, Object> dichVuInfo : dichVuList) {
                     ChiTietHoaDon chiTiet = new ChiTietHoaDon();
                     chiTiet.setMaDichVu((Integer) dichVuInfo.get("maDichVu"));
                     chiTiet.setSoLuong(1); // Mặc định số lượng 1
-                    
+
                     BigDecimal donGia = (BigDecimal) dichVuInfo.get("gia");
                     chiTiet.setDonGia(donGia);
                     chiTiet.recalculateThanhTien(); // Tính lại thành tiền
-                    
+
                     tongTien = tongTien.add(chiTiet.getThanhTien());
                     chiTietList.add(chiTiet);
                 }
             }
-            
+
             // Thêm phí giường (nếu có)
             BigDecimal phiGiuong = calculatePhiGiuong((Integer) datLichInfo.get("soLuongNguoi"));
             if (phiGiuong.compareTo(BigDecimal.ZERO) > 0) {
@@ -129,16 +137,16 @@ public class HoaDonService {
                 chiTietGiuong.setDonGia(phiGiuong);
                 chiTietGiuong.recalculateThanhTien(); // Tính lại thành tiền
                 chiTietGiuong.setDichVu(createDichVuGiuong(phiGiuong));
-                
+
                 chiTietList.add(chiTietGiuong);
                 tongTien = tongTien.add(chiTietGiuong.getThanhTien());
             }
-            
+
             hoaDon.setTongTien(tongTien);
             hoaDon.setChiTietHoaDon(chiTietList);
-            
+
             return hoaDon;
-            
+
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi tạo hóa đơn từ lịch hẹn: " + e.getMessage(), e);
         }
@@ -149,7 +157,7 @@ public class HoaDonService {
         if (soLuongNguoi == null || soLuongNguoi == 1) {
             return BigDecimal.ZERO; // Miễn phí giường cho 1 người
         }
-        
+
         // Phí giường: 50,000 VND cho mỗi người thêm
         BigDecimal phiCoBan = new BigDecimal("50000");
         return phiCoBan.multiply(BigDecimal.valueOf(soLuongNguoi - 1));
@@ -169,51 +177,51 @@ public class HoaDonService {
         try {
             HoaDon hoaDon = createHoaDonFromDatLich(datLichInfo);
             boolean success = addHoaDon(hoaDon);
-            
+
             if (success) {
                 System.out.println("Tạo hóa đơn thành công từ lịch hẹn: " + hoaDon.getMaHoaDon());
-                
+
                 // Log thông tin hóa đơn
                 logHoaDonInfo(hoaDon, datLichInfo);
             }
-            
+
             return success;
-            
+
         } catch (Exception e) {
             System.err.println("Lỗi khi tạo hóa đơn từ lịch hẹn: " + e.getMessage());
             return false;
         }
     }
 
-private void logHoaDonInfo(HoaDon hoaDon, Map<String, Object> datLichInfo) {
-    System.out.println("=== THÔNG TIN HÓA ĐƠN ===");
-    System.out.println("Mã hóa đơn: " + hoaDon.getMaHoaDon());
-    System.out.println("Mã khách hàng: " + hoaDon.getMaKhachHang());
-    System.out.println("Tên khách hàng: " + datLichInfo.get("tenKhachHang"));
-    System.out.println("Mã giường: " + datLichInfo.get("maGiuong"));
-    System.out.println("Số hiệu giường: " + datLichInfo.get("soHieuGiuong"));
-    System.out.println("Số lượng người: " + datLichInfo.get("soLuongNguoi"));
-    System.out.println("Tổng tiền: " + hoaDon.getTongTien());
-    System.out.println("Ngày lập: " + hoaDon.getNgayLap());
-    
-    if (hoaDon.hasChiTiet()) {
-        System.out.println("Chi tiết dịch vụ:");
-        for (ChiTietHoaDon chiTiet : hoaDon.getChiTietHoaDon()) {
-            String tenDichVu = chiTiet.getDichVu() != null ? chiTiet.getDichVu().getTenDichVu() : "Không xác định";
-            System.out.println("  - " + tenDichVu + 
-                             ": " + chiTiet.getDonGia() + " x " + chiTiet.getSoLuong() + 
-                             " = " + chiTiet.getThanhTien());
+    private void logHoaDonInfo(HoaDon hoaDon, Map<String, Object> datLichInfo) {
+        System.out.println("=== THÔNG TIN HÓA ĐƠN ===");
+        System.out.println("Mã hóa đơn: " + hoaDon.getMaHoaDon());
+        System.out.println("Mã khách hàng: " + hoaDon.getMaKhachHang());
+        System.out.println("Tên khách hàng: " + datLichInfo.get("tenKhachHang"));
+        System.out.println("Mã giường: " + datLichInfo.get("maGiuong"));
+        System.out.println("Số hiệu giường: " + datLichInfo.get("soHieuGiuong"));
+        System.out.println("Số lượng người: " + datLichInfo.get("soLuongNguoi"));
+        System.out.println("Tổng tiền: " + hoaDon.getTongTien());
+        System.out.println("Ngày lập: " + hoaDon.getNgayLap());
+
+        if (hoaDon.hasChiTiet()) {
+            System.out.println("Chi tiết dịch vụ:");
+            for (ChiTietHoaDon chiTiet : hoaDon.getChiTietHoaDon()) {
+                String tenDichVu = chiTiet.getDichVu() != null ? chiTiet.getDichVu().getTenDichVu() : "Không xác định";
+                System.out.println("  - " + tenDichVu
+                        + ": " + chiTiet.getDonGia() + " x " + chiTiet.getSoLuong()
+                        + " = " + chiTiet.getThanhTien());
+            }
         }
+        System.out.println("========================");
     }
-    System.out.println("========================");
-}
 
     // Phương thức tính tổng tiền từ chi tiết hóa đơn
     public BigDecimal tinhTongTienTuChiTiet(List<ChiTietHoaDon> chiTietList) {
         if (chiTietList == null || chiTietList.isEmpty()) {
             return BigDecimal.ZERO;
         }
-        
+
         return chiTietList.stream()
                 .map(ChiTietHoaDon::getThanhTien)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

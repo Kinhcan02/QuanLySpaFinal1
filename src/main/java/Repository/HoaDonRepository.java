@@ -33,6 +33,36 @@ public class HoaDonRepository {
         return list;
     }
 
+    // REMOVE THIS DUPLICATE METHOD - IT'S CAUSING THE ERROR
+    /*
+    public HoaDon getById(Integer maHoaDon) throws SQLException {
+        String sql = "SELECT * FROM HoaDon WHERE MaHoaDon = ?";
+
+        try (Connection conn = DataConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, maHoaDon);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    HoaDon hoaDon = mapResultSetToHoaDon(rs);
+                    // Load chi tiết hóa đơn
+                    hoaDon.setChiTietHoaDon(getChiTietHoaDon(maHoaDon)); // ERROR: getChiTietHoaDon doesn't exist
+                    return hoaDon;
+                }
+            }
+        }
+        return null;
+    }
+    */
+
+    private void deleteChiTietHoaDon(Connection conn, Integer maHoaDon) throws SQLException {
+        String sql = "DELETE FROM ChiTietHoaDon WHERE MaHoaDon = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, maHoaDon);
+            stmt.executeUpdate();
+        }
+    }
+
     public HoaDon getById(int maHoaDon) throws SQLException {
         String sql = "SELECT hd.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien "
                 + "FROM HoaDon hd "

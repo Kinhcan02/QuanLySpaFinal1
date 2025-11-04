@@ -389,6 +389,43 @@ public class MainView extends JFrame {
         }
     }
 
+// Từ giao diện chính, gọi như sau:
+    private void moCheDoSuaHoaDon(Integer maHoaDon) {
+        DatDichVuView view = new DatDichVuView();
+        DatDichVuController controller = new DatDichVuController(view);
+        controller.khoiTaoCheDoChinhSua(maHoaDon);
+
+        // Hiển thị view trong frame
+        JFrame frame = new JFrame("Sửa Hóa Đơn");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.getContentPane().add(view);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+// Hoặc có thể thêm dialog để nhập mã hóa đơn
+    private void showDialogSuaHoaDon() {
+        String maHoaDonStr = JOptionPane.showInputDialog(
+                this,
+                "Nhập mã hóa đơn cần sửa:",
+                "Sửa hóa đơn",
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (maHoaDonStr != null && !maHoaDonStr.trim().isEmpty()) {
+            try {
+                Integer maHoaDon = Integer.parseInt(maHoaDonStr.trim());
+                moCheDoSuaHoaDon(maHoaDon);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Mã hóa đơn không hợp lệ!",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     public void showThongBao() {
         try {
             // Kiểm tra nếu thongBaoView đã tồn tại nhưng bị dispose
@@ -562,7 +599,7 @@ public class MainView extends JFrame {
             QuanLyCaLamView quanLyCaLamView = new QuanLyCaLamView();
             CaLamService caLamService = new CaLamService();
             NhanVienService nhanVienService = new NhanVienService();
-            QuanLyCaLamController quanLyCaLamController = new QuanLyCaLamController(quanLyCaLamView, caLamService,nhanVienService);
+            QuanLyCaLamController quanLyCaLamController = new QuanLyCaLamController(quanLyCaLamView, caLamService, nhanVienService);
 
             internalFrame.setContentPane(quanLyCaLamView);
             internalFrame.pack();

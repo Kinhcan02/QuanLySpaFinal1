@@ -47,6 +47,8 @@ public class DatDichVuController {
     private DichVuService dichVuService;
     private NhanVienService nhanVienService;
     private HoaDonService hoaDonService;
+    private boolean cheDoChinhSua = false;
+    private Integer maHoaDonChinhSua = null;
 
     private NumberFormat currencyFormat;
     private KhachHang khachHangHienTai;
@@ -64,6 +66,14 @@ public class DatDichVuController {
 
         initController();
         loadDuLieuBanDau();
+    }
+
+    public void khoiTaoCheDoChinhSua(Integer maHoaDon) {
+        this.cheDoChinhSua = true;
+        this.maHoaDonChinhSua = maHoaDon;
+        loadDuLieuHoaDonChinhSua(maHoaDon);
+        // Trong khoiTaoCheDoChinhSua method của controller
+        view.setCheDoChinhSua(true, maHoaDon);
     }
 
     private void initController() {
@@ -100,6 +110,94 @@ public class DatDichVuController {
                 }
             }
         });
+    }
+
+    private void loadDuLieuHoaDonChinhSua(Integer maHoaDon) {
+        try {
+            HoaDon hoaDon = hoaDonService.getHoaDonById(maHoaDon);
+            if (hoaDon != null) {
+                // Tải thông tin khách hàng
+                khachHangHienTai = khachHangService.getKhachHangById(hoaDon.getMaKhachHang());
+                if (khachHangHienTai != null) {
+                    // Tìm và chọn khách hàng trong combobox
+                    for (int i = 0; i < view.getCboKhachHang().getItemCount(); i++) {
+                        String item = view.getCboKhachHang().getItemAt(i);
+                        if (item.contains(khachHangHienTai.getSoDienThoai())) {
+                            view.getCboKhachHang().setSelectedIndex(i);
+                            break;
+                        }
+                    }
+                    view.getLblDiemTichLuy().setText(khachHangHienTai.getDiemTichLuy() + " điểm");
+                }
+
+                // Tải chi tiết hóa đơn vào bảng
+                List<ChiTietHoaDon> chiTietList = hoaDon.getChiTietHoaDon();
+                DefaultTableModel model = view.getTableModel();
+                model.setRowCount(0); // Xóa dữ liệu cũ
+
+                tongTien = BigDecimal.ZERO;
+
+                for (ChiTietHoaDon chiTiet : chiTietList) {
+                    DichVu dichVu = dichVuService.getDichVuById(chiTiet.getMaDichVu());
+                    if (dichVu != null) {
+                        int stt = model.getRowCount() + 1;
+                        int soLuong = chiTiet.getSoLuong();
+                        BigDecimal thanhTien = chiTiet.getDonGia().multiply(BigDecimal.valueOf(soLuong));
+
+                        // Lấy thông tin nhân viên từ hóa đơn chính
+                        String tenNhanVien = "Chưa xác định";
+                        if (hoaDon.getMaNhanVienLap() != null) {
+                            NhanVien nv = nhanVienService.getNhanVienById(hoaDon.getMaNhanVienLap());
+                            if (nv != null) {
+                                tenNhanVien = nv.getHoTen();
+                            }
+                        }
+
+                        model.addRow(new Object[]{
+                            stt,
+                            dichVu.getTenDichVu(),
+                            dichVu.getThoiGian() + " phút",
+                            currencyFormat.format(chiTiet.getDonGia()),
+                            soLuong,
+                            tenNhanVien,
+                            currencyFormat.format(thanhTien)
+                        });
+
+                        tongTien = tongTien.add(thanhTien);
+                    }
+                }
+
+                capNhatTongTien();
+
+                // Cập nhật combobox nhân viên
+                if (hoaDon.getMaNhanVienLap() != null) {
+                    NhanVien nv = nhanVienService.getNhanVienById(hoaDon.getMaNhanVienLap());
+                    if (nv != null) {
+                        for (int i = 0; i < view.getCboNhanVien().getItemCount(); i++) {
+                            String item = view.getCboNhanVien().getItemAt(i);
+                            if (item.contains(nv.getHoTen())) {
+                                view.getCboNhanVien().setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Cập nhật tiêu đề để biết đang ở chế độ chỉnh sửa
+                view.setCheDoChinhSua(true, maHoaDon);
+
+                JOptionPane.showMessageDialog(view,
+                        "Đã tải hóa đơn #" + maHoaDon + " để chỉnh sửa.\nTổng tiền hiện tại: " + currencyFormat.format(tongTien),
+                        "Chế độ chỉnh sửa",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(view, "Không tìm thấy hóa đơn với mã: " + maHoaDon,
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(view, "Lỗi khi tải hóa đơn: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void loadDuLieuBanDau() {
@@ -429,14 +527,26 @@ public class DatDichVuController {
         }
 
         try {
-            // Xác nhận in hóa đơn
+            String message;
+            String title;
+            if (cheDoChinhSua) {
+                message = "Bạn có muốn CẬP NHẬT hóa đơn #" + maHoaDonChinhSua + "?\n"
+                        + "Khách hàng: " + getTenKhachHangHienTai() + "\n"
+                        + "Tổng tiền mới: " + currencyFormat.format(tongTien) + "\n"
+                        + "Số dịch vụ: " + view.getTableModel().getRowCount();
+                title = "Xác nhận cập nhật hóa đơn";
+            } else {
+                message = "Bạn có muốn in hóa đơn PDF?\n"
+                        + "Khách hàng: " + getTenKhachHangHienTai() + "\n"
+                        + "Tổng tiền: " + currencyFormat.format(tongTien) + "\n"
+                        + "Số dịch vụ: " + view.getTableModel().getRowCount();
+                title = "Xác nhận in hóa đơn PDF";
+            }
+
             int confirm = JOptionPane.showConfirmDialog(
                     view,
-                    "Bạn có muốn in hóa đơn PDF?\n"
-                    + "Khách hàng: " + getTenKhachHangHienTai() + "\n"
-                    + "Tổng tiền: " + currencyFormat.format(tongTien) + "\n"
-                    + "Số dịch vụ: " + view.getTableModel().getRowCount(),
-                    "Xác nhận in hóa đơn PDF",
+                    message,
+                    title,
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE
             );
@@ -445,19 +555,25 @@ public class DatDichVuController {
                 return;
             }
 
-            // LƯU HÓA ĐƠN VÀO CƠ SỞ DỮ LIỆU TRƯỚC KHI IN
-            boolean savedToDB = luuHoaDonVaoDatabase();
+            boolean success;
+            if (cheDoChinhSua) {
+                // Cập nhật hóa đơn hiện có
+                success = capNhatHoaDonTrongDatabase();
+            } else {
+                // Tạo hóa đơn mới
+                success = luuHoaDonVaoDatabase();
+            }
 
-            if (!savedToDB) {
+            if (!success) {
                 JOptionPane.showMessageDialog(view, "Lỗi khi lưu hóa đơn vào cơ sở dữ liệu!",
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             // Tạo và in hóa đơn PDF
-            boolean success = inHoaDonPDF();
+            boolean pdfSuccess = inHoaDonPDF();
 
-            if (success) {
+            if (pdfSuccess) {
                 // Cập nhật điểm tích lũy cho khách hàng (100.000 VND = 1 điểm)
                 int diemThuong = tongTien.divideToIntegralValue(BigDecimal.valueOf(100000)).intValue();
                 if (diemThuong > 0) {
@@ -467,15 +583,16 @@ public class DatDichVuController {
                     view.getLblDiemTichLuy().setText(diemMoi + " điểm");
 
                     JOptionPane.showMessageDialog(view,
-                            "In hóa đơn thành công!\n"
+                            (cheDoChinhSua ? "Cập nhật hóa đơn" : "In hóa đơn") + " thành công!\n"
                             + "Khách hàng được thưởng " + diemThuong + " điểm tích lũy!",
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    JOptionPane.showMessageDialog(view, "In hóa đơn thành công!",
+                    JOptionPane.showMessageDialog(view,
+                            (cheDoChinhSua ? "Cập nhật hóa đơn" : "In hóa đơn") + " thành công!",
                             "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 }
 
-                // Reset form sau khi in hóa đơn
+                // Reset form sau khi in/cập nhật hóa đơn
                 handleLamMoi();
             }
 
@@ -484,8 +601,83 @@ public class DatDichVuController {
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
-// PHƯƠNG THỨC LƯU HÓA ĐƠN VÀO DATABASE
 
+    private boolean capNhatHoaDonTrongDatabase() {
+        try {
+            // 1. Lấy hóa đơn hiện có
+            HoaDon hoaDon = hoaDonService.getHoaDonById(maHoaDonChinhSua);
+            if (hoaDon == null) {
+                JOptionPane.showMessageDialog(view, "Không tìm thấy hóa đơn để cập nhật!",
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            // 2. Cập nhật thông tin hóa đơn
+            hoaDon.setTongTien(tongTien);
+            hoaDon.setNgayLap(java.time.LocalDateTime.now());
+
+            // Lấy mã nhân viên từ combobox
+            String selectedNhanVien = (String) view.getCboNhanVien().getSelectedItem();
+            if (selectedNhanVien != null && !selectedNhanVien.equals("-- Chọn nhân viên --")) {
+                Integer maNhanVien = getMaNhanVienTheoTen(selectedNhanVien.split(" - ")[0]);
+                hoaDon.setMaNhanVienLap(maNhanVien);
+            }
+
+            hoaDon.setGhiChu("Hóa đơn dịch vụ spa - Đã cập nhật - "
+                    + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()));
+
+            // 3. Tạo danh sách chi tiết hóa đơn mới
+            List<ChiTietHoaDon> chiTietList = new ArrayList<>();
+            DefaultTableModel model = view.getTableModel();
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String tenDichVu = model.getValueAt(i, 1).toString();
+
+                // Bỏ qua dịch vụ "Vé gọi đầu" khi lưu database
+                if (tenDichVu.contains("Vé gọi đầu")) {
+                    continue;
+                }
+
+                int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
+
+                // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
+                String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
+                BigDecimal donGia = new BigDecimal(donGiaStr);
+
+                // Tìm mã dịch vụ theo tên
+                Integer maDichVu = getMaDichVuTheoTen(tenDichVu);
+                if (maDichVu != null) {
+                    ChiTietHoaDon chiTiet = new ChiTietHoaDon();
+                    chiTiet.setMaDichVu(maDichVu);
+                    chiTiet.setSoLuong(soLuong);
+                    chiTiet.setDonGia(donGia);
+                    chiTietList.add(chiTiet);
+                }
+            }
+
+            // 4. Đặt danh sách chi tiết mới vào hóa đơn
+            hoaDon.setChiTietHoaDon(chiTietList);
+
+            // 5. Cập nhật hóa đơn trong database (sử dụng phương thức update đã có)
+            boolean success = hoaDonService.updateHoaDon(hoaDon);
+
+            if (success) {
+                System.out.println("Đã cập nhật hóa đơn #" + maHoaDonChinhSua + " thành công!");
+                return true;
+            } else {
+                System.out.println("Lỗi khi cập nhật hóa đơn #" + maHoaDonChinhSua + "!");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(view, "Lỗi khi cập nhật hóa đơn: " + e.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+// PHƯƠNG THỨC LƯU HÓA ĐƠN VÀO DATABASE
 // PHƯƠNG THỨC LƯU HÓA ĐƠN VÀO DATABASE
     private boolean luuHoaDonVaoDatabase() {
         try {
@@ -870,6 +1062,11 @@ public class DatDichVuController {
             capNhatTongTien();
             khachHangHienTai = null;
             view.getLblDiemTichLuy().setText("0 điểm");
+
+            // Reset chế độ chỉnh sửa
+            this.cheDoChinhSua = false;
+            this.maHoaDonChinhSua = null;
+            view.setCheDoChinhSua(false, null);
         }
     }
 
