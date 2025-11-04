@@ -227,6 +227,7 @@ public class DatDichVuView extends JPanel {
 
     private JPanel createDiemTichLuyPanel() {
         JPanel panel = createCardPanel();
+        panel.setLayout(new GridLayout(3, 1, 2, 2)); // Sửa thành 3 dòng
 
         JLabel lblTitle = new JLabel("ĐIỂM TÍCH LŨY");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -242,8 +243,14 @@ public class DatDichVuView extends JPanel {
                 BorderFactory.createEmptyBorder(8, 5, 8, 5)
         ));
 
+        // THÊM LABEL THÔNG BÁO
+        JLabel lblNote = new JLabel("(Tối thiểu 10 điểm)", JLabel.CENTER);
+        lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 9));
+        lblNote.setForeground(COLOR_TEXT_SECONDARY);
+
         panel.add(lblTitle);
         panel.add(lblDiemTichLuy);
+        panel.add(lblNote);
 
         return panel;
     }
@@ -311,16 +318,10 @@ public class DatDichVuView extends JPanel {
         lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTongTien.setForeground(COLOR_ACCENT);
 
-        JLabel lblHuongDan = new JLabel("• Double-click để xóa dịch vụ •");
-        lblHuongDan.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        lblHuongDan.setForeground(COLOR_TEXT_SECONDARY);
-        lblHuongDan.setBorder(BorderFactory.createEmptyBorder(5, 20, 0, 0));
-
         panel.add(lblTitle);
         panel.add(Box.createRigidArea(new Dimension(10, 0)));
         panel.add(lblTongTien);
         panel.add(Box.createRigidArea(new Dimension(30, 0)));
-        panel.add(lblHuongDan);
 
         return panel;
     }
@@ -336,6 +337,7 @@ public class DatDichVuView extends JPanel {
 
         panel.add(btnXoaDichVu);
         panel.add(btnDoiDiem);
+        btnDoiDiem.setToolTipText("Tối thiểu 10 điểm mới được đổi");
         panel.add(btnInHoaDon);
         panel.add(btnLamMoi);
 

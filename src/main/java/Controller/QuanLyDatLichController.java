@@ -505,7 +505,7 @@ public class QuanLyDatLichController implements ActionListener {
 
             // Hiển thị điểm tích lũy hiện tại
             doc.add(new Paragraph("Điểm tích lũy hiện tại: " + khachHang.getDiemTichLuy() + " điểm", fontNormal));
-
+            doc.add(new Paragraph("Lưu ý: Cần tối thiểu 10 điểm để đổi vé gọi đầu", fontSmall));
             doc.add(new Paragraph("---------------------------------------------", fontNormal));
 
             // Bảng dịch vụ

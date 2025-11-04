@@ -101,15 +101,6 @@ public class DatDichVuController {
         // Sự kiện cho nút làm mới
         view.getBtnLamMoi().addActionListener(e -> handleLamMoi());
 
-        // Sự kiện double-click để xóa dịch vụ từ bảng
-        view.getTblDichVuDaChon().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    handleXoaDichVu();
-                }
-            }
-        });
     }
 
     private void loadDuLieuHoaDonChinhSua(Integer maHoaDon) {
@@ -456,32 +447,49 @@ public class DatDichVuController {
         }
 
         int diemHienCo = khachHangHienTai.getDiemTichLuy();
-        if (diemHienCo == 0) {
-            JOptionPane.showMessageDialog(view, "Khách hàng không có điểm tích lũy để đổi",
-                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+        // KIỂM TRA TỐI THIỂU 10 ĐIỂM
+        if (diemHienCo < 10) {
+            JOptionPane.showMessageDialog(view,
+                    "Cần tối thiểu 10 điểm để đổi 1 vé gọi đầu!\n"
+                    + "Số điểm hiện có: " + diemHienCo + " điểm\n"
+                    + "Còn thiếu: " + (10 - diemHienCo) + " điểm",
+                    "Không đủ điểm", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
+        // TÍNH SỐ VÉ TỐI ĐA CÓ THỂ ĐỔI
+        int soVeToiDa = diemHienCo / 10;
 
         String input = JOptionPane.showInputDialog(
                 view,
                 "Số điểm hiện có: " + diemHienCo + " điểm\n"
-                + "1 điểm = 1 vé gọi đầu\n"
-                + "Nhập số điểm muốn đổi:",
+                + "Tỷ lệ đổi: 10 điểm = 1 vé gọi đầu\n"
+                + "Số vé tối đa có thể đổi: " + soVeToiDa + " vé\n"
+                + "Nhập số vé muốn đổi:",
                 "Đổi điểm tích lũy",
                 JOptionPane.QUESTION_MESSAGE
         );
 
         if (input != null && !input.trim().isEmpty()) {
             try {
-                int diemMuonDoi = Integer.parseInt(input.trim());
-                if (diemMuonDoi <= 0) {
-                    JOptionPane.showMessageDialog(view, "Số điểm phải lớn hơn 0",
+                int soVeMuonDoi = Integer.parseInt(input.trim());
+
+                if (soVeMuonDoi <= 0) {
+                    JOptionPane.showMessageDialog(view, "Số vé phải lớn hơn 0",
                             "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
-                if (diemMuonDoi > diemHienCo) {
-                    JOptionPane.showMessageDialog(view, "Số điểm muốn đổi vượt quá điểm hiện có",
+                // TÍNH SỐ ĐIỂM CẦN ĐỔI
+                int diemCanDoi = soVeMuonDoi * 10;
+
+                if (diemCanDoi > diemHienCo) {
+                    JOptionPane.showMessageDialog(view,
+                            "Không đủ điểm để đổi!\n"
+                            + "Điểm cần: " + diemCanDoi + " điểm\n"
+                            + "Điểm hiện có: " + diemHienCo + " điểm\n"
+                            + "Số vé tối đa có thể đổi: " + soVeToiDa + " vé",
                             "Lỗi", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
@@ -491,23 +499,27 @@ public class DatDichVuController {
                 int stt = model.getRowCount() + 1;
                 model.addRow(new Object[]{
                     stt,
-                    "Vé gọi đầu (đổi điểm)",
+                    "Vé gọi đầu (đổi " + diemCanDoi + " điểm)",
                     "0 phút",
                     currencyFormat.format(0),
-                    diemMuonDoi,
+                    soVeMuonDoi, // Số lượng vé
                     getNhanVienInfoFromTable(),
                     currencyFormat.format(0)
                 });
 
                 // Cập nhật điểm tích lũy
-                khachHangHienTai.setDiemTichLuy(diemHienCo - diemMuonDoi);
-                view.getLblDiemTichLuy().setText(khachHangHienTai.getDiemTichLuy() + " điểm");
+                int diemMoi = diemHienCo - diemCanDoi;
+                khachHangHienTai.setDiemTichLuy(diemMoi);
+                view.getLblDiemTichLuy().setText(diemMoi + " điểm");
 
-                JOptionPane.showMessageDialog(view, "Đổi điểm thành công! Đã thêm " + diemMuonDoi + " vé gọi đầu",
+                JOptionPane.showMessageDialog(view,
+                        "Đổi điểm thành công!\n"
+                        + "Đã đổi " + diemCanDoi + " điểm để nhận " + soVeMuonDoi + " vé gọi đầu\n"
+                        + "Số điểm còn lại: " + diemMoi + " điểm",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
 
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(view, "Số điểm không hợp lệ",
+                JOptionPane.showMessageDialog(view, "Số vé không hợp lệ",
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
