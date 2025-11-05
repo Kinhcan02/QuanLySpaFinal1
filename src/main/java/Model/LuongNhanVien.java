@@ -8,8 +8,6 @@ public class LuongNhanVien {
     private Integer maNhanVien;
     private Integer thang;
     private Integer nam;
-    private BigDecimal tongTienLuong;
-    private BigDecimal tienTip;
     private BigDecimal tongLuong;
     private LocalDateTime ngayTinhLuong;
     private String trangThai;
@@ -19,8 +17,6 @@ public class LuongNhanVien {
 
     // Constructor mặc định
     public LuongNhanVien() {
-        this.tongTienLuong = BigDecimal.ZERO;
-        this.tienTip = BigDecimal.ZERO;
         this.tongLuong = BigDecimal.ZERO;
         this.trangThai = "Chưa thanh toán";
         this.ngayTinhLuong = LocalDateTime.now();
@@ -36,14 +32,11 @@ public class LuongNhanVien {
 
     // Constructor đầy đủ
     public LuongNhanVien(Integer maLuong, Integer maNhanVien, Integer thang, Integer nam,
-                        BigDecimal tongTienLuong, BigDecimal tienTip, BigDecimal tongLuong,
-                        LocalDateTime ngayTinhLuong, String trangThai) {
+                        BigDecimal tongLuong, LocalDateTime ngayTinhLuong, String trangThai) {
         this.maLuong = maLuong;
         this.maNhanVien = maNhanVien;
         this.thang = thang;
         this.nam = nam;
-        this.tongTienLuong = tongTienLuong != null ? tongTienLuong : BigDecimal.ZERO;
-        this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO;
         this.tongLuong = tongLuong != null ? tongLuong : BigDecimal.ZERO;
         this.ngayTinhLuong = ngayTinhLuong;
         this.trangThai = trangThai != null ? trangThai : "Chưa thanh toán";
@@ -66,16 +59,6 @@ public class LuongNhanVien {
     public Integer getNam() { return nam; }
     public void setNam(Integer nam) { this.nam = nam; }
 
-    public BigDecimal getTongTienLuong() { return tongTienLuong; }
-    public void setTongTienLuong(BigDecimal tongTienLuong) { 
-        this.tongTienLuong = tongTienLuong != null ? tongTienLuong : BigDecimal.ZERO; 
-    }
-
-    public BigDecimal getTienTip() { return tienTip; }
-    public void setTienTip(BigDecimal tienTip) { 
-        this.tienTip = tienTip != null ? tienTip : BigDecimal.ZERO; 
-    }
-
     public BigDecimal getTongLuong() { return tongLuong; }
     public void setTongLuong(BigDecimal tongLuong) { 
         this.tongLuong = tongLuong != null ? tongLuong : BigDecimal.ZERO; 
@@ -91,11 +74,6 @@ public class LuongNhanVien {
 
     public NhanVien getNhanVien() { return nhanVien; }
     public void setNhanVien(NhanVien nhanVien) { this.nhanVien = nhanVien; }
-
-    // Phương thức tính tổng lương
-    public void tinhTongLuong() {
-        this.tongLuong = this.tongTienLuong.add(this.tienTip);
-    }
 
     // Phương thức kiểm tra hợp lệ
     public boolean isValid() {
@@ -115,8 +93,6 @@ public class LuongNhanVien {
                 ", maNhanVien=" + maNhanVien +
                 ", thang=" + thang +
                 ", nam=" + nam +
-                ", tongTienLuong=" + tongTienLuong +
-                ", tienTip=" + tienTip +
                 ", tongLuong=" + tongLuong +
                 ", ngayTinhLuong=" + ngayTinhLuong +
                 ", trangThai='" + trangThai + '\'' +
