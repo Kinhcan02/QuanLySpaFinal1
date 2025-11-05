@@ -51,6 +51,8 @@ public class MainViewController implements ActionListener {
             xacNhanThoatChuongTrinh();
         } else if (source == mainView.getBtnQuanLyThuChi()) { // THÊM ĐOẠN NÀY
             mainView.showQuanLyThuChi();
+        } else if (source == mainView.getBtnQuanLyLuong()) { // THÊM ĐOẠN NÀY
+            mainView.showLuong();
         }
         // Các nút có menu accordion đã được xử lý trực tiếp trong MainView
         // nên không cần xử lý ở đây

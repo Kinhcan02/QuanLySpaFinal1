@@ -25,7 +25,7 @@ public class MainView extends JFrame {
     private JButton btnThongBao, btnDatLich, btnQuanLyNguyenLieu,
             btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam,
             btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe,
-            btnQuanLyTaiKhoan, btnThoat, btnQuanLyThuChi;
+            btnQuanLyTaiKhoan, btnThoat, btnQuanLyThuChi, btnQuanLyLuong;
     private JLabel lblUserInfo, lblVersion;
     private QuanLyDichVuView quanLyDichVuView;
     private QuanLyDichVuController quanLyDichVuController;
@@ -40,6 +40,8 @@ public class MainView extends JFrame {
     private ThongKeController thongKeController;
     private QuanLyThuChiView quanLyThuChiView;
     private QuanLyThuChiController quanLyThuChiController;
+    private QuanLyLuongController quanLyLuongController;
+    private QuanLyLuongView quanLyLuongView;
     // Màu sắc
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
     private final Color COLOR_MENU = new Color(0x4D, 0x8A, 0x57);
@@ -127,7 +129,7 @@ public class MainView extends JFrame {
         logoPanel.setPreferredSize(new Dimension(300, 120));
         logoPanel.setLayout(new GridLayout(2, 1));
 
-        JLabel lblMainTitle = new JLabel("SPA BEAUTY", JLabel.CENTER);
+        JLabel lblMainTitle = new JLabel("SWEET HOME", JLabel.CENTER);
         lblMainTitle.setFont(new Font("Arial", Font.BOLD, 22));
         lblMainTitle.setForeground(COLOR_TEXT);
 
@@ -168,6 +170,7 @@ public class MainView extends JFrame {
         btnThongKe = createMenuButton("THỐNG KÊ");
         btnQuanLyTaiKhoan = createMenuButton("QUẢN LÝ TÀI KHOẢN");
         btnQuanLyThuChi = createMenuButton("QUẢN LÝ THU CHI");
+        btnQuanLyLuong = createMenuButton("QUẢN LÝ LƯƠNG");
         // Thêm các component vào navPanel theo đúng thứ tự
         navPanel.add(btnThongBao);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -191,6 +194,8 @@ public class MainView extends JFrame {
         navPanel.add(btnQuanLyTaiKhoan);
         navPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         navPanel.add(btnQuanLyThuChi); // THÊM DÒNG NÀY
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnQuanLyLuong);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         // Separator
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
@@ -364,6 +369,7 @@ public class MainView extends JFrame {
         // Submenu Nguyên liệu
         btnNguyenLieu.addActionListener(e -> showQuanLyNguyenLieu());
         btnNhapNguyenLieu.addActionListener(e -> showQuanLyNhapNguyenLieu());
+        btnQuanLyLuong.addActionListener(mainViewController);
     }
 
     private void toggleNguyenLieuMenu() {
@@ -462,6 +468,26 @@ public class MainView extends JFrame {
             e.printStackTrace();
             hienThiThongBao("Lỗi khi mở thông báo: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void showLuong() {
+        try {
+            JInternalFrame internalFrame = new JInternalFrame(
+                    "Lương Nhân Viên",
+                    true, true, true, true
+            );
+
+            quanLyLuongView = new QuanLyLuongView();
+            quanLyLuongController = new QuanLyLuongController(quanLyLuongView);
+
+            internalFrame.setContentPane(quanLyLuongView);
+            internalFrame.pack();
+            showInternalFrame(internalFrame);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            hienThiThongBao("Lỗi khi mở đặt dịch vụ: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -935,6 +961,10 @@ public class MainView extends JFrame {
 
     public JButton getBtnQuanLyThuChi() {
         return btnQuanLyThuChi;
+    }
+
+    public JButton getBtnQuanLyLuong() {
+        return btnQuanLyLuong;
     }
 
     public void capNhatThongTinNguoiDung(String tenDangNhap, String vaiTro) {

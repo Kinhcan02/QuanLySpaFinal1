@@ -665,7 +665,7 @@ public class QuanLyDatLichController implements ActionListener {
                     doc.add(new Paragraph("\nMã QR thanh toán:", fontBold));
                     doc.add(qrImage);
 
-                    doc.add(new Paragraph("Ngân hàng: MBBank", fontNormal));
+                    doc.add(new Paragraph("Ngân hàng: EximBank", fontNormal));
                     doc.add(new Paragraph("Chủ tài khoản: " + accountName, fontNormal));
                     doc.add(new Paragraph("Số tài khoản: " + accountNumber, fontNormal));
 
