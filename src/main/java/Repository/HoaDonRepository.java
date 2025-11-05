@@ -4,6 +4,7 @@ import Data.DataConnection;
 import Model.HoaDon;
 import Model.ChiTietHoaDon;
 import Model.DichVu;
+import Model.NhanVien;
 
 import java.sql.*;
 import java.math.BigDecimal;
@@ -52,8 +53,7 @@ public class HoaDonRepository {
         }
         return null;
     }
-    */
-
+     */
     private void deleteChiTietHoaDon(Connection conn, Integer maHoaDon) throws SQLException {
         String sql = "DELETE FROM ChiTietHoaDon WHERE MaHoaDon = ?";
 
@@ -109,10 +109,13 @@ public class HoaDonRepository {
 
     public List<ChiTietHoaDon> getChiTietByMaHoaDon(int maHoaDon) throws SQLException {
         List<ChiTietHoaDon> list = new ArrayList<>();
-        String sql = "SELECT hdct.*, dv.TenDichVu, dv.Gia "
-                + "FROM ChiTietHoaDon hdct "
+        String sql = "SELECT hdct.*, dv.TenDichVu, dv.Gia, nv.HoTen as TenNhanVien "
+                + // THÊM nv
+                "FROM ChiTietHoaDon hdct "
                 + "JOIN DichVu dv ON hdct.MaDichVu = dv.MaDichVu "
-                + "WHERE hdct.MaHoaDon = ?";
+                + "LEFT JOIN NhanVien nv ON hdct.MaNhanVien = nv.MaNhanVien "
+                + // THÊM JOIN
+                "WHERE hdct.MaHoaDon = ?";
 
         try (Connection conn = DataConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -123,6 +126,7 @@ public class HoaDonRepository {
                     chiTiet.setMaCTHD(rs.getInt("MaCTHD"));
                     chiTiet.setMaHoaDon(rs.getInt("MaHoaDon"));
                     chiTiet.setMaDichVu(rs.getInt("MaDichVu"));
+                    chiTiet.setMaNhanVien(rs.getInt("MaNhanVien")); // THÊM DÒNG NÀY
                     chiTiet.setSoLuong(rs.getInt("SoLuong"));
                     chiTiet.setDonGia(rs.getBigDecimal("DonGia"));
                     chiTiet.setThanhTien(rs.getBigDecimal("ThanhTien"));
@@ -133,6 +137,14 @@ public class HoaDonRepository {
                     dichVu.setTenDichVu(rs.getString("TenDichVu"));
                     dichVu.setGia(rs.getBigDecimal("Gia"));
                     chiTiet.setDichVu(dichVu);
+
+                    // Thông tin nhân viên nếu có
+                    if (rs.getInt("MaNhanVien") != 0) {
+                        NhanVien nhanVien = new NhanVien();
+                        nhanVien.setMaNhanVien(rs.getInt("MaNhanVien"));
+                        nhanVien.setHoTen(rs.getString("TenNhanVien"));
+                        chiTiet.setNhanVien(nhanVien);
+                    }
 
                     list.add(chiTiet);
                 }
@@ -207,9 +219,8 @@ public class HoaDonRepository {
     }
 
     private boolean insertChiTiet(Connection conn, int maHoaDon, ChiTietHoaDon chiTiet) throws SQLException {
-        String sql = "INSERT INTO ChiTietHoaDon (MaHoaDon, MaDichVu, SoLuong, DonGia) "
-                + // BỎ CỘT ThanhTien
-                "VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO ChiTietHoaDon (MaHoaDon, MaDichVu, MaNhanVien, SoLuong, DonGia) "
+                + "VALUES (?, ?, ?, ?, ?)";
 
         PreparedStatement stmt = null;
 
@@ -217,8 +228,16 @@ public class HoaDonRepository {
             stmt = conn.prepareStatement(sql);
             stmt.setInt(1, maHoaDon);
             stmt.setInt(2, chiTiet.getMaDichVu());
-            stmt.setInt(3, chiTiet.getSoLuong());
-            stmt.setBigDecimal(4, chiTiet.getDonGia());
+
+            // THÊM MaNhanVien
+            if (chiTiet.getMaNhanVien() != null) {
+                stmt.setInt(3, chiTiet.getMaNhanVien());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+
+            stmt.setInt(4, chiTiet.getSoLuong());
+            stmt.setBigDecimal(5, chiTiet.getDonGia());
             // KHÔNG set ThanhTien vì nó là computed column
 
             int affectedRows = stmt.executeUpdate();

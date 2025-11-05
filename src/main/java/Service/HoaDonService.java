@@ -121,6 +121,12 @@ public class HoaDonService {
 
                     BigDecimal donGia = (BigDecimal) dichVuInfo.get("gia");
                     chiTiet.setDonGia(donGia);
+
+                    // THÊM MÃ NHÂN VIÊN NẾU CÓ
+                    if (dichVuInfo.get("maNhanVien") != null) {
+                        chiTiet.setMaNhanVien((Integer) dichVuInfo.get("maNhanVien"));
+                    }
+
                     chiTiet.recalculateThanhTien(); // Tính lại thành tiền
 
                     tongTien = tongTien.add(chiTiet.getThanhTien());

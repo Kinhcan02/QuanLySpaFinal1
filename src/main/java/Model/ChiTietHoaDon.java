@@ -7,31 +7,52 @@ public class ChiTietHoaDon {
     private Integer maCTHD;
     private Integer maHoaDon;
     private Integer maDichVu;
+    private Integer maNhanVien; // THÊM TRƯỜNG NÀY
     private Integer soLuong;
-    private BigDecimal donGia; // THÊM TRƯỜNG NÀY
-    private BigDecimal thanhTien;
+    private BigDecimal donGia;
+    private BigDecimal thanhTien; // GIỮ LẠI VÌ CÓ TRONG DATABASE (PERSISTED)
     
     // Reference objects
     private HoaDon hoaDon;
     private DichVu dichVu;
+    private NhanVien nhanVien; // THÊM REFERENCE
 
     // Constructor mặc định
     public ChiTietHoaDon() {
         this.soLuong = 1;
     }
 
-    // Constructor với tham số
+    // Constructor với tham số - THÊM maNhanVien
     public ChiTietHoaDon(Integer maCTHD, Integer maHoaDon, Integer maDichVu, 
-                        Integer soLuong, BigDecimal donGia, BigDecimal thanhTien) {
+                        Integer maNhanVien, Integer soLuong, BigDecimal donGia, 
+                        BigDecimal thanhTien) {
         this.maCTHD = maCTHD;
         this.maHoaDon = maHoaDon;
         this.maDichVu = maDichVu;
+        this.maNhanVien = maNhanVien;
         this.soLuong = soLuong != null ? soLuong : 1;
         this.donGia = donGia;
         this.thanhTien = thanhTien;
     }
 
-    // THÊM GETTER VÀ SETTER CHO donGia
+    // GETTER VÀ SETTER MỚI CHO maNhanVien
+    public Integer getMaNhanVien() {
+        return maNhanVien;
+    }
+
+    public void setMaNhanVien(Integer maNhanVien) {
+        this.maNhanVien = maNhanVien;
+    }
+
+    public NhanVien getNhanVien() {
+        return nhanVien;
+    }
+
+    public void setNhanVien(NhanVien nhanVien) {
+        this.nhanVien = nhanVien;
+    }
+
+    // Giữ nguyên các getter/setter khác...
     public BigDecimal getDonGia() {
         return donGia;
     }
@@ -40,7 +61,6 @@ public class ChiTietHoaDon {
         this.donGia = donGia;
     }
 
-    // Giữ nguyên các getter/setter khác...
     public Integer getMaCTHD() {
         return maCTHD;
     }
@@ -106,7 +126,7 @@ public class ChiTietHoaDon {
         }
     }
 
-    // Validation method
+    // Validation method - CẬP NHẬT
     public boolean isValid() {
         return maHoaDon != null && 
                maDichVu != null && 
@@ -122,13 +142,14 @@ public class ChiTietHoaDon {
         return Objects.equals(maCTHD, that.maCTHD) &&
                Objects.equals(maHoaDon, that.maHoaDon) &&
                Objects.equals(maDichVu, that.maDichVu) &&
+               Objects.equals(maNhanVien, that.maNhanVien) &&
                Objects.equals(soLuong, that.soLuong) &&
                Objects.equals(donGia, that.donGia);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maCTHD, maHoaDon, maDichVu, soLuong, donGia);
+        return Objects.hash(maCTHD, maHoaDon, maDichVu, maNhanVien, soLuong, donGia);
     }
 
     @Override
@@ -137,6 +158,7 @@ public class ChiTietHoaDon {
                 "maCTHD=" + maCTHD +
                 ", maHoaDon=" + maHoaDon +
                 ", maDichVu=" + maDichVu +
+                ", maNhanVien=" + maNhanVien +
                 ", soLuong=" + soLuong +
                 ", donGia=" + donGia +
                 ", thanhTien=" + thanhTien +

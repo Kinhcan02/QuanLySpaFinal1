@@ -638,34 +638,40 @@ public class DatDichVuController {
             hoaDon.setGhiChu("Hóa đơn dịch vụ spa - Đã cập nhật - "
                     + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()));
 
-            // 3. Tạo danh sách chi tiết hóa đơn mới
-            List<ChiTietHoaDon> chiTietList = new ArrayList<>();
-            DefaultTableModel model = view.getTableModel();
+        // 3. Tạo danh sách chi tiết hóa đơn mới
+        List<ChiTietHoaDon> chiTietList = new ArrayList<>();
+        DefaultTableModel model = view.getTableModel();
 
-            for (int i = 0; i < model.getRowCount(); i++) {
-                String tenDichVu = model.getValueAt(i, 1).toString();
+        for (int i = 0; i < model.getRowCount(); i++) {
+            String tenDichVu = model.getValueAt(i, 1).toString();
 
-                // Bỏ qua dịch vụ "Vé gọi đầu" khi lưu database
-                if (tenDichVu.contains("Vé gọi đầu")) {
-                    continue;
-                }
-
-                int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
-
-                // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
-                String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
-                BigDecimal donGia = new BigDecimal(donGiaStr);
-
-                // Tìm mã dịch vụ theo tên
-                Integer maDichVu = getMaDichVuTheoTen(tenDichVu);
-                if (maDichVu != null) {
-                    ChiTietHoaDon chiTiet = new ChiTietHoaDon();
-                    chiTiet.setMaDichVu(maDichVu);
-                    chiTiet.setSoLuong(soLuong);
-                    chiTiet.setDonGia(donGia);
-                    chiTietList.add(chiTiet);
-                }
+            // Bỏ qua dịch vụ "Vé gọi đầu" khi lưu database
+            if (tenDichVu.contains("Vé gọi đầu")) {
+                continue;
             }
+
+            int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
+
+            // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
+            String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
+            BigDecimal donGia = new BigDecimal(donGiaStr);
+
+            // Tìm mã dịch vụ theo tên
+            Integer maDichVu = getMaDichVuTheoTen(tenDichVu);
+            if (maDichVu != null) {
+                ChiTietHoaDon chiTiet = new ChiTietHoaDon();
+                chiTiet.setMaDichVu(maDichVu);
+                chiTiet.setSoLuong(soLuong);
+                chiTiet.setDonGia(donGia);
+                
+                // THÊM MÃ NHÂN VIÊN TỪ BẢNG
+                String tenNhanVien = model.getValueAt(i, 5).toString();
+                Integer maNhanVien = getMaNhanVienTheoTen(tenNhanVien);
+                chiTiet.setMaNhanVien(maNhanVien);
+
+                chiTietList.add(chiTiet);
+            }
+        }
 
             // 4. Đặt danh sách chi tiết mới vào hóa đơn
             hoaDon.setChiTietHoaDon(chiTietList);
@@ -733,7 +739,11 @@ public class DatDichVuController {
                     chiTiet.setMaDichVu(maDichVu);
                     chiTiet.setSoLuong(soLuong);
                     chiTiet.setDonGia(donGia);
-                    // KHÔNG gọi recalculateThanhTien() vì không cần lưu vào database
+
+                    // THÊM MÃ NHÂN VIÊN TỪ BẢNG
+                    String tenNhanVien = model.getValueAt(i, 5).toString();
+                    Integer maNhanVien = getMaNhanVienTheoTen(tenNhanVien);
+                    chiTiet.setMaNhanVien(maNhanVien);
 
                     chiTietList.add(chiTiet);
                 }

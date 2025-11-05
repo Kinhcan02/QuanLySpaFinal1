@@ -18,6 +18,45 @@ public class GiuongService {
         this.datLichService = new DatLichService();
     }
 
+    // PHƯƠNG THỨC CẬP NHẬT TRẠNG THÁI GIƯỜNG
+    public boolean updateTrangThai(Integer maGiuong, String trangThai) {
+        try {
+            return repository.updateTrangThai(maGiuong, trangThai);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi cập nhật trạng thái giường: " + e.getMessage(), e);
+        }
+    }
+
+    // LẤY TẤT CẢ GIƯỜNG
+    public List<Giuong> getAllGiuong() {
+        try {
+            return repository.getAll();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lấy danh sách giường: " + e.getMessage(), e);
+        }
+    }
+
+    // LẤY GIƯỜNG THEO ID
+    public Giuong getGiuongById(Integer maGiuong) {
+        try {
+            if (maGiuong == null) {
+                return null;
+            }
+            return repository.getById(maGiuong);
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lấy thông tin giường: " + e.getMessage(), e);
+        }
+    }
+
+    // LẤY GIƯỜNG TRỐNG
+    public List<Giuong> getGiuongTrong() {
+        try {
+            return repository.getGiuongTrong();
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi lấy giường trống: " + e.getMessage(), e);
+        }
+    }
+
     // Lấy tất cả giường với trạng thái cập nhật
     public List<Giuong> getAllGiuongWithStatus() {
         try {
@@ -132,22 +171,6 @@ public class GiuongService {
         }
     }
 
-    // Các phương thức cơ bản
-    public List<Giuong> getAllGiuong() {
-        try {
-            return repository.getAll();
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi lấy danh sách giường: " + e.getMessage(), e);
-        }
-    }
-
-    public Giuong getGiuongById(Integer maGiuong) {
-        try {
-            return repository.getById(maGiuong);
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi lấy thông tin giường: " + e.getMessage(), e);
-        }
-    }
 
     public boolean addGiuong(Giuong giuong) {
         try {
@@ -179,15 +202,6 @@ public class GiuongService {
             return repository.updateTrangThai(maGiuong, trangThai);
         } catch (Exception e) {
             throw new RuntimeException("Lỗi khi cập nhật trạng thái giường: " + e.getMessage(), e);
-        }
-    }
-
-    // Các phương thức lọc theo trạng thái
-    public List<Giuong> getGiuongTrong() {
-        try {
-            return repository.getGiuongTrong();
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi lấy giường trống: " + e.getMessage(), e);
         }
     }
 

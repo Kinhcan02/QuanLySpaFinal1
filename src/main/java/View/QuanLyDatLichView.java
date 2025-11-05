@@ -64,6 +64,7 @@ public class QuanLyDatLichView extends JPanel {
 
     // Selected appointment
     private DatLich selectedAppointment;
+    private Integer maGiuongCu; // THÊM FIELD NÀY
 
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
     private final Color COLOR_PRIMARY = new Color(0x4D, 0x8A, 0x57);
@@ -377,10 +378,10 @@ public class QuanLyDatLichView extends JPanel {
     public void loadNhanVienChoDichVu() {
         try {
             List<NhanVien> dsNhanVien = nhanVienService.getAllNhanVien();
-            
+
             cbNhanVienDichVu.removeAllItems();
             cbNhanVienDichVu.addItem(new NhanVien()); // Item trống
-            
+
             for (NhanVien nv : dsNhanVien) {
                 cbNhanVienDichVu.addItem(nv);
             }
@@ -810,6 +811,16 @@ public class QuanLyDatLichView extends JPanel {
     public JComboBox<DichVu> getCbDichVu() {
         return cbDichVu;
     }
+    // THÊM GETTER VÀ SETTER CHO maGiuongCu
+
+    public Integer getMaGiuongCu() {
+        return maGiuongCu;
+    }
+
+    public void setMaGiuongCu(Integer maGiuongCu) {
+        this.maGiuongCu = maGiuongCu;
+    }
+    
 
     public JComboBox<Giuong> getCbGiuong() {
         return cbGiuong;

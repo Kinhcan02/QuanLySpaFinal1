@@ -148,12 +148,19 @@ public class QuanLyDatLichController implements ActionListener {
 
             boolean success;
             if (isEditMode && currentEditId != -1) {
-                // Chế độ sửa
+                // Chế độ sửa - XỬ LÝ CẬP NHẬT GIƯỜNG
+                Integer maGiuongCu = view.getMaGiuongCu();
+                Integer maGiuongMoi = datLich.getMaGiuong();
+
                 success = datLichService.updateDatLich(datLich);
                 if (success) {
+                    // XỬ LÝ CẬP NHẬT TRẠNG THÁI GIƯỜNG KHI SỬA
+                    handleCapNhatGiuongKhiSua(maGiuongCu, maGiuongMoi);
+
                     JOptionPane.showMessageDialog(view, "Cập nhật lịch hẹn thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     isEditMode = false;
                     currentEditId = -1;
+                    view.setMaGiuongCu(null); // Reset sau khi sửa xong
                 }
             } else {
                 // Chế độ thêm mới
@@ -161,7 +168,7 @@ public class QuanLyDatLichController implements ActionListener {
                 if (success) {
                     // Cập nhật trạng thái giường thành "Đã đặt" ngay khi thêm lịch
                     if (datLich.getMaGiuong() != null) {
-                        giuongService.updateTrangThaiGiuong(datLich.getMaGiuong(), "Đã đặt");
+                        giuongService.updateTrangThai(datLich.getMaGiuong(), "Đã đặt");
                     }
                     JOptionPane.showMessageDialog(view, "Thêm lịch hẹn thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 }
@@ -188,9 +195,15 @@ public class QuanLyDatLichController implements ActionListener {
         }
 
         try {
+            // Lưu lại mã giường cũ trước khi chuyển sang chế độ sửa
+            Integer maGiuongCu = selectedAppointment.getMaGiuong();
+
             // Chuyển sang chế độ sửa
             isEditMode = true;
             currentEditId = selectedAppointment.getMaLich();
+
+            // Lưu thông tin giường cũ vào view để sử dụng sau
+            view.setMaGiuongCu(maGiuongCu);
 
             // Điền dữ liệu vào form
             fillFormData(selectedAppointment);
@@ -200,6 +213,58 @@ public class QuanLyDatLichController implements ActionListener {
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(view, "Lỗi khi sửa lịch hẹn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handleHuySua() {
+        if (isEditMode) {
+            int confirm = JOptionPane.showConfirmDialog(view,
+                    "Bạn có chắc muốn hủy thao tác sửa?",
+                    "Xác nhận hủy",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Reset trạng thái mà không cập nhật gì
+                isEditMode = false;
+                currentEditId = -1;
+                view.setMaGiuongCu(null);
+                clearForm();
+                JOptionPane.showMessageDialog(view, "Đã hủy thao tác sửa", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
+    }
+
+    // THÊM PHƯƠNG THỨC XỬ LÝ CẬP NHẬT GIƯỜNG KHI SỬA
+    // THÊM PHƯƠNG THỨC XỬ LÝ CẬP NHẬT GIƯỜNG KHI SỬA
+    private void handleCapNhatGiuongKhiSua(Integer maGiuongCu, Integer maGiuongMoi) {
+        try {
+            // Trường hợp 1: Có thay đổi giường (cả cũ và mới đều có giá trị và khác nhau)
+            if (maGiuongCu != null && maGiuongMoi != null && !maGiuongCu.equals(maGiuongMoi)) {
+                // Chuyển giường cũ về trạng thái "Trống"
+                giuongService.updateTrangThai(maGiuongCu, "Trống");
+                // Cập nhật giường mới thành "Đã đặt"
+                giuongService.updateTrangThai(maGiuongMoi, "Đã đặt");
+                System.out.println("Đã cập nhật trạng thái giường: " + maGiuongCu + " -> Trống, " + maGiuongMoi + " -> Đã đặt");
+            } // Trường hợp 2: Xóa giường (chuyển từ có giường sang không có giường)
+            else if (maGiuongCu != null && maGiuongMoi == null) {
+                giuongService.updateTrangThai(maGiuongCu, "Trống");
+                System.out.println("Đã cập nhật trạng thái giường: " + maGiuongCu + " -> Trống (xóa giường)");
+            } // Trường hợp 3: Thêm giường mới (chuyển từ không có giường sang có giường)
+            else if (maGiuongCu == null && maGiuongMoi != null) {
+                giuongService.updateTrangThai(maGiuongMoi, "Đã đặt");
+                System.out.println("Đã cập nhật trạng thái giường: " + maGiuongMoi + " -> Đã đặt (thêm giường)");
+            } // Trường hợp 4: Giữ nguyên giường - không làm gì
+            else {
+                System.out.println("Không có thay đổi giường");
+            }
+
+            // Refresh combobox giường để hiển thị trạng thái mới
+            view.refreshGiuongComboBox();
+
+        } catch (Exception e) {
+            System.err.println("Lỗi khi cập nhật trạng thái giường: " + e.getMessage());
+            e.printStackTrace();
+            // Vẫn cho phép cập nhật lịch hẹn thành công, chỉ log lỗi
         }
     }
 
@@ -223,7 +288,8 @@ public class QuanLyDatLichController implements ActionListener {
 
                 if (success && selectedAppointment.getMaGiuong() != null) {
                     // Cập nhật trạng thái giường thành "Trống" khi xóa lịch
-                    giuongService.updateTrangThaiGiuong(selectedAppointment.getMaGiuong(), "Trống");
+                    giuongService.updateTrangThai(selectedAppointment.getMaGiuong(), "Trống");
+                    view.refreshGiuongComboBox(); // Refresh combobox
                 }
 
                 if (success) {
@@ -264,7 +330,10 @@ public class QuanLyDatLichController implements ActionListener {
                     + "\nThời gian: " + selectedAppointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm"))
                     + "\nTổng tiền: " + String.format("%,.0f", tongTien) + " VND"
                     + (diemThuong > 0 ? "\nĐiểm tích lũy: +" + diemThuong + " điểm" : "")
-                    + "\n\nSau khi hoàn thành sẽ:\n- Lưu hóa đơn\n- In PDF hóa đơn\n- Xóa form",
+                    + "\nGiường: " + (selectedAppointment.getMaGiuong() != null
+                    ? giuongService.getGiuongById(selectedAppointment.getMaGiuong()).getSoHieu() : "Không có")
+                    + "\n\nSau khi hoàn thành sẽ:\n- Lưu hóa đơn\n- In PDF hóa đơn\n- Xóa form"
+                    + (selectedAppointment.getMaGiuong() != null ? "\n- Giường sẽ được chuyển về trạng thái 'Trống'" : ""),
                     "Xác nhận hoàn thành", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
@@ -272,6 +341,20 @@ public class QuanLyDatLichController implements ActionListener {
                 boolean success = datLichService.updateTrangThai(selectedAppointment.getMaLich(), "Hoàn thành");
 
                 if (success) {
+                    // XỬ LÝ CẬP NHẬT GIƯỜNG KHI HOÀN THÀNH
+                    if (selectedAppointment.getMaGiuong() != null) {
+                        giuongService.updateTrangThai(selectedAppointment.getMaGiuong(), "Trống");
+
+                        // Log thông tin cập nhật
+                        Giuong giuong = giuongService.getGiuongById(selectedAppointment.getMaGiuong());
+                        if (giuong != null) {
+                            System.out.println("Đã cập nhật trạng thái giường " + giuong.getSoHieu()
+                                    + " từ '" + giuong.getTrangThai() + "' -> 'Trống' (do hoàn thành lịch)");
+                        }
+
+                        view.refreshGiuongComboBox();
+                    }
+
                     // LƯU HÓA ĐƠN VÀO DATABASE
                     boolean luuHoaDonThanhCong = luuHoaDon(selectedAppointment);
 
@@ -284,25 +367,21 @@ public class QuanLyDatLichController implements ActionListener {
                         // In hóa đơn PDF
                         inHoaDonPDF(selectedAppointment);
 
-                        // Cập nhật trạng thái giường
-                        if (selectedAppointment.getMaGiuong() != null) {
-                            giuongService.updateTrangThaiGiuong(selectedAppointment.getMaGiuong(), "Trống");
-                            view.refreshGiuongComboBox();
-                        }
-
                         clearForm();
 
                         JOptionPane.showMessageDialog(view,
                                 "Hoàn thành lịch hẹn thành công!\n"
                                 + "- Đã lưu hóa đơn vào database\n"
                                 + (diemThuong > 0 ? "- Đã thưởng " + diemThuong + " điểm tích lũy cho khách hàng\n" : "")
+                                + (selectedAppointment.getMaGiuong() != null ? "- Giường đã được chuyển về trạng thái 'Trống'\n" : "")
                                 + "- Đã in PDF\n"
                                 + "- Đã xóa form",
                                 "Thành công", JOptionPane.INFORMATION_MESSAGE);
                         view.updateTimeline();
                     } else {
                         JOptionPane.showMessageDialog(view,
-                                "Hoàn thành lịch hẹn nhưng LỖI khi lưu hóa đơn!",
+                                "Hoàn thành lịch hẹn nhưng LỖI khi lưu hóa đơn!"
+                                + (selectedAppointment.getMaGiuong() != null ? "\nTuy nhiên giường đã được chuyển về trạng thái 'Trống'" : ""),
                                 "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                     }
                 } else {
@@ -360,6 +439,10 @@ public class QuanLyDatLichController implements ActionListener {
                         cthd.setMaDichVu(chiTiet.getMaDichVu());
                         cthd.setSoLuong(1);
                         cthd.setDonGia(chiTiet.getDichVu().getGia());
+
+                        // THÊM MÃ NHÂN VIÊN TỪ CHI TIẾT ĐẶT LỊCH
+                        cthd.setMaNhanVien(chiTiet.getMaNhanVien());
+
                         cthd.recalculateThanhTien(); // Tính thành tiền
                         chiTietList.add(cthd);
                     }
@@ -675,7 +758,7 @@ public class QuanLyDatLichController implements ActionListener {
             // Kiểm tra nếu có giường được chọn và giường đang "Đang sử dụng"
             if (selectedAppointment.getMaGiuong() != null) {
                 Giuong giuong = giuongService.getGiuongById(selectedAppointment.getMaGiuong());
-                if (giuong != null && giuong.isDangSuDung()) {
+                if (giuong != null && "Đang sử dụng".equals(giuong.getTrangThai())) {
                     JOptionPane.showMessageDialog(view,
                             "Không thể xác nhận lịch hẹn. Giường " + giuong.getSoHieu() + " đang được sử dụng.\nVui lòng chọn giường khác hoặc đợi giường trống.",
                             "Cảnh báo",
@@ -696,10 +779,8 @@ public class QuanLyDatLichController implements ActionListener {
 
                 if (success && selectedAppointment.getMaGiuong() != null) {
                     // Cập nhật trạng thái giường thành "Đang sử dụng" khi xác nhận
-                    giuongService.updateTrangThaiGiuong(selectedAppointment.getMaGiuong(), "Đang sử dụng");
-
-                    // Refresh combobox giường để ẩn giường đang sử dụng
-                    view.refreshGiuongComboBox();
+                    giuongService.updateTrangThai(selectedAppointment.getMaGiuong(), "Đang sử dụng");
+                    view.refreshGiuongComboBox(); // Refresh combobox
                 }
 
                 if (success) {
@@ -725,7 +806,8 @@ public class QuanLyDatLichController implements ActionListener {
             int confirm = JOptionPane.showConfirmDialog(view,
                     "Hủy lịch hẹn này?\nKhách hàng: "
                     + khachHangService.getKhachHangById(selectedAppointment.getMaKhachHang()).getHoTen()
-                    + "\nThời gian: " + selectedAppointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm")),
+                    + "\nThời gian: " + selectedAppointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm"))
+                    + "\n\nSau khi hủy, giường sẽ được chuyển về trạng thái 'Trống' (nếu có).",
                     "Xác nhận hủy lịch", JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
@@ -733,14 +815,24 @@ public class QuanLyDatLichController implements ActionListener {
 
                 if (success && selectedAppointment.getMaGiuong() != null) {
                     // Cập nhật trạng thái giường thành "Trống" khi hủy lịch
-                    giuongService.updateTrangThaiGiuong(selectedAppointment.getMaGiuong(), "Trống");
+                    giuongService.updateTrangThai(selectedAppointment.getMaGiuong(), "Trống");
+
+                    // Log thông tin cập nhật
+                    Giuong giuong = giuongService.getGiuongById(selectedAppointment.getMaGiuong());
+                    if (giuong != null) {
+                        System.out.println("Đã cập nhật trạng thái giường " + giuong.getSoHieu()
+                                + " từ '" + giuong.getTrangThai() + "' -> 'Trống' (do hủy lịch)");
+                    }
 
                     // Refresh combobox giường để hiển thị lại giường
                     view.refreshGiuongComboBox();
                 }
 
                 if (success) {
-                    JOptionPane.showMessageDialog(view, "Hủy lịch hẹn thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(view,
+                            "Hủy lịch hẹn thành công"
+                            + (selectedAppointment.getMaGiuong() != null ? "\nGiường đã được chuyển về trạng thái 'Trống'" : ""),
+                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     view.updateTimeline();
                 } else {
                     JOptionPane.showMessageDialog(view, "Hủy lịch hẹn thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -948,9 +1040,10 @@ public class QuanLyDatLichController implements ActionListener {
         view.getSpinnerSoLuongNguoi().setValue(1);
         view.clearPhanCongNhanVien(); // XÓA TẤT CẢ PHÂN CÔNG
 
-        // Reset edit mode
+        // Reset edit mode và thông tin giường cũ
         isEditMode = false;
         currentEditId = -1;
+        view.setMaGiuongCu(null); // RESET GIƯỜNG CŨ
 
         // Giữ nguyên ngày đặt (ngày đang chọn trên lịch)
         view.getTxtNgayDat().setText(view.getSelectedDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
