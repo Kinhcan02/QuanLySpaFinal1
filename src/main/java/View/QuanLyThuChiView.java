@@ -17,7 +17,7 @@ public class QuanLyThuChiView extends JPanel {
 
     // Components
     private JTabbedPane tabbedPane;
-    
+
     // Thu nhập components
     private JTable tblThuNhap;
     private DefaultTableModel modelThuNhap;
@@ -26,7 +26,7 @@ public class QuanLyThuChiView extends JPanel {
     private JButton btnThemThu, btnSuaThu, btnXoaThu, btnLamMoiThu, btnTimKiemThu;
     private JLabel lblTongThu, lblTongThuHoaDon;
     private JComboBox<String> cboThangThu, cboNamThu;
-    
+
     // Chi tiêu components
     private JTable tblChiTieu;
     private DefaultTableModel modelChiTieu;
@@ -35,7 +35,7 @@ public class QuanLyThuChiView extends JPanel {
     private JButton btnThemChi, btnSuaChi, btnXoaChi, btnLamMoiChi, btnTimKiemChi;
     private JLabel lblTongChi, lblTongChiNguyenLieu;
     private JComboBox<String> cboThangChi, cboNamChi;
-    
+
     // Tổng quan components
     private JLabel lblTongThuTongQuan, lblTongChiTongQuan, lblLoiNhuanTongQuan;
     private JDateChooser dateTuNgayTQ, dateDenNgayTQ;
@@ -147,23 +147,29 @@ public class QuanLyThuChiView extends JPanel {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
-            
+
             @Override
             public Class<?> getColumnClass(int column) {
                 return switch (column) {
-                    case 0 -> Integer.class; // Mã thu
-                    case 1 -> LocalDate.class; // Ngày thu
-                    case 2 -> String.class; // Số tiền
-                    case 3 -> String.class; // Nội dung
-                    case 4 -> String.class; // Loại thu
-                    default -> Object.class;
+                    case 0 ->
+                        Integer.class; // Mã thu
+                    case 1 ->
+                        LocalDate.class; // Ngày thu
+                    case 2 ->
+                        String.class; // Số tiền
+                    case 3 ->
+                        String.class; // Nội dung
+                    case 4 ->
+                        String.class; // Loại thu
+                    default ->
+                        Object.class;
                 };
             }
         };
 
         tblThuNhap = new JTable(modelThuNhap);
         styleTable(tblThuNhap);
-        
+
         // Set column widths
         tblThuNhap.getColumnModel().getColumn(0).setPreferredWidth(80);
         tblThuNhap.getColumnModel().getColumn(1).setPreferredWidth(100);
@@ -178,22 +184,33 @@ public class QuanLyThuChiView extends JPanel {
         panel.setBorder(BorderFactory.createTitledBorder("Thông tin thu nhập"));
 
         // Ngày thu
-        panel.add(new JLabel("Ngày thu:"));
+        JLabel lblNgayThu = new JLabel("Ngày thu:");
+        lblNgayThu.setForeground(Color.BLACK); // THÊM DÒNG NÀY
+        panel.add(lblNgayThu);
+
         dateNgayThu = new JDateChooser();
         dateNgayThu.setDate(new java.util.Date());
         dateNgayThu.setPreferredSize(new Dimension(120, 25));
         panel.add(dateNgayThu);
 
         // Số tiền
-        panel.add(new JLabel("Số tiền:"));
+        JLabel lblSoTienThu = new JLabel("Số tiền:");
+        lblSoTienThu.setForeground(Color.BLACK); // THÊM DÒNG NÀY
+        panel.add(lblSoTienThu);
+
         txtSoTienThu = new JTextField();
         txtSoTienThu.setPreferredSize(new Dimension(120, 25));
+        txtSoTienThu.setForeground(Color.BLACK); // THÊM DÒNG NÀY
         panel.add(txtSoTienThu);
 
         // Nội dung
-        panel.add(new JLabel("Nội dung:"));
+        JLabel lblNoiDungThu = new JLabel("Nội dung:");
+        lblNoiDungThu.setForeground(Color.BLACK); // THÊM DÒNG NÀY
+        panel.add(lblNoiDungThu);
+
         txtNoiDungThu = new JTextField();
         txtNoiDungThu.setPreferredSize(new Dimension(200, 25));
+        txtNoiDungThu.setForeground(Color.BLACK); // THÊM DÒNG NÀY
         panel.add(txtNoiDungThu);
 
         // Buttons
@@ -272,35 +289,38 @@ public class QuanLyThuChiView extends JPanel {
     }
 
     private void createChiTieuTable() {
-        String[] cols = {"Mã chi", "Ngày chi", "Số tiền", "Mục đích", "Loại chi"};
+        String[] cols = {"Mã chi", "Ngày chi", "Số tiền", "Mục đích"};
         modelChiTieu = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
-            
+
             @Override
             public Class<?> getColumnClass(int column) {
                 return switch (column) {
-                    case 0 -> Integer.class; // Mã chi
-                    case 1 -> LocalDate.class; // Ngày chi
-                    case 2 -> String.class; // Số tiền
-                    case 3 -> String.class; // Mục đích
-                    case 4 -> String.class; // Loại chi
-                    default -> Object.class;
+                    case 0 ->
+                        Integer.class; // Mã chi
+                    case 1 ->
+                        LocalDate.class; // Ngày chi
+                    case 2 ->
+                        String.class; // Số tiền
+                    case 3 ->
+                        String.class; // Mục đích
+                    default ->
+                        Object.class;
                 };
             }
         };
 
         tblChiTieu = new JTable(modelChiTieu);
         styleTable(tblChiTieu);
-        
+
         // Set column widths
         tblChiTieu.getColumnModel().getColumn(0).setPreferredWidth(80);
         tblChiTieu.getColumnModel().getColumn(1).setPreferredWidth(100);
         tblChiTieu.getColumnModel().getColumn(2).setPreferredWidth(120);
         tblChiTieu.getColumnModel().getColumn(3).setPreferredWidth(200);
-        tblChiTieu.getColumnModel().getColumn(4).setPreferredWidth(100);
     }
 
     private JPanel createChiTieuInputPanel() {
@@ -309,22 +329,33 @@ public class QuanLyThuChiView extends JPanel {
         panel.setBorder(BorderFactory.createTitledBorder("Thông tin chi tiêu"));
 
         // Ngày chi
-        panel.add(new JLabel("Ngày chi:"));
+        JLabel lblNgayChi = new JLabel("Ngày chi:");
+        lblNgayChi.setForeground(Color.BLACK);
+        panel.add(lblNgayChi);
+
         dateNgayChi = new JDateChooser();
         dateNgayChi.setDate(new java.util.Date());
         dateNgayChi.setPreferredSize(new Dimension(120, 25));
         panel.add(dateNgayChi);
 
         // Số tiền
-        panel.add(new JLabel("Số tiền:"));
+        JLabel lblSoTienChi = new JLabel("Số tiền:");
+        lblSoTienChi.setForeground(Color.BLACK);
+        panel.add(lblSoTienChi);
+
         txtSoTienChi = new JTextField();
         txtSoTienChi.setPreferredSize(new Dimension(120, 25));
+        txtSoTienChi.setForeground(Color.BLACK);
         panel.add(txtSoTienChi);
 
         // Mục đích
-        panel.add(new JLabel("Mục đích:"));
+        JLabel lblMucDichChi = new JLabel("Mục đích:");
+        lblMucDichChi.setForeground(Color.BLACK);
+        panel.add(lblMucDichChi);
+
         txtMucDichChi = new JTextField();
         txtMucDichChi.setPreferredSize(new Dimension(200, 25));
+        txtMucDichChi.setForeground(Color.BLACK);
         panel.add(txtMucDichChi);
 
         // Buttons
@@ -354,14 +385,14 @@ public class QuanLyThuChiView extends JPanel {
         JPanel pnContent = new JPanel(new BorderLayout(10, 10));
         pnContent.setBackground(COLOR_BACKGROUND);
         pnContent.add(createSummaryDateFilter(), BorderLayout.NORTH);
-        
+
         // Có thể thêm biểu đồ ở đây
         JPanel pnChartPlaceholder = new JPanel();
         pnChartPlaceholder.setBackground(Color.WHITE);
         pnChartPlaceholder.setBorder(BorderFactory.createTitledBorder("Biểu đồ thu chi"));
         pnChartPlaceholder.setPreferredSize(new Dimension(800, 300));
         pnContent.add(pnChartPlaceholder, BorderLayout.CENTER);
-        
+
         panel.add(pnContent, BorderLayout.CENTER);
 
         return panel;
@@ -404,11 +435,11 @@ public class QuanLyThuChiView extends JPanel {
         JLabel lblValue = new JLabel(value, SwingConstants.CENTER);
         lblValue.setFont(new Font("Arial", Font.BOLD, 20));
         lblValue.setForeground(Color.WHITE);
-        
+
         JPanel valuePanel = new JPanel(new BorderLayout());
         valuePanel.setBackground(color);
         valuePanel.add(lblValue, BorderLayout.CENTER);
-        
+
         card.add(valuePanel, BorderLayout.CENTER);
 
         return card;
@@ -476,42 +507,139 @@ public class QuanLyThuChiView extends JPanel {
     }
 
     // Getter methods
-    public JTable getTblThuNhap() { return tblThuNhap; }
-    public JTable getTblChiTieu() { return tblChiTieu; }
-    public DefaultTableModel getModelThuNhap() { return modelThuNhap; }
-    public DefaultTableModel getModelChiTieu() { return modelChiTieu; }
-    
-    public JTextField getTxtSoTienThu() { return txtSoTienThu; }
-    public JTextField getTxtNoiDungThu() { return txtNoiDungThu; }
-    public JTextField getTxtSoTienChi() { return txtSoTienChi; }
-    public JTextField getTxtMucDichChi() { return txtMucDichChi; }
-    
-    public JDateChooser getDateNgayThu() { return dateNgayThu; }
-    public JDateChooser getDateNgayChi() { return dateNgayChi; }
-    public JDateChooser getDateTuNgayThu() { return dateTuNgayThu; }
-    public JDateChooser getDateDenNgayThu() { return dateDenNgayThu; }
-    public JDateChooser getDateTuNgayChi() { return dateTuNgayChi; }
-    public JDateChooser getDateDenNgayChi() { return dateDenNgayChi; }
-    public JDateChooser getDateTuNgayTQ() { return dateTuNgayTQ; }
-    public JDateChooser getDateDenNgayTQ() { return dateDenNgayTQ; }
-    
-    public JButton getBtnThemThu() { return btnThemThu; }
-    public JButton getBtnSuaThu() { return btnSuaThu; }
-    public JButton getBtnXoaThu() { return btnXoaThu; }
-    public JButton getBtnLamMoiThu() { return btnLamMoiThu; }
-    public JButton getBtnTimKiemThu() { return btnTimKiemThu; }
-    public JButton getBtnThemChi() { return btnThemChi; }
-    public JButton getBtnSuaChi() { return btnSuaChi; }
-    public JButton getBtnXoaChi() { return btnXoaChi; }
-    public JButton getBtnLamMoiChi() { return btnLamMoiChi; }
-    public JButton getBtnTimKiemChi() { return btnTimKiemChi; }
-    public JButton getBtnXemBaoCao() { return btnXemBaoCao; }
-    
-    public JLabel getLblTongThu() { return lblTongThu; }
-    public JLabel getLblTongThuHoaDon() { return lblTongThuHoaDon; }
-    public JLabel getLblTongChi() { return lblTongChi; }
-    public JLabel getLblTongChiNguyenLieu() { return lblTongChiNguyenLieu; }
-    public JLabel getLblTongThuTongQuan() { return lblTongThuTongQuan; }
-    public JLabel getLblTongChiTongQuan() { return lblTongChiTongQuan; }
-    public JLabel getLblLoiNhuanTongQuan() { return lblLoiNhuanTongQuan; }
+    public JTable getTblThuNhap() {
+        return tblThuNhap;
+    }
+
+    public JTable getTblChiTieu() {
+        return tblChiTieu;
+    }
+
+    public DefaultTableModel getModelThuNhap() {
+        return modelThuNhap;
+    }
+
+    public DefaultTableModel getModelChiTieu() {
+        return modelChiTieu;
+    }
+
+    public JTextField getTxtSoTienThu() {
+        return txtSoTienThu;
+    }
+
+    public JTextField getTxtNoiDungThu() {
+        return txtNoiDungThu;
+    }
+
+    public JTextField getTxtSoTienChi() {
+        return txtSoTienChi;
+    }
+
+    public JTextField getTxtMucDichChi() {
+        return txtMucDichChi;
+    }
+
+    public JDateChooser getDateNgayThu() {
+        return dateNgayThu;
+    }
+
+    public JDateChooser getDateNgayChi() {
+        return dateNgayChi;
+    }
+
+    public JDateChooser getDateTuNgayThu() {
+        return dateTuNgayThu;
+    }
+
+    public JDateChooser getDateDenNgayThu() {
+        return dateDenNgayThu;
+    }
+
+    public JDateChooser getDateTuNgayChi() {
+        return dateTuNgayChi;
+    }
+
+    public JDateChooser getDateDenNgayChi() {
+        return dateDenNgayChi;
+    }
+
+    public JDateChooser getDateTuNgayTQ() {
+        return dateTuNgayTQ;
+    }
+
+    public JDateChooser getDateDenNgayTQ() {
+        return dateDenNgayTQ;
+    }
+
+    public JButton getBtnThemThu() {
+        return btnThemThu;
+    }
+
+    public JButton getBtnSuaThu() {
+        return btnSuaThu;
+    }
+
+    public JButton getBtnXoaThu() {
+        return btnXoaThu;
+    }
+
+    public JButton getBtnLamMoiThu() {
+        return btnLamMoiThu;
+    }
+
+    public JButton getBtnTimKiemThu() {
+        return btnTimKiemThu;
+    }
+
+    public JButton getBtnThemChi() {
+        return btnThemChi;
+    }
+
+    public JButton getBtnSuaChi() {
+        return btnSuaChi;
+    }
+
+    public JButton getBtnXoaChi() {
+        return btnXoaChi;
+    }
+
+    public JButton getBtnLamMoiChi() {
+        return btnLamMoiChi;
+    }
+
+    public JButton getBtnTimKiemChi() {
+        return btnTimKiemChi;
+    }
+
+    public JButton getBtnXemBaoCao() {
+        return btnXemBaoCao;
+    }
+
+    public JLabel getLblTongThu() {
+        return lblTongThu;
+    }
+
+    public JLabel getLblTongThuHoaDon() {
+        return lblTongThuHoaDon;
+    }
+
+    public JLabel getLblTongChi() {
+        return lblTongChi;
+    }
+
+    public JLabel getLblTongChiNguyenLieu() {
+        return lblTongChiNguyenLieu;
+    }
+
+    public JLabel getLblTongThuTongQuan() {
+        return lblTongThuTongQuan;
+    }
+
+    public JLabel getLblTongChiTongQuan() {
+        return lblTongChiTongQuan;
+    }
+
+    public JLabel getLblLoiNhuanTongQuan() {
+        return lblLoiNhuanTongQuan;
+    }
 }

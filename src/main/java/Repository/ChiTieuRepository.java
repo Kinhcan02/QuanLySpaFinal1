@@ -77,7 +77,7 @@ public class ChiTieuRepository implements IChiTieuRepository {
     
     @Override
     public boolean addChiTieu(ChiTieu chiTieu) {
-        String sql = "INSERT INTO ChiTieu (NgayChi, SoTien, MucDich, LoaiChi) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO ChiTieu (NgayChi, SoTien, MucDich) VALUES (?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -85,7 +85,6 @@ public class ChiTieuRepository implements IChiTieuRepository {
             stmt.setDate(1, java.sql.Date.valueOf(chiTieu.getNgayChi()));
             stmt.setBigDecimal(2, chiTieu.getSoTien());
             stmt.setString(3, chiTieu.getMucDich());
-            stmt.setString(4, "Vật tư");
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
