@@ -96,7 +96,7 @@ public class MainView extends JFrame {
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         titlePanel.setBackground(COLOR_MENU);
 
-        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ SPA BEAUTY");
+        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ SPA SWEET HOME");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 24));
         lblTitle.setForeground(COLOR_TEXT);
 
@@ -395,7 +395,7 @@ public class MainView extends JFrame {
         }
     }
 
-// Từ giao diện chính, gọi như sau:
+    // Từ giao diện chính, gọi như sau:
     private void moCheDoSuaHoaDon(Integer maHoaDon) {
         DatDichVuView view = new DatDichVuView();
         DatDichVuController controller = new DatDichVuController(view);
@@ -410,7 +410,7 @@ public class MainView extends JFrame {
         frame.setVisible(true);
     }
 
-// Hoặc có thể thêm dialog để nhập mã hóa đơn
+    // Hoặc có thể thêm dialog để nhập mã hóa đơn
     private void showDialogSuaHoaDon() {
         String maHoaDonStr = JOptionPane.showInputDialog(
                 this,
@@ -972,8 +972,6 @@ public class MainView extends JFrame {
 
         if ("ADMIN".equalsIgnoreCase(vaiTro)) {
             vaiTroText = "Quản trị viên";
-        } else if ("THUNGAN".equalsIgnoreCase(vaiTro)) {
-            vaiTroText = "Thu ngân";
         } else if ("NHANVIEN".equalsIgnoreCase(vaiTro)) {
             vaiTroText = "Nhân viên";
         } else {
@@ -981,6 +979,16 @@ public class MainView extends JFrame {
         }
 
         lblUserInfo.setText("Xin chào: " + tenDangNhap + " | " + vaiTroText);
+        if ("NHANVIEN".equalsIgnoreCase(vaiTro)) {
+            btnQuanLyNguyenLieu.setVisible(false);
+            btnQuanLyNhanVien.setVisible(false);
+            btnQuanLyCaLam.setVisible(false);
+            btnQuanLyDichVu.setVisible(false);
+            btnThongKe.setVisible(false);
+            btnQuanLyTaiKhoan.setVisible(false);
+            btnQuanLyThuChi.setVisible(false);
+            btnQuanLyLuong.setVisible(false);
+        }
     }
 
     public static void khoiChayUngDung() {
