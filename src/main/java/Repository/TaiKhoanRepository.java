@@ -10,10 +10,11 @@ import java.util.List;
 
 public class TaiKhoanRepository {
 
-    // READ - Lấy tài khoản theo tên đăng nhập (đã có)
+    // READ - Lấy tài khoản theo tên đăng nhập
     public TaiKhoan findByTenDangNhap(String tenDangNhap) {
         String sql = "SELECT * FROM TaiKhoan WHERE TenDangNhap = ?";
-        try (Connection conn = DataConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DataConnection.getConnection(); 
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, tenDangNhap);
             ResultSet rs = stmt.executeQuery();
@@ -36,7 +37,8 @@ public class TaiKhoanRepository {
     // READ - Lấy tài khoản theo mã
     public TaiKhoan findById(int maTaiKhoan) {
         String sql = "SELECT * FROM TaiKhoan WHERE MaTaiKhoan = ?";
-        try (Connection conn = DataConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DataConnection.getConnection(); 
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, maTaiKhoan);
             ResultSet rs = stmt.executeQuery();
@@ -83,6 +85,7 @@ public class TaiKhoanRepository {
 
     // CREATE - Thêm tài khoản mới
     public boolean insert(TaiKhoan taiKhoan) {
+        // Access sử dụng AUTOINCREMENT thay vì IDENTITY
         String sql = "INSERT INTO TaiKhoan (TenDangNhap, MatKhauHash, VaiTro, MaNhanVien) VALUES (?, ?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection(); 
@@ -92,6 +95,7 @@ public class TaiKhoanRepository {
             stmt.setString(2, hashPassword(taiKhoan.getMatKhauHash())); // Hash mật khẩu trước khi lưu
             stmt.setString(3, taiKhoan.getVaiTro());
             
+            // Xử lý giá trị NULL cho MaNhanVien
             if (taiKhoan.getMaNhanVien() != 0) {
                 stmt.setInt(4, taiKhoan.getMaNhanVien());
             } else {
@@ -117,6 +121,7 @@ public class TaiKhoanRepository {
             stmt.setString(1, taiKhoan.getTenDangNhap());
             stmt.setString(2, taiKhoan.getVaiTro());
             
+            // Xử lý giá trị NULL cho MaNhanVien
             if (taiKhoan.getMaNhanVien() != 0) {
                 stmt.setInt(3, taiKhoan.getMaNhanVien());
             } else {
@@ -178,7 +183,7 @@ public class TaiKhoanRepository {
 
     // Kiểm tra tên đăng nhập đã tồn tại (trừ tài khoản hiện tại - dùng cho cập nhật)
     public boolean isTenDangNhapExists(String tenDangNhap, int maTaiKhoanHienTai) {
-        String sql = "SELECT COUNT(*) FROM TaiKhoan WHERE TenDangNhap = ? AND MaTaiKhoan != ?";
+        String sql = "SELECT COUNT(*) FROM TaiKhoan WHERE TenDangNhap = ? AND MaTaiKhoan <> ?";
         
         try (Connection conn = DataConnection.getConnection(); 
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -196,7 +201,7 @@ public class TaiKhoanRepository {
         return false;
     }
 
-    // Kiểm tra đăng nhập (đã có)
+    // Kiểm tra đăng nhập
     public boolean kiemTraDangNhap(String tenDangNhap, String matKhau) {
         TaiKhoan taiKhoan = findByTenDangNhap(tenDangNhap);
         if (taiKhoan != null) {
@@ -214,6 +219,7 @@ public class TaiKhoanRepository {
         return false;
     }
 
+    // Hàm băm mật khẩu sử dụng SHA-256
     private String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

@@ -10,8 +10,16 @@
         <maven.compiler.release>23</maven.compiler.release>
         <exec.mainClass>com.mycompany.quanlyspafinal.QuanLySpaFinal</exec.mainClass>
     </properties>
+    
     <dependencies>
-        <!-- ✅ JDBC driver cho SQL Server -->
+        <!-- UCanAccess -->
+        <dependency>
+            <groupId>net.sf.ucanaccess</groupId>
+            <artifactId>ucanaccess</artifactId>
+            <version>5.0.1</version>
+        </dependency>
+        
+        <!-- Các dependency khác giữ nguyên -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
@@ -52,8 +60,5 @@
             <artifactId>log4j-core</artifactId>
             <version>2.20.0</version>
         </dependency>
-
-        
     </dependencies>
-
 </project>
