@@ -3,6 +3,8 @@ package Controller;
 import Model.NhanVien;
 import Service.NhanVienService;
 import View.QuanLyNhanVienView;
+import View.PhanTramDichVuView;
+import java.awt.Frame;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
@@ -11,8 +13,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 import java.util.List;
 
 public class QuanLyNhanVienController {
@@ -69,6 +73,14 @@ public class QuanLyNhanVienController {
             }
         });
 
+        // Sự kiện cho nút Phần trăm dịch vụ
+        view.getBtnPhanTramDichVu().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                moQuanLyPhanTramDichVu();
+            }
+        });
+
         // Sự kiện click trên bảng
         view.getTblNhanVien().addMouseListener(new MouseAdapter() {
             @Override
@@ -100,11 +112,17 @@ public class QuanLyNhanVienController {
                 nv.getDiaChi(),
                 nv.getChucVu(),
                 nv.getNgayVaoLam() != null ? nv.getNgayVaoLam().format(dateFormatter) : "",
-                nv.getHeSoLuong(),
+                formatLuong(nv.getLuongCanBan()),
                 nv.getThamNien()
             };
             model.addRow(row);
         }
+    }
+
+    private String formatLuong(BigDecimal luong) {
+        if (luong == null) return "0.0";
+        // Format để chỉ hiển thị .0 thay vì .000
+        return String.format("%.1f", luong);
     }
 
     private void themNhanVien() {
@@ -220,49 +238,84 @@ public class QuanLyNhanVienController {
             DefaultTableModel model = view.getModel();
             view.getTxtMaNhanVien().setText(model.getValueAt(selectedRow, 0).toString());
             view.getTxtHoTen().setText(model.getValueAt(selectedRow, 1).toString());
-            view.getTxtNgaySinh().setText(model.getValueAt(selectedRow, 2).toString());
+            
+            // Hiển thị ngày sinh lên JDateChooser
+            String ngaySinhStr = model.getValueAt(selectedRow, 2).toString();
+            if (!ngaySinhStr.isEmpty()) {
+                LocalDate ngaySinh = LocalDate.parse(ngaySinhStr, dateFormatter);
+                Date date = Date.from(ngaySinh.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                view.getDateChooserNgaySinh().setDate(date);
+            } else {
+                view.getDateChooserNgaySinh().setDate(null);
+            }
+            
             view.getTxtSoDienThoai().setText(model.getValueAt(selectedRow, 3).toString());
             view.getTxtDiaChi().setText(model.getValueAt(selectedRow, 4).toString());
             view.getCboChucVu().setSelectedItem(model.getValueAt(selectedRow, 5).toString());
-            view.getTxtNgayVaoLam().setText(model.getValueAt(selectedRow, 6).toString());
-            view.getTxtHeSoLuong().setText(model.getValueAt(selectedRow, 7).toString());
+            
+            // Hiển thị ngày vào làm lên JDateChooser
+            String ngayVaoLamStr = model.getValueAt(selectedRow, 6).toString();
+            if (!ngayVaoLamStr.isEmpty()) {
+                LocalDate ngayVaoLam = LocalDate.parse(ngayVaoLamStr, dateFormatter);
+                Date date = Date.from(ngayVaoLam.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                view.getDateChooserNgayVaoLam().setDate(date);
+            } else {
+                view.getDateChooserNgayVaoLam().setDate(null);
+            }
+            
+            view.getTxtLuongCanBan().setText(model.getValueAt(selectedRow, 7).toString());
         }
     }
 
     private NhanVien layThongTinNhanVienTuForm() {
         try {
             String hoTen = view.getTxtHoTen().getText().trim();
-            String ngaySinhStr = view.getTxtNgaySinh().getText().trim();
             String soDienThoai = view.getTxtSoDienThoai().getText().trim();
             String diaChi = view.getTxtDiaChi().getText().trim();
             String chucVu = (String) view.getCboChucVu().getSelectedItem();
-            String ngayVaoLamStr = view.getTxtNgayVaoLam().getText().trim();
-            String heSoLuongStr = view.getTxtHeSoLuong().getText().trim();
+            String luongCanBanStr = view.getTxtLuongCanBan().getText().trim();
 
-            // Parse dates
-            LocalDate ngaySinh = null;
-            if (!ngaySinhStr.isEmpty()) {
-                ngaySinh = LocalDate.parse(ngaySinhStr, dateFormatter);
+            // Validate required fields
+            if (hoTen.isEmpty()) {
+                showError("Họ tên không được để trống!");
+                return null;
+            }
+            if (soDienThoai.isEmpty()) {
+                showError("Số điện thoại không được để trống!");
+                return null;
+            }
+            if (diaChi.isEmpty()) {
+                showError("Địa chỉ không được để trống!");
+                return null;
+            }
+            if (view.getDateChooserNgayVaoLam().getDate() == null) {
+                showError("Ngày vào làm không được để trống!");
+                return null;
             }
 
-            LocalDate ngayVaoLam = LocalDate.parse(ngayVaoLamStr, dateFormatter);
+            // Parse dates từ JDateChooser
+            LocalDate ngaySinh = null;
+            if (view.getDateChooserNgaySinh().getDate() != null) {
+                ngaySinh = view.getDateChooserNgaySinh().getDate().toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDate();
+            }
 
-            // Parse hệ số lương
-            BigDecimal heSoLuong = new BigDecimal("1.0");
-            if (!heSoLuongStr.isEmpty()) {
-                heSoLuong = new BigDecimal(heSoLuongStr);
-                if (heSoLuong.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Hệ số lương phải >= 0");
+            LocalDate ngayVaoLam = view.getDateChooserNgayVaoLam().getDate().toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
+
+            // Parse lương cơ bản
+            BigDecimal luongCanBan = new BigDecimal("0");
+            if (!luongCanBanStr.isEmpty()) {
+                luongCanBan = new BigDecimal(luongCanBanStr);
+                if (luongCanBan.compareTo(BigDecimal.ZERO) < 0) {
+                    throw new IllegalArgumentException("Lương cơ bản phải >= 0");
                 }
             }
 
-            return new NhanVien(null, hoTen, ngaySinh, soDienThoai, diaChi, chucVu, ngayVaoLam, heSoLuong);
+            return new NhanVien(null, hoTen, ngaySinh, soDienThoai, diaChi, chucVu, ngayVaoLam, luongCanBan);
 
-        } catch (DateTimeParseException e) {
-            showError("Định dạng ngày không hợp lệ. Vui lòng sử dụng định dạng yyyy-MM-dd");
-            return null;
         } catch (NumberFormatException e) {
-            showError("Hệ số lương phải là số hợp lệ");
+            showError("Lương cơ bản phải là số hợp lệ");
             return null;
         } catch (Exception e) {
             showError("Lỗi dữ liệu: " + e.getMessage());
@@ -270,15 +323,48 @@ public class QuanLyNhanVienController {
         }
     }
 
+    private void moQuanLyPhanTramDichVu() {
+        try {
+            String maNVStr = view.getTxtMaNhanVien().getText().trim();
+            if (maNVStr.isEmpty()) {
+                showError("Vui lòng chọn nhân viên trước!");
+                return;
+            }
+
+            int maNhanVien = Integer.parseInt(maNVStr);
+            String tenNhanVien = view.getTxtHoTen().getText().trim();
+            
+            if (tenNhanVien.isEmpty()) {
+                showError("Không tìm thấy thông tin nhân viên!");
+                return;
+            }
+            
+            // Mở dialog quản lý phần trăm dịch vụ
+            JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), 
+                "Quản lý phần trăm dịch vụ - " + tenNhanVien, true);
+            
+            PhanTramDichVuView phanTramView = new PhanTramDichVuView();
+            new Controller.PhanTramDichVuController(phanTramView, maNhanVien);
+            
+            dialog.setContentPane(phanTramView);
+            dialog.pack();
+            dialog.setLocationRelativeTo(view);
+            dialog.setVisible(true);
+            
+        } catch (Exception e) {
+            showError("Lỗi khi mở quản lý phần trăm dịch vụ: " + e.getMessage());
+        }
+    }
+
     private void lamMoiForm() {
         view.getTxtMaNhanVien().setText("");
         view.getTxtHoTen().setText("");
-        view.getTxtNgaySinh().setText("");
+        view.getDateChooserNgaySinh().setDate(null);
         view.getTxtSoDienThoai().setText("");
         view.getTxtDiaChi().setText("");
         view.getCboChucVu().setSelectedIndex(0);
-        view.getTxtNgayVaoLam().setText("");
-        view.getTxtHeSoLuong().setText("1.0");
+        view.getDateChooserNgayVaoLam().setDate(null);
+        view.getTxtLuongCanBan().setText("0.0");
         view.getTxtTimKiem().setText("");
         view.getCboChucVuFilter().setSelectedIndex(0);
         view.getTblNhanVien().clearSelection();

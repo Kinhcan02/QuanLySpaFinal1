@@ -12,7 +12,7 @@ public class ThuNhapRepository implements IThuNhapRepository {
     @Override
     public List<ThuNhap> getAllThuNhap() {
         List<ThuNhap> list = new ArrayList<>();
-        // SỬA QUERY PHÙ HỢP VỚI CẤU TRÚC BẢNG THỰC TẾ
+        // Access sử dụng TOP thay vì LIMIT và có cú pháp hơi khác
         String sql = "SELECT * FROM ThuNhap ORDER BY NgayTinhThuNhap DESC";
         
         try (Connection conn = DataConnection.getConnection();
@@ -20,20 +20,18 @@ public class ThuNhapRepository implements IThuNhapRepository {
              ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
-                // SỬA THEO CẤU TRÚC BẢNG THỰC TẾ
                 ThuNhap tn = new ThuNhap();
                 tn.setMaThu(rs.getInt("MaThu"));
                 
-                // SỬA: Sử dụng java.sql.Date rõ ràng
+                // Access sử dụng java.sql.Date tương tự MySQL
                 java.sql.Date ngay = rs.getDate("NgayTinhThuNhap");
                 if (ngay != null) {
                     tn.setNgayThu(ngay.toLocalDate());
                 } else {
-                    // Nếu không có cột ngày, sử dụng ngày hiện tại
                     tn.setNgayThu(LocalDate.now());
                 }
                 
-                // Sử dụng cột số tiền thực tế
+                // Kiểm tra và lấy cột số tiền
                 if (hasColumn(rs, "TongDoanhThuDichVu")) {
                     tn.setSoTien(rs.getBigDecimal("TongDoanhThuDichVu"));
                 } else if (hasColumn(rs, "SoTien")) {
@@ -42,7 +40,7 @@ public class ThuNhapRepository implements IThuNhapRepository {
                     tn.setSoTien(BigDecimal.ZERO);
                 }
                 
-                // Sử dụng cột nội dung thực tế
+                // Kiểm tra và lấy cột nội dung
                 if (hasColumn(rs, "GhiChu")) {
                     tn.setNoiDung(rs.getString("GhiChu"));
                 } else if (hasColumn(rs, "NoiDung")) {
@@ -59,11 +57,17 @@ public class ThuNhapRepository implements IThuNhapRepository {
         return list;
     }
     
-    // Phương thức kiểm tra xem cột có tồn tại trong ResultSet không
+    // Phương thức kiểm tra cột tồn tại trong ResultSet
     private boolean hasColumn(ResultSet rs, String columnName) {
         try {
-            rs.findColumn(columnName);
-            return true;
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columns = rsmd.getColumnCount();
+            for (int i = 1; i <= columns; i++) {
+                if (columnName.equalsIgnoreCase(rsmd.getColumnName(i))) {
+                    return true;
+                }
+            }
+            return false;
         } catch (SQLException e) {
             return false;
         }
@@ -72,7 +76,7 @@ public class ThuNhapRepository implements IThuNhapRepository {
     @Override
     public List<ThuNhap> getThuNhapByDateRange(LocalDate fromDate, LocalDate toDate) {
         List<ThuNhap> list = new ArrayList<>();
-        // SỬA QUERY SỬ DỤNG CỘT NGÀY THỰC TẾ
+        // Access sử dụng BETWEEN tương tự MySQL
         String sql = "SELECT * FROM ThuNhap WHERE NgayTinhThuNhap BETWEEN ? AND ? ORDER BY NgayTinhThuNhap DESC";
         
         try (Connection conn = DataConnection.getConnection();
@@ -86,14 +90,23 @@ public class ThuNhapRepository implements IThuNhapRepository {
                 ThuNhap tn = new ThuNhap();
                 tn.setMaThu(rs.getInt("MaThu"));
                 
-                // SỬA: Sử dụng java.sql.Date rõ ràng
                 java.sql.Date ngay = rs.getDate("NgayTinhThuNhap");
                 if (ngay != null) {
                     tn.setNgayThu(ngay.toLocalDate());
                 }
                 
-                tn.setSoTien(rs.getBigDecimal("TongDoanhThuDichVu"));
-                tn.setNoiDung(rs.getString("GhiChu"));
+                // Sử dụng các cột thực tế trong database Access
+                if (hasColumn(rs, "TongDoanhThuDichVu")) {
+                    tn.setSoTien(rs.getBigDecimal("TongDoanhThuDichVu"));
+                } else {
+                    tn.setSoTien(BigDecimal.ZERO);
+                }
+                
+                if (hasColumn(rs, "GhiChu")) {
+                    tn.setNoiDung(rs.getString("GhiChu"));
+                } else {
+                    tn.setNoiDung("Thu nhập dịch vụ");
+                }
                 
                 list.add(tn);
             }
@@ -106,7 +119,7 @@ public class ThuNhapRepository implements IThuNhapRepository {
     
     @Override
     public boolean addThuNhap(ThuNhap thuNhap) {
-        // SỬA QUERY INSERT PHÙ HỢP VỚI CẤU TRÚC BẢNG
+        // Access: Không cần chỉ định tất cả các cột nếu có identity column
         String sql = "INSERT INTO ThuNhap (NgayTinhThuNhap, TongDoanhThuDichVu, GhiChu, Thang, Nam) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
@@ -127,7 +140,6 @@ public class ThuNhapRepository implements IThuNhapRepository {
     
     @Override
     public boolean updateThuNhap(ThuNhap thuNhap) {
-        // SỬA QUERY UPDATE
         String sql = "UPDATE ThuNhap SET NgayTinhThuNhap=?, TongDoanhThuDichVu=?, GhiChu=?, Thang=?, Nam=? WHERE MaThu=?";
         
         try (Connection conn = DataConnection.getConnection();
@@ -225,5 +237,42 @@ public class ThuNhapRepository implements IThuNhapRepository {
             return BigDecimal.ZERO;
         }
         return result;
+    }
+    
+    // Thêm phương thức để lấy thu nhập theo ID (hữu ích cho Access)
+    public ThuNhap getThuNhapById(int maThu) {
+        String sql = "SELECT * FROM ThuNhap WHERE MaThu = ?";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, maThu);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                ThuNhap tn = new ThuNhap();
+                tn.setMaThu(rs.getInt("MaThu"));
+                
+                java.sql.Date ngay = rs.getDate("NgayTinhThuNhap");
+                if (ngay != null) {
+                    tn.setNgayThu(ngay.toLocalDate());
+                }
+                
+                if (hasColumn(rs, "TongDoanhThuDichVu")) {
+                    tn.setSoTien(rs.getBigDecimal("TongDoanhThuDichVu"));
+                }
+                
+                if (hasColumn(rs, "GhiChu")) {
+                    tn.setNoiDung(rs.getString("GhiChu"));
+                }
+                
+                rs.close();
+                return tn;
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

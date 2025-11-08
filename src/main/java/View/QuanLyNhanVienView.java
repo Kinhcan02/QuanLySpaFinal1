@@ -3,24 +3,25 @@ package View;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import com.toedter.calendar.JDateChooser;
 
 public class QuanLyNhanVienView extends JPanel {
 
     private JTable tblNhanVien;
     private DefaultTableModel model;
     private JTextField txtTimKiem;
-    private JButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
+    private JButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem, btnPhanTramDichVu;
     private JComboBox<String> cboChucVuFilter;
 
     // Form fields
     private JTextField txtMaNhanVien;
     private JTextField txtHoTen;
-    private JTextField txtNgaySinh;
+    private JDateChooser dateChooserNgaySinh;
     private JTextField txtSoDienThoai;
     private JTextArea txtDiaChi;
     private JComboBox<String> cboChucVu;
-    private JTextField txtNgayVaoLam;
-    private JTextField txtHeSoLuong;
+    private JDateChooser dateChooserNgayVaoLam;
+    private JTextField txtLuongCanBan;
 
     // Màu sắc
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
@@ -136,9 +137,8 @@ public class QuanLyNhanVienView extends JPanel {
         pnForm.add(createStyledLabel("Ngày sinh:"), gbc);
 
         gbc.gridx = 1;
-        txtNgaySinh = createStyledTextField(10);
-        txtNgaySinh.setToolTipText("Định dạng: yyyy-MM-dd");
-        pnForm.add(txtNgaySinh, gbc);
+        dateChooserNgaySinh = createStyledDateChooser();
+        pnForm.add(dateChooserNgaySinh, gbc);
 
         gbc.gridx = 2;
         pnForm.add(createStyledLabel("Số điện thoại:"), gbc);
@@ -163,25 +163,24 @@ public class QuanLyNhanVienView extends JPanel {
         pnForm.add(createStyledLabel("Ngày vào làm:"), gbc);
 
         gbc.gridx = 3;
-        txtNgayVaoLam = createStyledTextField(10);
-        txtNgayVaoLam.setToolTipText("Định dạng: yyyy-MM-dd");
-        pnForm.add(txtNgayVaoLam, gbc);
+        dateChooserNgayVaoLam = createStyledDateChooser();
+        pnForm.add(dateChooserNgayVaoLam, gbc);
 
         gbc.gridx = 4;
-        pnForm.add(createStyledLabel("Hệ số lương:"), gbc);
+        pnForm.add(createStyledLabel("Lương cơ bản:"), gbc);
 
         gbc.gridx = 5;
-        txtHeSoLuong = createStyledTextField(5);
-        txtHeSoLuong.setText("1.0");
-        pnForm.add(txtHeSoLuong, gbc);
+        txtLuongCanBan = createStyledTextField(8);
+        txtLuongCanBan.setText("0.0");
+        pnForm.add(txtLuongCanBan, gbc);
 
-        // Dòng 4: Địa chỉ
+        // Dòng 4: Địa chỉ và nút phần trăm dịch vụ
         gbc.gridx = 0;
         gbc.gridy = 3;
         pnForm.add(createStyledLabel("Địa chỉ:"), gbc);
 
         gbc.gridx = 1;
-        gbc.gridwidth = 5;
+        gbc.gridwidth = 4;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
         txtDiaChi = new JTextArea(2, 20);
@@ -190,6 +189,13 @@ public class QuanLyNhanVienView extends JPanel {
         scrollDiaChi.setPreferredSize(new Dimension(100, 50));
         scrollDiaChi.setBorder(BorderFactory.createLineBorder(COLOR_BUTTON));
         pnForm.add(scrollDiaChi, gbc);
+
+        gbc.gridx = 5;
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        btnPhanTramDichVu = createStyledButton("Phần trăm dịch vụ", COLOR_BUTTON);
+        btnPhanTramDichVu.setPreferredSize(new Dimension(120, 30)); // Bé hơn
+        pnForm.add(btnPhanTramDichVu, gbc);
 
         return pnForm;
     }
@@ -221,7 +227,7 @@ public class QuanLyNhanVienView extends JPanel {
     }
 
     private void createTable() {
-        String[] cols = {"Mã NV", "Họ tên", "Ngày sinh", "Số điện thoại", "Địa chỉ", "Chức vụ", "Ngày vào làm", "Hệ số lương", "Thâm niên"};
+        String[] cols = {"Mã NV", "Họ tên", "Ngày sinh", "Số điện thoại", "Địa chỉ", "Chức vụ", "Ngày vào làm", "Lương cơ bản", "Thâm niên"};
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -265,7 +271,7 @@ public class QuanLyNhanVienView extends JPanel {
         tblNhanVien.getColumnModel().getColumn(4).setPreferredWidth(200);  // Địa chỉ
         tblNhanVien.getColumnModel().getColumn(5).setPreferredWidth(100);  // Chức vụ
         tblNhanVien.getColumnModel().getColumn(6).setPreferredWidth(80);   // Ngày vào làm
-        tblNhanVien.getColumnModel().getColumn(7).setPreferredWidth(70);   // Hệ số lương
+        tblNhanVien.getColumnModel().getColumn(7).setPreferredWidth(90);   // Lương cơ bản
         tblNhanVien.getColumnModel().getColumn(8).setPreferredWidth(60);   // Thâm niên
     }
 
@@ -310,6 +316,15 @@ public class QuanLyNhanVienView extends JPanel {
                 BorderFactory.createEmptyBorder(3, 5, 3, 5)
         ));
         return textField;
+    }
+
+    private JDateChooser createStyledDateChooser() {
+        JDateChooser dateChooser = new JDateChooser();
+        dateChooser.setDateFormatString("yyyy-MM-dd");
+        dateChooser.setFont(new Font("Arial", Font.PLAIN, 11));
+        dateChooser.getCalendarButton().setPreferredSize(new Dimension(25, 25));
+        dateChooser.setBorder(BorderFactory.createLineBorder(COLOR_BUTTON));
+        return dateChooser;
     }
 
     private void styleTextArea(JTextArea textArea) {
@@ -388,6 +403,10 @@ public class QuanLyNhanVienView extends JPanel {
         return btnTimKiem;
     }
 
+    public JButton getBtnPhanTramDichVu() {
+        return btnPhanTramDichVu;
+    }
+
     public JComboBox<String> getCboChucVuFilter() {
         return cboChucVuFilter;
     }
@@ -400,8 +419,8 @@ public class QuanLyNhanVienView extends JPanel {
         return txtHoTen;
     }
 
-    public JTextField getTxtNgaySinh() {
-        return txtNgaySinh;
+    public JDateChooser getDateChooserNgaySinh() {
+        return dateChooserNgaySinh;
     }
 
     public JTextField getTxtSoDienThoai() {
@@ -416,11 +435,11 @@ public class QuanLyNhanVienView extends JPanel {
         return cboChucVu;
     }
 
-    public JTextField getTxtNgayVaoLam() {
-        return txtNgayVaoLam;
+    public JDateChooser getDateChooserNgayVaoLam() {
+        return dateChooserNgayVaoLam;
     }
 
-    public JTextField getTxtHeSoLuong() {
-        return txtHeSoLuong;
+    public JTextField getTxtLuongCanBan() {
+        return txtLuongCanBan;
     }
 }

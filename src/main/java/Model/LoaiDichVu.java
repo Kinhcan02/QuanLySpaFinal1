@@ -69,12 +69,8 @@ public class LoaiDichVu {
     }
 
     // toString
-    @Override
+     @Override
     public String toString() {
-        return "LoaiDichVu{" +
-                "maLoaiDV=" + maLoaiDV +
-                ", tenLoaiDV='" + tenLoaiDV + '\'' +
-                ", moTa='" + moTa + '\'' +
-                '}';
+        return tenLoaiDV != null ? tenLoaiDV : "";
     }
 }

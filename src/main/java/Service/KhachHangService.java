@@ -80,6 +80,14 @@ public class KhachHangService {
             return repository.insert(khachHang);
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi thêm khách hàng: " + khachHang.getHoTen(), e);
+            
+            // Xử lý lỗi trùng số điện thoại
+            if (e.getMessage().toLowerCase().contains("duplicate") || 
+                e.getMessage().toLowerCase().contains("unique") ||
+                e.getSQLState() != null && e.getSQLState().equals("23000")) {
+                throw new RuntimeException("Số điện thoại đã tồn tại trong hệ thống");
+            }
+            
             throw new RuntimeException("Không thể thêm khách hàng", e);
         }
     }
@@ -93,6 +101,14 @@ public class KhachHangService {
             return repository.update(khachHang);
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi cập nhật khách hàng: " + khachHang.getMaKhachHang(), e);
+            
+            // Xử lý lỗi trùng số điện thoại
+            if (e.getMessage().toLowerCase().contains("duplicate") || 
+                e.getMessage().toLowerCase().contains("unique") ||
+                e.getSQLState() != null && e.getSQLState().equals("23000")) {
+                throw new RuntimeException("Số điện thoại đã tồn tại trong hệ thống");
+            }
+            
             throw new RuntimeException("Không thể cập nhật khách hàng", e);
         }
     }
@@ -109,20 +125,40 @@ public class KhachHangService {
                 throw new RuntimeException("Khách hàng không tồn tại");
             }
             
+            // Kiểm tra dữ liệu liên quan trước khi xóa
+            Map<String, Integer> duLieuLienQuan = kiemTraDuLieuLienQuan(maKhachHang);
+            if (!duLieuLienQuan.isEmpty()) {
+                StringBuilder message = new StringBuilder("Không thể xóa khách hàng vì có dữ liệu liên quan:\n");
+                for (Map.Entry<String, Integer> entry : duLieuLienQuan.entrySet()) {
+                    message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" bản ghi\n");
+                }
+                throw new RuntimeException(message.toString());
+            }
+            
             return repository.delete(maKhachHang);
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi xóa khách hàng: " + maKhachHang, e);
             
             // Xử lý lỗi ràng buộc khóa ngoại
-            if (e.getSQLState().equals("23000") || e.getMessage().contains("foreign key constraint")) {
-                throw new RuntimeException("Không thể xóa khách hàng vì có dữ liệu liên quan (hóa đơn, đặt lịch, etc.)");
+            if (e.getMessage().toLowerCase().contains("constraint") || 
+                e.getMessage().toLowerCase().contains("foreign") ||
+                e.getMessage().toLowerCase().contains("related") ||
+                (e.getSQLState() != null && e.getSQLState().equals("23000"))) {
+                
+                Map<String, Integer> duLieuLienQuan = kiemTraDuLieuLienQuan(maKhachHang);
+                if (!duLieuLienQuan.isEmpty()) {
+                    StringBuilder message = new StringBuilder("Không thể xóa khách hàng vì có dữ liệu liên quan:\n");
+                    for (Map.Entry<String, Integer> entry : duLieuLienQuan.entrySet()) {
+                        message.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" bản ghi\n");
+                    }
+                    throw new RuntimeException(message.toString());
+                }
             }
             
             throw new RuntimeException("Không thể xóa khách hàng: " + e.getMessage());
         }
     }
 
-    // PHƯƠNG THỨC MỚI - KIỂM TRA DỮ LIỆU LIÊN QUAN
     public Map<String, Integer> kiemTraDuLieuLienQuan(int maKhachHang) {
         if (maKhachHang <= 0) {
             throw new IllegalArgumentException("Mã khách hàng không hợp lệ");
@@ -136,7 +172,6 @@ public class KhachHangService {
         }
     }
 
-    // Phương thức cập nhật điểm tích lũy
     public boolean updateDiemTichLuy(int maKhachHang, int diemTichLuy) {
         if (maKhachHang <= 0) {
             throw new IllegalArgumentException("Mã khách hàng không hợp lệ");
@@ -150,11 +185,34 @@ public class KhachHangService {
             if (khachHang == null) {
                 throw new RuntimeException("Khách hàng không tồn tại");
             }
-            khachHang.setDiemTichLuy(diemTichLuy);
-            return repository.update(khachHang);
+            
+            // Sử dụng phương thức chuyên dụng để cập nhật điểm
+            return repository.updateDiemTichLuy(maKhachHang, diemTichLuy);
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi cập nhật điểm tích lũy cho khách hàng: " + maKhachHang, e);
             throw new RuntimeException("Không thể cập nhật điểm tích lũy", e);
+        }
+    }
+
+    public int getTongSoKhachHang() {
+        try {
+            return repository.getTongSoKhachHang();
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Lỗi khi lấy tổng số khách hàng", e);
+            throw new RuntimeException("Không thể lấy tổng số khách hàng", e);
+        }
+    }
+
+    public List<KhachHang> getTopKhachHangTheoDiem(int soLuong) {
+        if (soLuong <= 0) {
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
+        }
+        
+        try {
+            return repository.getTopKhachHangTheoDiem(soLuong);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Lỗi khi lấy top khách hàng theo điểm: " + soLuong, e);
+            throw new RuntimeException("Không thể lấy top khách hàng theo điểm", e);
         }
     }
 
@@ -169,9 +227,8 @@ public class KhachHangService {
             throw new IllegalArgumentException("Loại khách không được để trống");
         }
         validateSoDienThoai(khachHang.getSoDienThoai());
-        if (khachHang.getNgayTao() == null) {
-            throw new IllegalArgumentException("Ngày tạo không được để trống");
-        }
+        
+        // Không validate NgayTao vì nó sẽ được tự động tạo
         if (khachHang.getDiemTichLuy() < 0) {
             throw new IllegalArgumentException("Điểm tích lũy không được âm");
         }
@@ -181,8 +238,12 @@ public class KhachHangService {
         if (soDienThoai == null || soDienThoai.trim().isEmpty()) {
             throw new IllegalArgumentException("Số điện thoại không được để trống");
         }
-        if (!soDienThoai.matches("\\d{10,11}")) {
-            throw new IllegalArgumentException("Số điện thoại không hợp lệ");
+        
+        String cleanedSoDienThoai = soDienThoai.trim().replaceAll("\\s+", "");
+        
+        // Kiểm tra số điện thoại Việt Nam (10-11 số, bắt đầu bằng 0 hoặc +84)
+        if (!cleanedSoDienThoai.matches("^(0|\\+84)\\d{9,10}$")) {
+            throw new IllegalArgumentException("Số điện thoại không hợp lệ. Phải là 10-11 số và bắt đầu bằng 0 hoặc +84");
         }
     }
 }

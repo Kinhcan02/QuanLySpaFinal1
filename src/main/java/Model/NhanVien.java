@@ -13,10 +13,11 @@ public class NhanVien {
     private String diaChi;
     private String chucVu;
     private LocalDate ngayVaoLam;
-    private BigDecimal heSoLuong;
+    private BigDecimal luongCanBan;
 
     // Constructor mặc định
     public NhanVien() {
+        this.luongCanBan = BigDecimal.ZERO;
     }
 
     // Constructor cho thêm mới nhân viên
@@ -34,7 +35,7 @@ public class NhanVien {
     // Constructor đầy đủ
     public NhanVien(Integer maNhanVien, String hoTen, LocalDate ngaySinh,
             String soDienThoai, String diaChi, String chucVu,
-            LocalDate ngayVaoLam, BigDecimal heSoLuong) {
+            LocalDate ngayVaoLam, BigDecimal luongCanBan) {
         this.maNhanVien = maNhanVien;
         this.hoTen = hoTen;
         this.ngaySinh = ngaySinh;
@@ -42,7 +43,7 @@ public class NhanVien {
         this.diaChi = diaChi;
         this.chucVu = chucVu;
         this.ngayVaoLam = ngayVaoLam;
-        this.heSoLuong = heSoLuong != null ? heSoLuong : new BigDecimal("1.0");
+        this.luongCanBan = luongCanBan != null ? luongCanBan : BigDecimal.ZERO;
     }
 
     // Getter và Setter
@@ -102,14 +103,27 @@ public class NhanVien {
         this.ngayVaoLam = ngayVaoLam;
     }
 
+    public BigDecimal getLuongCanBan() {
+        return luongCanBan;
+    }
+
+    public void setLuongCanBan(BigDecimal luongCanBan) {
+        if (luongCanBan != null && luongCanBan.compareTo(BigDecimal.ZERO) >= 0) {
+            this.luongCanBan = luongCanBan;
+        } else {
+            this.luongCanBan = BigDecimal.ZERO;
+        }
+    }
+
+    // Phương thức để tương thích với code cũ (nếu có)
     public BigDecimal getHeSoLuong() {
-        return heSoLuong;
+        // Trong DB mới không có hệ số lương, trả về 1.0 làm giá trị mặc định
+        return new BigDecimal("10.0");
     }
 
     public void setHeSoLuong(BigDecimal heSoLuong) {
-        if (heSoLuong != null && heSoLuong.compareTo(BigDecimal.ZERO) >= 0) {
-            this.heSoLuong = heSoLuong;
-        }
+        // Trong DB mới không có hệ số lương, không làm gì cả
+        // Hoặc có thể map sang luongCanBan nếu cần
     }
 
     // Tính thâm niên
@@ -120,15 +134,52 @@ public class NhanVien {
         return Period.between(ngayVaoLam, LocalDate.now()).getYears();
     }
 
+    // Tính tuổi
+    public int getTuoi() {
+        if (ngaySinh == null) {
+            return 0;
+        }
+        return Period.between(ngaySinh, LocalDate.now()).getYears();
+    }
+
     // Phương thức kiểm tra hợp lệ
     public boolean isValid() {
         return hoTen != null && !hoTen.trim().isEmpty()
-                && soDienThoai != null && !soDienThoai.trim().isEmpty();
+                && soDienThoai != null && !soDienThoai.trim().isEmpty()
+                && chucVu != null && !chucVu.trim().isEmpty()
+                && ngayVaoLam != null;
+    }
+
+    // Kiểm tra nhân viên có đang làm việc không
+    public boolean isDangLamViec() {
+        return maNhanVien != null && ngayVaoLam != null;
     }
 
     @Override
     public String toString() {
-        return hoTen != null ? hoTen + " - " + chucVu : "N/A";
+        StringBuilder sb = new StringBuilder();
+        sb.append(hoTen != null ? hoTen : "N/A");
+        
+        if (chucVu != null && !chucVu.isEmpty()) {
+            sb.append(" - ").append(chucVu);
+        }
+        
+        if (soDienThoai != null && !soDienThoai.isEmpty()) {
+            sb.append(" (").append(soDienThoai).append(")");
+        }
+        
+        return sb.toString();
     }
 
+    // Phương thức hiển thị thông tin đầy đủ
+    public String getThongTinDayDu() {
+        return String.format(
+            "Mã NV: %d | Họ tên: %s | Chức vụ: %s | Lương cơ bản: %s | SĐT: %s",
+            maNhanVien != null ? maNhanVien : "N/A",
+            hoTen != null ? hoTen : "N/A",
+            chucVu != null ? chucVu : "N/A",
+            luongCanBan != null ? luongCanBan.toString() : "0",
+            soDienThoai != null ? soDienThoai : "N/A"
+        );
+    }
 }

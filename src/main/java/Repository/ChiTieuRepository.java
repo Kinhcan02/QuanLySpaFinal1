@@ -21,7 +21,7 @@ public class ChiTieuRepository implements IChiTieuRepository {
             while (rs.next()) {
                 ChiTieu ct = new ChiTieu(
                     rs.getInt("MaChi"),
-                    rs.getDate("NgayChi").toLocalDate(),
+                    rs.getDate("NgayChi") != null ? rs.getDate("NgayChi").toLocalDate() : null,
                     rs.getString("MucDich"),
                     rs.getBigDecimal("SoTien")
                 );
@@ -48,7 +48,7 @@ public class ChiTieuRepository implements IChiTieuRepository {
             while (rs.next()) {
                 ChiTieu ct = new ChiTieu(
                     rs.getInt("MaChi"),
-                    rs.getDate("NgayChi").toLocalDate(),
+                    rs.getDate("NgayChi") != null ? rs.getDate("NgayChi").toLocalDate() : null,
                     rs.getString("MucDich"),
                     rs.getBigDecimal("SoTien")
                 );
@@ -154,7 +154,7 @@ public class ChiTieuRepository implements IChiTieuRepository {
     
     @Override
     public BigDecimal getTongChiTieuByNguyenLieu(LocalDate fromDate, LocalDate toDate) {
-        // Sửa lại query cho đúng với bảng NhapNguyenLieu trong database
+        // Sửa lại query cho đúng với bảng NhapNguyenLieu trong database Access
         String sql = "SELECT SUM(SoLuong * DonGia) as TongChi FROM NhapNguyenLieu WHERE NgayNhap BETWEEN ? AND ?";
         BigDecimal result = BigDecimal.ZERO;
         
@@ -176,6 +176,60 @@ public class ChiTieuRepository implements IChiTieuRepository {
             e.printStackTrace();
             // Trả về 0 nếu có lỗi để không làm crash ứng dụng
             return BigDecimal.ZERO;
+        }
+        return result;
+    }
+    
+    // Thêm phương thức mới để lấy chi tiêu theo tháng sử dụng hàm Access
+    public List<ChiTieu> getChiTieuByMonthUsingAccessFunctions(int month, int year) {
+        List<ChiTieu> list = new ArrayList<>();
+        // Access sử dụng MONTH() và YEAR() functions
+        String sql = "SELECT * FROM ChiTieu WHERE MONTH(NgayChi) = ? AND YEAR(NgayChi) = ? ORDER BY NgayChi DESC";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, month);
+            stmt.setInt(2, year);
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                ChiTieu ct = new ChiTieu(
+                    rs.getInt("MaChi"),
+                    rs.getDate("NgayChi") != null ? rs.getDate("NgayChi").toLocalDate() : null,
+                    rs.getString("MucDich"),
+                    rs.getBigDecimal("SoTien")
+                );
+                list.add(ct);
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    // Thêm phương thức để lấy tổng chi tiêu theo tháng
+    public BigDecimal getTongChiTieuByMonth(int month, int year) {
+        String sql = "SELECT SUM(SoTien) as TongChi FROM ChiTieu WHERE MONTH(NgayChi) = ? AND YEAR(NgayChi) = ?";
+        BigDecimal result = BigDecimal.ZERO;
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, month);
+            stmt.setInt(2, year);
+            
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                result = rs.getBigDecimal("TongChi");
+                if (result == null) {
+                    result = BigDecimal.ZERO;
+                }
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return result;
     }

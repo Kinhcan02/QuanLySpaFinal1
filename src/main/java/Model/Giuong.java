@@ -1,11 +1,15 @@
 package Model;
 
+import java.time.LocalDateTime;
+
 public class Giuong {
 
     private Integer maGiuong;
     private String soHieu;
     private String trangThai; // "Trống", "Đã đặt", "Đang sử dụng", "Bảo trì"
     private String ghiChu;  // Đổi từ moTa thành ghiChu
+    private LocalDateTime ngayTao;
+    private LocalDateTime ngayCapNhat;
 
     // Constructor
     public Giuong() {
@@ -17,6 +21,15 @@ public class Giuong {
         this.soHieu = soHieu;
         this.trangThai = trangThai != null ? trangThai : "Trống";
         this.ghiChu = ghiChu;
+    }
+
+    public Giuong(Integer maGiuong, String soHieu, String trangThai, String ghiChu, LocalDateTime ngayTao, LocalDateTime ngayCapNhat) {
+        this.maGiuong = maGiuong;
+        this.soHieu = soHieu;
+        this.trangThai = trangThai != null ? trangThai : "Trống";
+        this.ghiChu = ghiChu;
+        this.ngayTao = ngayTao;
+        this.ngayCapNhat = ngayCapNhat;
     }
 
     // Getter và Setter
@@ -51,6 +64,22 @@ public class Giuong {
     public void setGhiChu(String ghiChu) {
         this.ghiChu = ghiChu;
     }  // Đổi từ setMoTa thành setGhiChu
+
+    public LocalDateTime getNgayTao() {
+        return ngayTao;
+    }
+
+    public void setNgayTao(LocalDateTime ngayTao) {
+        this.ngayTao = ngayTao;
+    }
+
+    public LocalDateTime getNgayCapNhat() {
+        return ngayCapNhat;
+    }
+
+    public void setNgayCapNhat(LocalDateTime ngayCapNhat) {
+        this.ngayCapNhat = ngayCapNhat;
+    }
 
     // Phương thức kiểm tra trạng thái
     public boolean isTrong() {

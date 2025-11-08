@@ -11,7 +11,12 @@ public class SuDungDichVuRepository {
     
     public List<SuDungDichVu> getAll() throws SQLException {
         List<SuDungDichVu> list = new ArrayList<>();
-        String sql = "SELECT * FROM SuDungDichVu";
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "ORDER BY sddv.NgaySuDung DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -25,7 +30,12 @@ public class SuDungDichVuRepository {
     }
     
     public SuDungDichVu getById(int maSuDung) throws SQLException {
-        String sql = "SELECT * FROM SuDungDichVu WHERE MaSuDung = ?";
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE sddv.MaSuDung = ?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -42,7 +52,13 @@ public class SuDungDichVuRepository {
     
     public List<SuDungDichVu> getByMaKhachHang(int maKhachHang) throws SQLException {
         List<SuDungDichVu> list = new ArrayList<>();
-        String sql = "SELECT * FROM SuDungDichVu WHERE MaKhachHang = ?";
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE sddv.MaKhachHang = ? " +
+                    "ORDER BY sddv.NgaySuDung DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -59,7 +75,13 @@ public class SuDungDichVuRepository {
     
     public List<SuDungDichVu> getByMaNhanVien(int maNhanVien) throws SQLException {
         List<SuDungDichVu> list = new ArrayList<>();
-        String sql = "SELECT * FROM SuDungDichVu WHERE MaNhanVien = ?";
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE sddv.MaNhanVien = ? " +
+                    "ORDER BY sddv.NgaySuDung DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -74,15 +96,95 @@ public class SuDungDichVuRepository {
         return list;
     }
     
-    public List<SuDungDichVu> getByDateRange(Date fromDate, Date toDate) throws SQLException {
+    public List<SuDungDichVu> getByMaDichVu(int maDichVu) throws SQLException {
         List<SuDungDichVu> list = new ArrayList<>();
-        String sql = "SELECT * FROM SuDungDichVu WHERE CAST(NgaySuDung AS DATE) BETWEEN ? AND ?";
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE sddv.MaDichVu = ? " +
+                    "ORDER BY sddv.NgaySuDung DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setDate(1, fromDate);
-            stmt.setDate(2, toDate);
+            stmt.setInt(1, maDichVu);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSuDungDichVu(rs));
+                }
+            }
+        }
+        return list;
+    }
+    
+    public List<SuDungDichVu> getByDateRange(Date fromDate, Date toDate) throws SQLException {
+        List<SuDungDichVu> list = new ArrayList<>();
+        // Access không hỗ trợ CAST AS DATE, sử dụng trực tiếp Date
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE sddv.NgaySuDung BETWEEN ? AND ? " +
+                    "ORDER BY sddv.NgaySuDung DESC";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setTimestamp(1, new Timestamp(fromDate.getTime()));
+            stmt.setTimestamp(2, new Timestamp(toDate.getTime() + 24 * 60 * 60 * 1000 - 1000)); // Thêm 1 ngày - 1 giây
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSuDungDichVu(rs));
+                }
+            }
+        }
+        return list;
+    }
+    
+    // PHƯƠNG THỨC MỚI: Tìm theo tháng năm
+    public List<SuDungDichVu> getByThangNam(int thang, int nam) throws SQLException {
+        List<SuDungDichVu> list = new ArrayList<>();
+        // Access sử dụng MONTH() và YEAR() cho DateTime fields
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE MONTH(sddv.NgaySuDung) = ? AND YEAR(sddv.NgaySuDung) = ? " +
+                    "ORDER BY sddv.NgaySuDung DESC";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToSuDungDichVu(rs));
+                }
+            }
+        }
+        return list;
+    }
+    
+    // PHƯƠNG THỨC MỚI: Tìm theo năm
+    public List<SuDungDichVu> getByNam(int nam) throws SQLException {
+        List<SuDungDichVu> list = new ArrayList<>();
+        String sql = "SELECT sddv.*, kh.HoTen as TenKhachHang, nv.HoTen as TenNhanVien, dv.TenDichVu " +
+                    "FROM ((SuDungDichVu sddv " +
+                    "LEFT JOIN KhachHang kh ON sddv.MaKhachHang = kh.MaKhachHang) " +
+                    "LEFT JOIN NhanVien nv ON sddv.MaNhanVien = nv.MaNhanVien) " +
+                    "LEFT JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE YEAR(sddv.NgaySuDung) = ? " +
+                    "ORDER BY sddv.NgaySuDung DESC";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, nam);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapResultSetToSuDungDichVu(rs));
@@ -139,6 +241,100 @@ public class SuDungDichVuRepository {
         }
     }
     
+    // PHƯƠNG THỨC MỚI: Tính tổng doanh thu theo tháng năm
+    public java.math.BigDecimal getTongDoanhThuTheoThangNam(int thang, int nam) throws SQLException {
+        String sql = "SELECT SUM(SoTien) as TongDoanhThu FROM SuDungDichVu " +
+                    "WHERE MONTH(NgaySuDung) = ? AND YEAR(NgaySuDung) = ?";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    java.math.BigDecimal tongDoanhThu = rs.getBigDecimal("TongDoanhThu");
+                    return tongDoanhThu != null ? tongDoanhThu : java.math.BigDecimal.ZERO;
+                }
+            }
+        }
+        return java.math.BigDecimal.ZERO;
+    }
+    
+    // PHƯƠNG THỨC MỚI: Tính tổng tiền tip theo tháng năm
+    public java.math.BigDecimal getTongTienTipTheoThangNam(int thang, int nam) throws SQLException {
+        String sql = "SELECT SUM(TienTip) as TongTienTip FROM SuDungDichVu " +
+                    "WHERE MONTH(NgaySuDung) = ? AND YEAR(NgaySuDung) = ?";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    java.math.BigDecimal tongTienTip = rs.getBigDecimal("TongTienTip");
+                    return tongTienTip != null ? tongTienTip : java.math.BigDecimal.ZERO;
+                }
+            }
+        }
+        return java.math.BigDecimal.ZERO;
+    }
+    
+    // PHƯƠNG THỨC MỚI: Thống kê dịch vụ được sử dụng nhiều nhất
+    public List<Object[]> getTopDichVuSuDungNhieuNhat(int limit) throws SQLException {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT TOP ? dv.TenDichVu, COUNT(sddv.MaSuDung) as SoLanSuDung, SUM(sddv.SoTien) as TongTien " +
+                    "FROM SuDungDichVu sddv " +
+                    "INNER JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "GROUP BY dv.MaDichVu, dv.TenDichVu " +
+                    "ORDER BY SoLanSuDung DESC";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] data = new Object[3];
+                    data[0] = rs.getString("TenDichVu");
+                    data[1] = rs.getInt("SoLanSuDung");
+                    data[2] = rs.getBigDecimal("TongTien");
+                    list.add(data);
+                }
+            }
+        }
+        return list;
+    }
+    
+    // PHƯƠNG THỨC MỚI: Thống kê doanh thu theo dịch vụ
+    public List<Object[]> getDoanhThuTheoDichVu(Date fromDate, Date toDate) throws SQLException {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT dv.TenDichVu, COUNT(sddv.MaSuDung) as SoLanSuDung, SUM(sddv.SoTien) as TongDoanhThu " +
+                    "FROM SuDungDichVu sddv " +
+                    "INNER JOIN DichVu dv ON sddv.MaDichVu = dv.MaDichVu " +
+                    "WHERE sddv.NgaySuDung BETWEEN ? AND ? " +
+                    "GROUP BY dv.MaDichVu, dv.TenDichVu " +
+                    "ORDER BY TongDoanhThu DESC";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setTimestamp(1, new Timestamp(fromDate.getTime()));
+            stmt.setTimestamp(2, new Timestamp(toDate.getTime() + 24 * 60 * 60 * 1000 - 1000));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Object[] data = new Object[3];
+                    data[0] = rs.getString("TenDichVu");
+                    data[1] = rs.getInt("SoLanSuDung");
+                    data[2] = rs.getBigDecimal("TongDoanhThu");
+                    list.add(data);
+                }
+            }
+        }
+        return list;
+    }
+    
     private void setSuDungDichVuParameters(PreparedStatement stmt, SuDungDichVu suDungDV) throws SQLException {
         if (suDungDV.getMaKhachHang() != null) {
             stmt.setInt(1, suDungDV.getMaKhachHang());
@@ -170,7 +366,7 @@ public class SuDungDichVuRepository {
     }
     
     private SuDungDichVu mapResultSetToSuDungDichVu(ResultSet rs) throws SQLException {
-        return new SuDungDichVu(
+        SuDungDichVu suDungDV = new SuDungDichVu(
             rs.getInt("MaSuDung"),
             rs.getInt("MaKhachHang"),
             rs.getInt("MaDichVu"),
@@ -179,5 +375,16 @@ public class SuDungDichVuRepository {
             rs.getBigDecimal("SoTien"),
             rs.getBigDecimal("TienTip")
         );
+        
+        // Xử lý các giá trị có thể null
+        if (rs.getInt("MaKhachHang") == 0 && rs.wasNull()) {
+            suDungDV.setMaKhachHang(null);
+        }
+        
+        if (rs.getInt("MaNhanVien") == 0 && rs.wasNull()) {
+            suDungDV.setMaNhanVien(null);
+        }
+        
+        return suDungDV;
     }
 }

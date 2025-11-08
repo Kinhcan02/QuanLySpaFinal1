@@ -25,11 +25,15 @@ public class DatLich {
     // Danh sách dịch vụ chi tiết
     private List<DatLichChiTiet> danhSachDichVu;
 
+    // Thêm trường tongThoiGian để lưu tổng thời gian tính từ database
+    private Integer tongThoiGian;
+
     public DatLich() {
         this.ngayDat = LocalDate.now();
         this.trangThai = "Chờ xác nhận";
         this.danhSachDichVu = new ArrayList<>();
         this.soLuongNguoi = 1; // Mặc định 1 người
+        this.tongThoiGian = 0;
     }
 
     // Constructor đầy đủ - THÊM soLuongNguoi
@@ -50,6 +54,16 @@ public class DatLich {
         this.maNhanVienTao = maNhanVienTao;
         this.soLuongNguoi = soLuongNguoi != null ? soLuongNguoi : 1;
         this.danhSachDichVu = new ArrayList<>();
+        this.tongThoiGian = thoiGianDuKien != null ? thoiGianDuKien : 0;
+    }
+
+    // Getter và Setter cho tongThoiGian
+    public Integer getTongThoiGian() {
+        return tongThoiGian;
+    }
+
+    public void setTongThoiGian(Integer tongThoiGian) {
+        this.tongThoiGian = tongThoiGian != null ? tongThoiGian : 0;
     }
 
     // Getter và Setter cho soLuongNguoi

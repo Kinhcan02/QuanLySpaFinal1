@@ -10,6 +10,8 @@ public class ThongBao {
     private LocalDateTime thoiGian;
     private String trangThai; // MOI, DA_DOC
     private Integer maLich;
+    private Integer maNhanVien; // THÊM TRƯỜNG NÀY
+    private Integer maNguyenLieu; // THÊM TRƯỜNG NÀY
 
     // Constructors
     public ThongBao() {}
@@ -43,4 +45,12 @@ public class ThongBao {
 
     public Integer getMaLich() { return maLich; }
     public void setMaLich(Integer maLich) { this.maLich = maLich; }
+
+    // THÊM GETTER VÀ SETTER CHO MA_NHAN_VIEN
+    public Integer getMaNhanVien() { return maNhanVien; }
+    public void setMaNhanVien(Integer maNhanVien) { this.maNhanVien = maNhanVien; }
+
+    // THÊM GETTER VÀ SETTER CHO MA_NGUYEN_LIEU
+    public Integer getMaNguyenLieu() { return maNguyenLieu; }
+    public void setMaNguyenLieu(Integer maNguyenLieu) { this.maNguyenLieu = maNguyenLieu; }
 }

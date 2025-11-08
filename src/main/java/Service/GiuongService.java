@@ -221,23 +221,26 @@ public class GiuongService {
         }
     }
 
-    public List<Giuong> getGiuongAvailableForBooking() {
-        try {
-            List<Giuong> allGiuongs = repository.getAll();
-            List<Giuong> availableGiuongs = new ArrayList<>();
-
-            for (Giuong giuong : allGiuongs) {
-                // Chỉ hiển thị giường có trạng thái "Trống" hoặc "Đã đặt"
-                if (giuong.isTrong() || giuong.isDaDat()) {
-                    availableGiuongs.add(giuong);
-                }
-            }
-
-            return availableGiuongs;
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi khi lấy danh sách giường khả dụng: " + e.getMessage(), e);
+public List<Giuong> getGiuongAvailableForBooking() {
+    try {
+        System.out.println("=== DEBUG: Gọi getGiuongCoTheDat() từ repository ===");
+        // ✅ SỬA: Gọi đúng phương thức từ repository
+        List<Giuong> result = repository.getGiuongCoTheDat();
+        System.out.println("=== DEBUG: Lấy được " + result.size() + " giường khả dụng ===");
+        
+        // Debug chi tiết từng giường
+        for (Giuong g : result) {
+            System.out.println(" - Giường " + g.getSoHieu() + " - Trạng thái: " + g.getTrangThai());
         }
+        
+        return result;
+    } catch (Exception e) {
+        System.err.println("❌ Lỗi trong getGiuongAvailableForBooking: " + e.getMessage());
+        e.printStackTrace();
+        // Trả về danh sách rỗng thay vì throw exception để tránh crash ứng dụng
+        return new ArrayList<>();
     }
+}
 
     public List<Giuong> getGiuongBaoTri() {
         try {
