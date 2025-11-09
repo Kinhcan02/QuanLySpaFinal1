@@ -130,7 +130,7 @@ public class MainView extends JFrame {
         logoPanel.setLayout(new GridLayout(2, 1));
 
         JLabel lblMainTitle = new JLabel("SWEET HOME", JLabel.CENTER);
-        lblMainTitle.setFont(new Font("Arial", Font.BOLD, 22));
+        lblMainTitle.setFont(new Font("Arial", Font.BOLD, 24));
         lblMainTitle.setForeground(COLOR_TEXT);
 
         JLabel lblSubTitle = new JLabel("Management System", JLabel.CENTER);

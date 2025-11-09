@@ -2,7 +2,6 @@ package Repository;
 
 import Data.DataConnection;
 import Model.ChiTietTienDichVuCuaNhanVien;
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,10 +10,12 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
     
     public List<ChiTietTienDichVuCuaNhanVien> getAll() throws SQLException {
         List<ChiTietTienDichVuCuaNhanVien> list = new ArrayList<>();
-        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen " +
+        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen, pt.TiLePhanTram, ldv.MaLoaiDV " +
                     "FROM ChiTietTienDichVuCuaNhanVien ct " +
                     "LEFT JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu " +
                     "LEFT JOIN NhanVien nv ON ct.MaNhanVien = nv.MaNhanVien " +
+                    "LEFT JOIN PhanTramDichVu pt ON ct.MaPhanTram = pt.MaPhanTram " +
+                    "LEFT JOIN LoaiDichVu ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
                     "ORDER BY ct.NgayTao DESC";
         
         try (Connection conn = DataConnection.getConnection();
@@ -29,10 +30,12 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
     }
     
     public ChiTietTienDichVuCuaNhanVien getById(int maCTTienDV) throws SQLException {
-        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen " +
+        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen, pt.TiLePhanTram, ldv.MaLoaiDV " +
                     "FROM ChiTietTienDichVuCuaNhanVien ct " +
                     "LEFT JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu " +
                     "LEFT JOIN NhanVien nv ON ct.MaNhanVien = nv.MaNhanVien " +
+                    "LEFT JOIN PhanTramDichVu pt ON ct.MaPhanTram = pt.MaPhanTram " +
+                    "LEFT JOIN LoaiDichVu ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
                     "WHERE ct.MaCTTienDV = ?";
         
         try (Connection conn = DataConnection.getConnection();
@@ -50,10 +53,12 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
     
     public List<ChiTietTienDichVuCuaNhanVien> getByNhanVien(int maNhanVien) throws SQLException {
         List<ChiTietTienDichVuCuaNhanVien> list = new ArrayList<>();
-        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen " +
+        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen, pt.TiLePhanTram, ldv.MaLoaiDV " +
                     "FROM ChiTietTienDichVuCuaNhanVien ct " +
                     "LEFT JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu " +
                     "LEFT JOIN NhanVien nv ON ct.MaNhanVien = nv.MaNhanVien " +
+                    "LEFT JOIN PhanTramDichVu pt ON ct.MaPhanTram = pt.MaPhanTram " +
+                    "LEFT JOIN LoaiDichVu ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
                     "WHERE ct.MaNhanVien = ? " +
                     "ORDER BY ct.NgayTao DESC";
         
@@ -72,10 +77,12 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
     
     public List<ChiTietTienDichVuCuaNhanVien> getByChiTietHoaDon(int maCTHD) throws SQLException {
         List<ChiTietTienDichVuCuaNhanVien> list = new ArrayList<>();
-        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen " +
+        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen, pt.TiLePhanTram, ldv.MaLoaiDV " +
                     "FROM ChiTietTienDichVuCuaNhanVien ct " +
                     "LEFT JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu " +
                     "LEFT JOIN NhanVien nv ON ct.MaNhanVien = nv.MaNhanVien " +
+                    "LEFT JOIN PhanTramDichVu pt ON ct.MaPhanTram = pt.MaPhanTram " +
+                    "LEFT JOIN LoaiDichVu ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
                     "WHERE ct.MaCTHD = ? " +
                     "ORDER BY ct.NgayTao DESC";
         
@@ -92,15 +99,17 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
         return list;
     }
     
+    // FIXED: Lấy chi tiết tiền dịch vụ theo tháng/năm - JOIN với HoaDon để lấy đúng tháng/năm
     public List<ChiTietTienDichVuCuaNhanVien> getByThangNam(int maNhanVien, int thang, int nam) throws SQLException {
         List<ChiTietTienDichVuCuaNhanVien> list = new ArrayList<>();
-        // Access: Dùng MONTH() và YEAR() vẫn hoạt động
-        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen " +
+        String sql = "SELECT ct.*, dv.TenDichVu, nv.HoTen, pt.TiLePhanTram, ldv.MaLoaiDV " +
                     "FROM ChiTietTienDichVuCuaNhanVien ct " +
                     "INNER JOIN ChiTietHoaDon cthd ON ct.MaCTHD = cthd.MaCTHD " +
                     "INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon " +
                     "LEFT JOIN DichVu dv ON ct.MaDichVu = dv.MaDichVu " +
                     "LEFT JOIN NhanVien nv ON ct.MaNhanVien = nv.MaNhanVien " +
+                    "LEFT JOIN PhanTramDichVu pt ON ct.MaPhanTram = pt.MaPhanTram " +
+                    "LEFT JOIN LoaiDichVu ldv ON dv.MaLoaiDV = ldv.MaLoaiDV " +
                     "WHERE ct.MaNhanVien = ? AND MONTH(hd.NgayLap) = ? AND YEAR(hd.NgayLap) = ? " +
                     "ORDER BY ct.NgayTao DESC";
         
@@ -119,33 +128,31 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
         return list;
     }
     
-    public BigDecimal getTongTienDichVuByThangNam(int maNhanVien, int thang, int nam) throws SQLException {
-        String sql = "SELECT SUM(ct.DonGiaThucTe * ct.SoLuong) as TongTien " +
-                    "FROM ChiTietTienDichVuCuaNhanVien ct " +
-                    "INNER JOIN ChiTietHoaDon cthd ON ct.MaCTHD = cthd.MaCTHD " +
-                    "INNER JOIN HoaDon hd ON cthd.MaHoaDon = hd.MaHoaDon " +
-                    "WHERE ct.MaNhanVien = ? AND MONTH(hd.NgayLap) = ? AND YEAR(hd.NgayLap) = ?";
+    // FIXED: Tự động tạo chi tiết tiền dịch vụ dựa trên chi tiết hóa đơn và phân trăm dịch vụ
+    public boolean taoChiTietTienDichVuTuDong(int maCTHD) throws SQLException {
+        String sql = "INSERT INTO ChiTietTienDichVuCuaNhanVien (MaCTHD, MaDichVu, MaNhanVien, MaPhanTram, DonGiaThucTe, NgayTao) " +
+                    "SELECT cthd.MaCTHD, cthd.MaDichVu, cthd.MaNhanVien, pt.MaPhanTram, " +
+                    "       (cthd.SoLuong * cthd.DonGia * pt.TiLePhanTram / 100) as DonGiaThucTe, " +
+                    "       NOW() as NgayTao " +
+                    "FROM ChiTietHoaDon cthd " +
+                    "INNER JOIN DichVu dv ON cthd.MaDichVu = dv.MaDichVu " +
+                    "INNER JOIN PhanTramDichVu pt ON dv.MaLoaiDV = pt.MaLoaiDV AND cthd.MaNhanVien = pt.MaNhanVien " +
+                    "WHERE cthd.MaCTHD = ? AND NOT EXISTS (" +
+                    "    SELECT 1 FROM ChiTietTienDichVuCuaNhanVien ct " +
+                    "    WHERE ct.MaCTHD = cthd.MaCTHD AND ct.MaNhanVien = cthd.MaNhanVien" +
+                    ")";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setInt(1, maNhanVien);
-            stmt.setInt(2, thang);
-            stmt.setInt(3, nam);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    BigDecimal result = rs.getBigDecimal("TongTien");
-                    return result != null ? result : BigDecimal.ZERO;
-                }
-            }
+            stmt.setInt(1, maCTHD);
+            return stmt.executeUpdate() > 0;
         }
-        return BigDecimal.ZERO;
     }
     
     public boolean insert(ChiTietTienDichVuCuaNhanVien chiTiet) throws SQLException {
-        // Access: Không dùng RETURN_GENERATED_KEYS
-        String sql = "INSERT INTO ChiTietTienDichVuCuaNhanVien (MaCTHD, MaDichVu, MaNhanVien, SoLuong, " +
-                    "DonGiaGoc, TiLePhanTram, DonGiaThucTe, NgayTao) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO ChiTietTienDichVuCuaNhanVien (MaCTHD, MaDichVu, MaNhanVien, MaPhanTram, DonGiaThucTe, NgayTao) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -153,16 +160,13 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
             stmt.setInt(1, chiTiet.getMaCTHD());
             stmt.setInt(2, chiTiet.getMaDichVu());
             stmt.setInt(3, chiTiet.getMaNhanVien());
-            stmt.setInt(4, chiTiet.getSoLuong());
-            stmt.setBigDecimal(5, chiTiet.getDonGiaGoc());
-            stmt.setDouble(6, chiTiet.getTiLePhanTram());
-            stmt.setBigDecimal(7, chiTiet.getDonGiaThucTe());
+            stmt.setInt(4, chiTiet.getMaPhanTram());
+            stmt.setBigDecimal(5, chiTiet.getDonGiaThucTe());
             
-            // Access: Xử lý TIMESTAMP
             if (chiTiet.getNgayTao() != null) {
-                stmt.setTimestamp(8, Timestamp.valueOf(chiTiet.getNgayTao()));
+                stmt.setTimestamp(6, Timestamp.valueOf(chiTiet.getNgayTao()));
             } else {
-                stmt.setNull(8, Types.TIMESTAMP);
+                stmt.setNull(6, Types.TIMESTAMP);
             }
             
             return stmt.executeUpdate() > 0;
@@ -170,8 +174,8 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
     }
     
     public boolean update(ChiTietTienDichVuCuaNhanVien chiTiet) throws SQLException {
-        String sql = "UPDATE ChiTietTienDichVuCuaNhanVien SET MaCTHD=?, MaDichVu=?, MaNhanVien=?, SoLuong=?, " +
-                    "DonGiaGoc=?, TiLePhanTram=?, DonGiaThucTe=?, NgayTao=? WHERE MaCTTienDV=?";
+        String sql = "UPDATE ChiTietTienDichVuCuaNhanVien SET MaCTHD=?, MaDichVu=?, MaNhanVien=?, " +
+                    "MaPhanTram=?, DonGiaThucTe=?, NgayTao=? WHERE MaCTTienDV=?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -179,18 +183,16 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
             stmt.setInt(1, chiTiet.getMaCTHD());
             stmt.setInt(2, chiTiet.getMaDichVu());
             stmt.setInt(3, chiTiet.getMaNhanVien());
-            stmt.setInt(4, chiTiet.getSoLuong());
-            stmt.setBigDecimal(5, chiTiet.getDonGiaGoc());
-            stmt.setDouble(6, chiTiet.getTiLePhanTram());
-            stmt.setBigDecimal(7, chiTiet.getDonGiaThucTe());
+            stmt.setInt(4, chiTiet.getMaPhanTram());
+            stmt.setBigDecimal(5, chiTiet.getDonGiaThucTe());
             
             if (chiTiet.getNgayTao() != null) {
-                stmt.setTimestamp(8, Timestamp.valueOf(chiTiet.getNgayTao()));
+                stmt.setTimestamp(6, Timestamp.valueOf(chiTiet.getNgayTao()));
             } else {
-                stmt.setNull(8, Types.TIMESTAMP);
+                stmt.setNull(6, Types.TIMESTAMP);
             }
             
-            stmt.setInt(9, chiTiet.getMaCTTienDV());
+            stmt.setInt(7, chiTiet.getMaCTTienDV());
             
             return stmt.executeUpdate() > 0;
         }
@@ -224,7 +226,6 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
         return false;
     }
     
-    // Phương thức để lấy ID vừa insert trong Access
     public int getLastInsertId() throws SQLException {
         String sql = "SELECT @@IDENTITY AS LastID";
         try (Connection conn = DataConnection.getConnection();
@@ -243,12 +244,9 @@ public class ChiTietTienDichVuCuaNhanVienRepository {
         chiTiet.setMaCTHD(rs.getInt("MaCTHD"));
         chiTiet.setMaDichVu(rs.getInt("MaDichVu"));
         chiTiet.setMaNhanVien(rs.getInt("MaNhanVien"));
-        chiTiet.setSoLuong(rs.getInt("SoLuong"));
-        chiTiet.setDonGiaGoc(rs.getBigDecimal("DonGiaGoc"));
-        chiTiet.setTiLePhanTram(rs.getDouble("TiLePhanTram"));
+        chiTiet.setMaPhanTram(rs.getInt("MaPhanTram"));
         chiTiet.setDonGiaThucTe(rs.getBigDecimal("DonGiaThucTe"));
         
-        // Xử lý TIMESTAMP
         Timestamp ngayTao = rs.getTimestamp("NgayTao");
         if (ngayTao != null) {
             chiTiet.setNgayTao(ngayTao.toLocalDateTime());

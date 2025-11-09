@@ -157,6 +157,9 @@ public class HoaDonRepository {
                 }
             }
 
+            // 3. Tạo chi tiết tiền dịch vụ tự động
+            taoChiTietTienDichVuTuDong(conn, generatedMaHoaDon);
+
             conn.commit();
             return true;
 
@@ -265,6 +268,9 @@ public class HoaDonRepository {
                     }
                 }
             }
+
+            // 4. Tạo chi tiết tiền dịch vụ tự động
+            taoChiTietTienDichVuTuDong(conn, hoaDon.getMaHoaDon());
 
             conn.commit();
             return true;
@@ -395,6 +401,53 @@ public class HoaDonRepository {
             }
         }
         return list;
+    }
+
+    public boolean taoChiTietTienDichVuTuDong(int maHoaDon) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DataConnection.getConnection();
+            conn.setAutoCommit(false);
+            
+            boolean result = taoChiTietTienDichVuTuDong(conn, maHoaDon);
+            conn.commit();
+            return result;
+            
+        } catch (SQLException e) {
+            if (conn != null) {
+                conn.rollback();
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                conn.setAutoCommit(true);
+                conn.close();
+            }
+        }
+    }
+
+    private boolean taoChiTietTienDichVuTuDong(Connection conn, int maHoaDon) throws SQLException {
+        // SQL để tạo ChiTietTienDichVuCuaNhanVien từ ChiTietHoaDon
+        String sql = "INSERT INTO ChiTietTienDichVuCuaNhanVien (MaCTHD, MaDichVu, MaNhanVien, MaPhanTram, DonGiaThucTe, NgayTao) " +
+                    "SELECT cthd.MaCTHD, cthd.MaDichVu, cthd.MaNhanVien, pt.MaPhanTram, " +
+                    "       (cthd.SoLuong * cthd.DonGia * pt.TiLePhanTram / 100) as DonGiaThucTe, " +
+                    "       NOW() as NgayTao " +
+                    "FROM ChiTietHoaDon cthd " +
+                    "INNER JOIN DichVu dv ON cthd.MaDichVu = dv.MaDichVu " +
+                    "INNER JOIN PhanTramDichVu pt ON dv.MaLoaiDV = pt.MaLoaiDV AND cthd.MaNhanVien = pt.MaNhanVien " +
+                    "WHERE cthd.MaHoaDon = ? AND cthd.MaNhanVien IS NOT NULL " +
+                    "AND NOT EXISTS (" +
+                    "    SELECT 1 FROM ChiTietTienDichVuCuaNhanVien ct " +
+                    "    WHERE ct.MaCTHD = cthd.MaCTHD AND ct.MaNhanVien = cthd.MaNhanVien" +
+                    ")";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, maHoaDon);
+            int affectedRows = stmt.executeUpdate();
+            
+            // Trả về true ngay cả khi không có dòng nào được chèn (không có chi tiết phù hợp)
+            return true;
+        }
     }
 
     private HoaDon mapResultSetToHoaDon(ResultSet rs) throws SQLException {

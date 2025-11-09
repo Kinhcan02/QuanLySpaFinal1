@@ -9,9 +9,7 @@ public class ChiTietTienDichVuCuaNhanVien {
     private Integer maCTHD;
     private Integer maDichVu;
     private Integer maNhanVien;
-    private Integer soLuong;
-    private BigDecimal donGiaGoc;
-    private Double tiLePhanTram;
+    private Integer maPhanTram;
     private BigDecimal donGiaThucTe;
     private LocalDateTime ngayTao;
 
@@ -19,26 +17,20 @@ public class ChiTietTienDichVuCuaNhanVien {
     private ChiTietHoaDon chiTietHoaDon;
     private DichVu dichVu;
     private NhanVien nhanVien;
+    private PhanTramDichVu phanTramDichVu;
 
     // Constructors
     public ChiTietTienDichVuCuaNhanVien() {
-        this.soLuong = 1;
-        this.donGiaGoc = BigDecimal.ZERO;
-        this.tiLePhanTram = 0.0;
         this.donGiaThucTe = BigDecimal.ZERO;
         this.ngayTao = LocalDateTime.now();
     }
 
-    public ChiTietTienDichVuCuaNhanVien(Integer maCTHD, Integer maDichVu, Integer maNhanVien, 
-                                       Integer soLuong, BigDecimal donGiaGoc, Double tiLePhanTram) {
+    public ChiTietTienDichVuCuaNhanVien(Integer maCTHD, Integer maDichVu, Integer maNhanVien, Integer maPhanTram) {
         this();
         this.maCTHD = maCTHD;
         this.maDichVu = maDichVu;
         this.maNhanVien = maNhanVien;
-        this.soLuong = soLuong;
-        this.donGiaGoc = donGiaGoc;
-        this.tiLePhanTram = tiLePhanTram;
-        tinhDonGiaThucTe();
+        this.maPhanTram = maPhanTram;
     }
 
     // Getters and Setters
@@ -54,23 +46,8 @@ public class ChiTietTienDichVuCuaNhanVien {
     public Integer getMaNhanVien() { return maNhanVien; }
     public void setMaNhanVien(Integer maNhanVien) { this.maNhanVien = maNhanVien; }
 
-    public Integer getSoLuong() { return soLuong; }
-    public void setSoLuong(Integer soLuong) { 
-        this.soLuong = soLuong != null ? soLuong : 1;
-        tinhDonGiaThucTe();
-    }
-
-    public BigDecimal getDonGiaGoc() { return donGiaGoc; }
-    public void setDonGiaGoc(BigDecimal donGiaGoc) { 
-        this.donGiaGoc = donGiaGoc != null ? donGiaGoc : BigDecimal.ZERO;
-        tinhDonGiaThucTe();
-    }
-
-    public Double getTiLePhanTram() { return tiLePhanTram; }
-    public void setTiLePhanTram(Double tiLePhanTram) { 
-        this.tiLePhanTram = tiLePhanTram != null ? tiLePhanTram : 0.0;
-        tinhDonGiaThucTe();
-    }
+    public Integer getMaPhanTram() { return maPhanTram; }
+    public void setMaPhanTram(Integer maPhanTram) { this.maPhanTram = maPhanTram; }
 
     public BigDecimal getDonGiaThucTe() { return donGiaThucTe; }
     public void setDonGiaThucTe(BigDecimal donGiaThucTe) { 
@@ -91,25 +68,34 @@ public class ChiTietTienDichVuCuaNhanVien {
     public NhanVien getNhanVien() { return nhanVien; }
     public void setNhanVien(NhanVien nhanVien) { this.nhanVien = nhanVien; }
 
-    // Tính đơn giá thực tế theo công thức
+    public PhanTramDichVu getPhanTramDichVu() { return phanTramDichVu; }
+    public void setPhanTramDichVu(PhanTramDichVu phanTramDichVu) { this.phanTramDichVu = phanTramDichVu; }
+
+    // Tính đơn giá thực tế theo công thức mới: Thành tiền (ChiTietHoaDon) * Tỉ lệ phần trăm (PhanTramDichVu)
     public void tinhDonGiaThucTe() {
-        if (donGiaGoc != null && tiLePhanTram != null) {
-            this.donGiaThucTe = donGiaGoc.multiply(BigDecimal.valueOf(tiLePhanTram))
-                                         .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+        if (chiTietHoaDon != null && phanTramDichVu != null) {
+            BigDecimal thanhTien = chiTietHoaDon.getThanhTien();
+            Double tiLePhanTram = phanTramDichVu.getTiLePhanTram();
+            
+            if (thanhTien != null && tiLePhanTram != null) {
+                this.donGiaThucTe = thanhTien.multiply(BigDecimal.valueOf(tiLePhanTram))
+                                             .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+            } else {
+                this.donGiaThucTe = BigDecimal.ZERO;
+            }
         } else {
             this.donGiaThucTe = BigDecimal.ZERO;
         }
     }
 
-    // Tính thành tiền
+    // Tính thành tiền cho chi tiết này (trong trường hợp cần)
     public BigDecimal getThanhTien() {
-        return donGiaThucTe.multiply(BigDecimal.valueOf(soLuong));
+        return donGiaThucTe;
     }
 
     // Validation
     public boolean isValid() {
-        return maCTHD != null && maDichVu != null && maNhanVien != null && 
-               soLuong != null && soLuong > 0 && donGiaGoc != null;
+        return maCTHD != null && maDichVu != null && maNhanVien != null && maPhanTram != null;
     }
 
     @Override
@@ -121,17 +107,14 @@ public class ChiTietTienDichVuCuaNhanVien {
                Objects.equals(maCTHD, that.maCTHD) &&
                Objects.equals(maDichVu, that.maDichVu) &&
                Objects.equals(maNhanVien, that.maNhanVien) &&
-               Objects.equals(soLuong, that.soLuong) &&
-               Objects.equals(donGiaGoc, that.donGiaGoc) &&
-               Objects.equals(tiLePhanTram, that.tiLePhanTram) &&
+               Objects.equals(maPhanTram, that.maPhanTram) &&
                Objects.equals(donGiaThucTe, that.donGiaThucTe) &&
                Objects.equals(ngayTao, that.ngayTao);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maCTTienDV, maCTHD, maDichVu, maNhanVien, soLuong, 
-                           donGiaGoc, tiLePhanTram, donGiaThucTe, ngayTao);
+        return Objects.hash(maCTTienDV, maCTHD, maDichVu, maNhanVien, maPhanTram, donGiaThucTe, ngayTao);
     }
 
     @Override
@@ -141,9 +124,7 @@ public class ChiTietTienDichVuCuaNhanVien {
                 ", maCTHD=" + maCTHD +
                 ", maDichVu=" + maDichVu +
                 ", maNhanVien=" + maNhanVien +
-                ", soLuong=" + soLuong +
-                ", donGiaGoc=" + donGiaGoc +
-                ", tiLePhanTram=" + tiLePhanTram +
+                ", maPhanTram=" + maPhanTram +
                 ", donGiaThucTe=" + donGiaThucTe +
                 ", ngayTao=" + ngayTao +
                 '}';

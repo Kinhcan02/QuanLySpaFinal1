@@ -2,7 +2,6 @@ package Service;
 
 import Model.ChiTietTienDichVuCuaNhanVien;
 import Repository.ChiTietTienDichVuCuaNhanVienRepository;
-import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
@@ -58,24 +57,24 @@ public class ChiTietTienDichVuCuaNhanVienService {
         }
     }
 
-    public BigDecimal getTongTienDichVuByThangNam(int maNhanVien, int thang, int nam) {
+    public boolean taoChiTietTienDichVuTuDong(int maCTHD) {
         try {
-            return repository.getTongTienDichVuByThangNam(maNhanVien, thang, nam);
+            return repository.taoChiTietTienDichVuTuDong(maCTHD);
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, 
-                String.format("Lỗi khi tính tổng tiền dịch vụ tháng %d năm %d cho nhân viên %d", 
-                    thang, nam, maNhanVien), e);
-            throw new RuntimeException("Không thể tính tổng tiền dịch vụ", e);
+            logger.log(Level.SEVERE, "Lỗi khi tạo chi tiết tiền dịch vụ tự động cho MaCTHD: " + maCTHD, e);
+            throw new RuntimeException("Không thể tạo chi tiết tiền dịch vụ tự động", e);
         }
     }
 
     public boolean addChiTietTienDV(ChiTietTienDichVuCuaNhanVien chiTiet) {
         validateChiTietTienDV(chiTiet);
-        chiTiet.tinhDonGiaThucTe(); // Ensure calculation is done before insert
+        
+        // Tính toán đơn giá thực tế trước khi lưu
+        chiTiet.tinhDonGiaThucTe();
+        
         try {
             boolean result = repository.insert(chiTiet);
             if (result) {
-                // Lấy ID vừa insert và set vào object
                 int newId = repository.getLastInsertId();
                 chiTiet.setMaCTTienDV(newId);
             }
@@ -91,7 +90,10 @@ public class ChiTietTienDichVuCuaNhanVienService {
         if (chiTiet.getMaCTTienDV() == null || chiTiet.getMaCTTienDV() <= 0) {
             throw new IllegalArgumentException("Mã chi tiết tiền dịch vụ không hợp lệ");
         }
-        chiTiet.tinhDonGiaThucTe(); // Ensure calculation is done before update
+        
+        // Tính toán đơn giá thực tế trước khi cập nhật
+        chiTiet.tinhDonGiaThucTe();
+        
         try {
             return repository.update(chiTiet);
         } catch (SQLException e) {
@@ -125,14 +127,8 @@ public class ChiTietTienDichVuCuaNhanVienService {
         if (chiTiet.getMaNhanVien() == null || chiTiet.getMaNhanVien() <= 0) {
             throw new IllegalArgumentException("Mã nhân viên không hợp lệ");
         }
-        if (chiTiet.getSoLuong() == null || chiTiet.getSoLuong() <= 0) {
-            throw new IllegalArgumentException("Số lượng phải lớn hơn 0");
-        }
-        if (chiTiet.getDonGiaGoc() == null || chiTiet.getDonGiaGoc().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Đơn giá gốc không hợp lệ");
-        }
-        if (chiTiet.getTiLePhanTram() == null || chiTiet.getTiLePhanTram() < 0) {
-            throw new IllegalArgumentException("Tỉ lệ phần trăm không hợp lệ");
+        if (chiTiet.getMaPhanTram() == null || chiTiet.getMaPhanTram() <= 0) {
+            throw new IllegalArgumentException("Mã phân trăm không hợp lệ");
         }
     }
 }
