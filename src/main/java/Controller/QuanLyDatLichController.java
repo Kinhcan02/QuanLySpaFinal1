@@ -108,7 +108,6 @@ public class QuanLyDatLichController implements ActionListener {
         }
     }
 
-    // CẬP NHẬT PHƯƠNG THỨC XỬ LÝ PHÂN CÔNG NHÂN VIÊN
     private void handlePhanCongNhanVien() {
         int selectedIndex = view.getListDichVu().getSelectedIndex();
         if (selectedIndex == -1) {
@@ -130,13 +129,7 @@ public class QuanLyDatLichController implements ActionListener {
         // Lưu phân công vào map
         view.themPhanCongNhanVien(selectedDichVu, selectedNhanVien);
 
-        // Hiển thị thông báo thành công
-        JOptionPane.showMessageDialog(view,
-                "Đã phân công nhân viên " + selectedNhanVien.getHoTen()
-                + " cho dịch vụ " + selectedDichVu.getTenDichVu()
-                + "\n\nBạn có thể phân công nhân viên khác cho dịch vụ khác."
-                + "\nThông tin phân công sẽ được lưu khi bạn nhấn 'Thêm mới' hoặc 'Sửa'",
-                "Thành công", JOptionPane.INFORMATION_MESSAGE);
+        // BỎ HỘP THOẠI THÔNG BÁO PHÂN CÔNG THÀNH CÔNG
     }
 
     private void handleThemMoi() {
@@ -148,29 +141,36 @@ public class QuanLyDatLichController implements ActionListener {
 
             boolean success;
             if (isEditMode && currentEditId != -1) {
-                // Chế độ sửa - XỬ LÝ CẬP NHẬT GIƯỜNG
+                // Chế độ sửa
                 Integer maGiuongCu = view.getMaGiuongCu();
                 Integer maGiuongMoi = datLich.getMaGiuong();
 
                 success = datLichService.updateDatLich(datLich);
                 if (success) {
-                    // XỬ LÝ CẬP NHẬT TRẠNG THÁI GIƯỜNG KHI SỬA
                     handleCapNhatGiuongKhiSua(maGiuongCu, maGiuongMoi);
-
-                    JOptionPane.showMessageDialog(view, "Cập nhật lịch hẹn thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     isEditMode = false;
                     currentEditId = -1;
-                    view.setMaGiuongCu(null); // Reset sau khi sửa xong
+                    view.setMaGiuongCu(null);
+
+                    // Tự động chọn và highlight lịch vừa sửa
+                    DatLich updatedAppointment = datLichService.getDatLichById(datLich.getMaLich());
+                    if (updatedAppointment != null) {
+                        view.highlightSelectedAppointment(updatedAppointment);
+                    }
                 }
             } else {
                 // Chế độ thêm mới
                 success = datLichService.addDatLich(datLich);
                 if (success) {
-                    // Cập nhật trạng thái giường thành "Đã đặt" ngay khi thêm lịch
                     if (datLich.getMaGiuong() != null) {
                         giuongService.updateTrangThai(datLich.getMaGiuong(), "Đã đặt");
                     }
-                    JOptionPane.showMessageDialog(view, "Thêm lịch hẹn thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Tự động chọn và highlight lịch vừa thêm
+                    DatLich newAppointment = findNewlyAddedAppointment(datLich);
+                    if (newAppointment != null) {
+                        view.highlightSelectedAppointment(newAppointment);
+                    }
                 }
             }
 
@@ -185,6 +185,27 @@ public class QuanLyDatLichController implements ActionListener {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(view, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+// Thêm phương thức tìm lịch vừa thêm
+    private DatLich findNewlyAddedAppointment(DatLich datLich) {
+        try {
+            // Lấy tất cả lịch của ngày hiện tại
+            List<DatLich> appointments = datLichService.getDatLichTheoNgay(datLich.getNgayDat());
+
+            // Tìm lịch có thông tin khớp với lịch vừa thêm
+            for (DatLich appointment : appointments) {
+                if (appointment.getMaKhachHang().equals(datLich.getMaKhachHang())
+                        && appointment.getGioDat().equals(datLich.getGioDat())
+                        && ((appointment.getMaGiuong() == null && datLich.getMaGiuong() == null)
+                        || (appointment.getMaGiuong() != null && appointment.getMaGiuong().equals(datLich.getMaGiuong())))) {
+                    return appointment;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi khi tìm lịch vừa thêm: " + e.getMessage());
+        }
+        return null;
     }
 
     private void handleSua() {
@@ -208,9 +229,7 @@ public class QuanLyDatLichController implements ActionListener {
             // Điền dữ liệu vào form
             fillFormData(selectedAppointment);
 
-            JOptionPane.showMessageDialog(view, "Đã chuyển sang chế độ sửa. Vui lòng cập nhật thông tin và nhấn 'Thêm mới' để lưu thay đổi.",
-                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-
+            // BỎ HỘP THOẠI THÔNG BÁO CHUYỂN SANG CHẾ ĐỘ SỬA
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(view, "Lỗi khi sửa lịch hẹn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -304,94 +323,101 @@ public class QuanLyDatLichController implements ActionListener {
         }
     }
 
-    private void handleHoanThanh() {
-        DatLich selectedAppointment = view.getSelectedAppointment();
-        if (selectedAppointment == null) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn lịch hẹn để hoàn thành", "Thông báo", JOptionPane.WARNING_MESSAGE);
+private void handleHoanThanh() {
+    DatLich selectedAppointment = view.getSelectedAppointment();
+    if (selectedAppointment == null) {
+        JOptionPane.showMessageDialog(view, "Vui lòng chọn lịch hẹn để hoàn thành", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    try {
+        // Kiểm tra nếu lịch hẹn chưa được xác nhận
+        if (!selectedAppointment.isDaXacNhan() && !selectedAppointment.isDangThucHien()) {
+            JOptionPane.showMessageDialog(view, "Chỉ có thể hoàn thành lịch hẹn đã được xác nhận hoặc đang thực hiện", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        try {
-            // Kiểm tra nếu lịch hẹn chưa được xác nhận
-            if (!selectedAppointment.isDaXacNhan() && !selectedAppointment.isDangThucHien()) {
-                JOptionPane.showMessageDialog(view, "Chỉ có thể hoàn thành lịch hẹn đã được xác nhận hoặc đang thực hiện", "Thông báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+        // Tính tổng tiền hóa đơn (KHÔNG tính phí giường)
+        BigDecimal tongTien = tinhTongTienHoaDon(selectedAppointment);
 
-            // Tính tổng tiền hóa đơn (KHÔNG tính phí giường)
-            BigDecimal tongTien = tinhTongTienHoaDon(selectedAppointment);
+        // Tính điểm tích lũy (100.000 VND = 1 điểm)
+        int diemThuong = tongTien.divideToIntegralValue(BigDecimal.valueOf(100000)).intValue();
 
-            // Tính điểm tích lũy (100.000 VND = 1 điểm)
-            int diemThuong = tongTien.divideToIntegralValue(BigDecimal.valueOf(100000)).intValue();
+        int confirm = JOptionPane.showConfirmDialog(view,
+                "Hoàn thành lịch hẹn này?\nKhách hàng: "
+                + khachHangService.getKhachHangById(selectedAppointment.getMaKhachHang()).getHoTen()
+                + "\nThời gian: " + selectedAppointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm"))
+                + "\nTổng tiền: " + String.format("%,.0f", tongTien) + " VND"
+                + (diemThuong > 0 ? "\nĐiểm tích lũy: +" + diemThuong + " điểm" : "")
+                + "\nGiường: " + (selectedAppointment.getMaGiuong() != null
+                ? giuongService.getGiuongById(selectedAppointment.getMaGiuong()).getSoHieu() : "Không có")
+                + "\n\nSau khi hoàn thành sẽ:\n- Lưu hóa đơn\n- In PDF hóa đơn\n- Xóa form"
+                + (selectedAppointment.getMaGiuong() != null ? "\n- Giường sẽ được chuyển về trạng thái 'Trống'" : ""),
+                "Xác nhận hoàn thành", JOptionPane.YES_NO_OPTION);
 
-            int confirm = JOptionPane.showConfirmDialog(view,
-                    "Hoàn thành lịch hẹn này?\nKhách hàng: "
-                    + khachHangService.getKhachHangById(selectedAppointment.getMaKhachHang()).getHoTen()
-                    + "\nThời gian: " + selectedAppointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm"))
-                    + "\nTổng tiền: " + String.format("%,.0f", tongTien) + " VND"
-                    + (diemThuong > 0 ? "\nĐiểm tích lũy: +" + diemThuong + " điểm" : "")
-                    + "\nGiường: " + (selectedAppointment.getMaGiuong() != null
-                    ? giuongService.getGiuongById(selectedAppointment.getMaGiuong()).getSoHieu() : "Không có")
-                    + "\n\nSau khi hoàn thành sẽ:\n- Lưu hóa đơn\n- In PDF hóa đơn\n- Xóa form"
-                    + (selectedAppointment.getMaGiuong() != null ? "\n- Giường sẽ được chuyển về trạng thái 'Trống'" : ""),
-                    "Xác nhận hoàn thành", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Cập nhật trạng thái lịch hẹn thành "Hoàn thành"
+            boolean success = datLichService.updateTrangThai(selectedAppointment.getMaLich(), "Hoàn thành");
 
-            if (confirm == JOptionPane.YES_OPTION) {
-                // Cập nhật trạng thái lịch hẹn thành "Hoàn thành"
-                boolean success = datLichService.updateTrangThai(selectedAppointment.getMaLich(), "Hoàn thành");
+            if (success) {
+                // XỬ LÝ CẬP NHẬT GIƯỜNG KHI HOÀN THÀNH
+                if (selectedAppointment.getMaGiuong() != null) {
+                    giuongService.updateTrangThai(selectedAppointment.getMaGiuong(), "Trống");
 
-                if (success) {
-                    // XỬ LÝ CẬP NHẬT GIƯỜNG KHI HOÀN THÀNH
-                    if (selectedAppointment.getMaGiuong() != null) {
-                        giuongService.updateTrangThai(selectedAppointment.getMaGiuong(), "Trống");
-
-                        // Log thông tin cập nhật
-                        Giuong giuong = giuongService.getGiuongById(selectedAppointment.getMaGiuong());
-                        if (giuong != null) {
-                            System.out.println("Đã cập nhật trạng thái giường " + giuong.getSoHieu()
-                                    + " từ '" + giuong.getTrangThai() + "' -> 'Trống' (do hoàn thành lịch)");
-                        }
-
-                        view.refreshGiuongComboBox();
+                    // Log thông tin cập nhật
+                    Giuong giuong = giuongService.getGiuongById(selectedAppointment.getMaGiuong());
+                    if (giuong != null) {
+                        System.out.println("Đã cập nhật trạng thái giường " + giuong.getSoHieu()
+                                + " từ '" + giuong.getTrangThai() + "' -> 'Trống' (do hoàn thành lịch)");
                     }
 
-                    // LƯU HÓA ĐƠN VÀO DATABASE
-                    boolean luuHoaDonThanhCong = luuHoaDon(selectedAppointment);
-
-                    if (luuHoaDonThanhCong) {
-                        // CẬP NHẬT ĐIỂM TÍCH LŨY CHO KHÁCH HÀNG
-                        if (diemThuong > 0) {
-                            capNhatDiemTichLuy(selectedAppointment.getMaKhachHang(), diemThuong);
-                        }
-
-                        // In hóa đơn PDF
-                        inHoaDonPDF(selectedAppointment);
-
-                        clearForm();
-
-                        JOptionPane.showMessageDialog(view,
-                                "Hoàn thành lịch hẹn thành công!\n"
-                                + "- Đã lưu hóa đơn vào database\n"
-                                + (diemThuong > 0 ? "- Đã thưởng " + diemThuong + " điểm tích lũy cho khách hàng\n" : "")
-                                + (selectedAppointment.getMaGiuong() != null ? "- Giường đã được chuyển về trạng thái 'Trống'\n" : "")
-                                + "- Đã in PDF\n"
-                                + "- Đã xóa form",
-                                "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                        view.updateTimeline();
-                    } else {
-                        JOptionPane.showMessageDialog(view,
-                                "Hoàn thành lịch hẹn nhưng LỖI khi lưu hóa đơn!"
-                                + (selectedAppointment.getMaGiuong() != null ? "\nTuy nhiên giường đã được chuyển về trạng thái 'Trống'" : ""),
-                                "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(view, "Cập nhật trạng thái lịch hẹn thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    view.refreshGiuongComboBox();
                 }
+
+                // LƯU HÓA ĐƠN VÀO DATABASE
+                boolean luuHoaDonThanhCong = luuHoaDon(selectedAppointment);
+
+                if (luuHoaDonThanhCong) {
+                    // CẬP NHẬT ĐIỂM TÍCH LŨY CHO KHÁCH HÀNG
+                    if (diemThuong > 0) {
+                        capNhatDiemTichLuy(selectedAppointment.getMaKhachHang(), diemThuong);
+                    }
+
+                    // In hóa đơn PDF
+                    inHoaDonPDF(selectedAppointment);
+
+                    // TỰ ĐỘNG CHỌN LẠI LỊCH VỪA HOÀN THÀNH TRƯỚC KHI XÓA FORM
+                    DatLich updatedAppointment = datLichService.getDatLichById(selectedAppointment.getMaLich());
+                    if (updatedAppointment != null) {
+                        view.highlightSelectedAppointment(updatedAppointment);
+                    }
+                    
+                    clearForm();
+                    view.updateTimeline();
+
+                    // BỎ HỘP THOẠI THÔNG BÁO THÀNH CÔNG
+                    // JOptionPane.showMessageDialog(view,
+                    //        "Hoàn thành lịch hẹn thành công!\n"
+                    //        + "- Đã lưu hóa đơn vào database\n"
+                    //        + (diemThuong > 0 ? "- Đã thưởng " + diemThuong + " điểm tích lũy cho khách hàng\n" : "")
+                    //        + (selectedAppointment.getMaGiuong() != null ? "- Giường đã được chuyển về trạng thái 'Trống'\n" : "")
+                    //        + "- Đã in PDF\n"
+                    //        + "- Đã xóa form",
+                    //        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(view,
+                            "Hoàn thành lịch hẹn nhưng LỖI khi lưu hóa đơn!"
+                            + (selectedAppointment.getMaGiuong() != null ? "\nTuy nhiên giường đã được chuyển về trạng thái 'Trống'" : ""),
+                            "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(view, "Cập nhật trạng thái lịch hẹn thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi hoàn thành lịch hẹn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(view, "Lỗi khi hoàn thành lịch hẹn: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
     }
+}
 
 // Thêm phương thức cập nhật điểm tích lũy
     private void capNhatDiemTichLuy(Integer maKhachHang, int diemThuong) {
@@ -746,7 +772,6 @@ public class QuanLyDatLichController implements ActionListener {
         }
     }
 
-    // Cập nhật phương thức handleXacNhan() để kiểm tra giường "Đang sử dụng"
     private void handleXacNhan() {
         DatLich selectedAppointment = view.getSelectedAppointment();
         if (selectedAppointment == null) {
@@ -784,8 +809,16 @@ public class QuanLyDatLichController implements ActionListener {
                 }
 
                 if (success) {
-                    JOptionPane.showMessageDialog(view, "Xác nhận lịch hẹn thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    // TỰ ĐỘNG CHỌN LẠI LỊCH VỪA XÁC NHẬN
+                    DatLich updatedAppointment = datLichService.getDatLichById(selectedAppointment.getMaLich());
+                    if (updatedAppointment != null) {
+                        view.highlightSelectedAppointment(updatedAppointment);
+                    }
+
                     view.updateTimeline();
+
+                    // BỎ HỘP THOẠI THÔNG BÁO THÀNH CÔNG
+                    // JOptionPane.showMessageDialog(view, "Xác nhận lịch hẹn thành công", "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(view, "Xác nhận lịch hẹn thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
@@ -829,11 +862,19 @@ public class QuanLyDatLichController implements ActionListener {
                 }
 
                 if (success) {
-                    JOptionPane.showMessageDialog(view,
-                            "Hủy lịch hẹn thành công"
-                            + (selectedAppointment.getMaGiuong() != null ? "\nGiường đã được chuyển về trạng thái 'Trống'" : ""),
-                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    // TỰ ĐỘNG CHỌN LẠI LỊCH VỪA HỦY
+                    DatLich updatedAppointment = datLichService.getDatLichById(selectedAppointment.getMaLich());
+                    if (updatedAppointment != null) {
+                        view.highlightSelectedAppointment(updatedAppointment);
+                    }
+
                     view.updateTimeline();
+
+                    // BỎ HỘP THOẠI THÔNG BÁO THÀNH CÔNG
+                    // JOptionPane.showMessageDialog(view,
+                    //        "Hủy lịch hẹn thành công"
+                    //        + (selectedAppointment.getMaGiuong() != null ? "\nGiường đã được chuyển về trạng thái 'Trống'" : ""),
+                    //        "Thành công", JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(view, "Hủy lịch hẹn thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
@@ -858,7 +899,6 @@ public class QuanLyDatLichController implements ActionListener {
         }
     }
 
-    // CẬP NHẬT PHƯƠNG THỨC XÓA DỊCH VỤ ĐỂ XÓA CẢ PHÂN CÔNG
     private void handleXoaDichVu() {
         int selectedIndex = view.getListDichVu().getSelectedIndex();
         if (selectedIndex == -1) {
@@ -876,9 +916,10 @@ public class QuanLyDatLichController implements ActionListener {
             // Xóa phân công nhân viên cho dịch vụ này (nếu có)
             view.xoaPhanCongNhanVien(dichVuSeXoa);
 
-            JOptionPane.showMessageDialog(view, "Đã xóa dịch vụ và phân công nhân viên (nếu có)",
-                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            // Cập nhật hiển thị
+            view.capNhatHienThiPhanCong();
 
+            // BỎ HỘP THOẠI THÔNG BÁO XÓA THÀNH CÔNG
         } catch (Exception e) {
             JOptionPane.showMessageDialog(view, "Lỗi khi xóa dịch vụ: " + e.getMessage(),
                     "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -1028,6 +1069,9 @@ public class QuanLyDatLichController implements ActionListener {
                 }
             }
         }
+
+        // CẬP NHẬT HIỂN THỊ PHÂN CÔNG
+        view.capNhatHienThiPhanCong();
     }
 
     private void clearForm() {
@@ -1048,7 +1092,7 @@ public class QuanLyDatLichController implements ActionListener {
         // Giữ nguyên ngày đặt (ngày đang chọn trên lịch)
         view.getTxtNgayDat().setText(view.getSelectedDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
-        // Reset selected appointment
-        view.setSelectedAppointment(null);
+//        // Reset selected appointment
+//        view.setSelectedAppointment(null);
     }
 }

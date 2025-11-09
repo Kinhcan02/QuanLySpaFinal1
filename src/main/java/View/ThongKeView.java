@@ -5,6 +5,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import com.toedter.calendar.JDateChooser;
 
 public class ThongKeView extends JPanel {
 
@@ -15,10 +17,11 @@ public class ThongKeView extends JPanel {
 
     private JComboBox<Integer> cboNam;
     private JButton btnThongKe, btnXuatExcel;
-    private JTextField txtDateFrom, txtDateTo;
+    private JDateChooser dateChooserFrom, dateChooserTo;
     private JTabbedPane tabbedPane;
     private JTable tblKhachHang, tblDoanhThu, tblDichVu;
     private JTextArea txtTongQuan;
+    private JTable tblHoaDon;
 
     public ThongKeView() {
         initUI();
@@ -71,10 +74,22 @@ public class ThongKeView extends JPanel {
         lblFrom.setForeground(COLOR_BUTTON);
         pnControl.add(lblFrom);
 
-        txtDateFrom = new JTextField(10);
-        txtDateFrom.setText("01/01/2024");
-        styleTextField(txtDateFrom);
-        pnControl.add(txtDateFrom);
+        dateChooserFrom = new JDateChooser();
+        styleDateChooser(dateChooserFrom);
+
+        // Đặt ngày mặc định là 01/01/2024
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            Date defaultFromDate = sdf.parse("01/01/2024");
+            dateChooserFrom.setDate(defaultFromDate);
+        } catch (Exception e) {
+            // Nếu có lỗi, sử dụng ngày đầu năm hiện tại
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.MONTH, Calendar.JANUARY);
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            dateChooserFrom.setDate(cal.getTime());
+        }
+        pnControl.add(dateChooserFrom);
 
         // Ngày kết thúc
         JLabel lblTo = new JLabel("Đến ngày:");
@@ -82,15 +97,12 @@ public class ThongKeView extends JPanel {
         lblTo.setForeground(COLOR_BUTTON);
         pnControl.add(lblTo);
 
-        txtDateTo = new JTextField(10);
-        Calendar cal = Calendar.getInstance();
-        String currentDate = String.format("%02d/%02d/%d",
-                cal.get(Calendar.DAY_OF_MONTH),
-                cal.get(Calendar.MONTH) + 1,
-                cal.get(Calendar.YEAR));
-        txtDateTo.setText(currentDate);
-        styleTextField(txtDateTo);
-        pnControl.add(txtDateTo);
+        dateChooserTo = new JDateChooser();
+        styleDateChooser(dateChooserTo);
+
+        // Đặt ngày mặc định là ngày hiện tại
+        dateChooserTo.setDate(new Date());
+        pnControl.add(dateChooserTo);
 
         // Năm
         JLabel lblNam = new JLabel("Năm:");
@@ -136,6 +148,37 @@ public class ThongKeView extends JPanel {
         // Tab dịch vụ
         JPanel pnDichVu = createDichVuPanel();
         tabbedPane.addTab("Dịch vụ", pnDichVu);
+
+        // TAB MỚI: Hóa đơn
+        JPanel pnHoaDon = createHoaDonPanel();
+        tabbedPane.addTab("Hóa đơn", pnHoaDon);
+    }
+// Thêm phương thức tạo panel hóa đơn
+
+    private JPanel createHoaDonPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Color.WHITE);
+
+        String[] cols = {"Mã HĐ", "Ngày lập", "Khách hàng", "Nhân viên", "Tổng tiền", "Số DV", "Ghi chú"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        tblHoaDon = createStyledTable(model);
+
+        JScrollPane scrollPane = new JScrollPane(tblHoaDon);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Danh sách hóa đơn theo thời gian"));
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+// Thêm getter cho tblHoaDon
+    public JTable getTblHoaDon() {
+        return tblHoaDon;
     }
 
     private JPanel createTongQuanPanel() {
@@ -169,7 +212,7 @@ public class ThongKeView extends JPanel {
         };
 
         tblKhachHang = createStyledTable(model);
-        
+
         JScrollPane scrollPane = new JScrollPane(tblKhachHang);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Top khách hàng sử dụng nhiều dịch vụ nhất"));
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -190,7 +233,7 @@ public class ThongKeView extends JPanel {
         };
 
         tblDoanhThu = createStyledTable(model);
-        
+
         JScrollPane scrollPane = new JScrollPane(tblDoanhThu);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Doanh thu theo tháng"));
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -211,7 +254,7 @@ public class ThongKeView extends JPanel {
         };
 
         tblDichVu = createStyledTable(model);
-        
+
         JScrollPane scrollPane = new JScrollPane(tblDichVu);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Top dịch vụ bán chạy"));
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -268,14 +311,27 @@ public class ThongKeView extends JPanel {
         return button;
     }
 
-    private void styleTextField(JTextField field) {
-        field.setPreferredSize(new Dimension(100, 30));
-        field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BUTTON, 1),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)
-        ));
-        field.setBackground(Color.WHITE);
-        field.setForeground(COLOR_BUTTON);
+    private void styleDateChooser(JDateChooser dateChooser) {
+        dateChooser.setPreferredSize(new Dimension(120, 30));
+        dateChooser.setDateFormatString("dd/MM/yyyy");
+        dateChooser.getCalendarButton().setBackground(COLOR_BUTTON);
+        dateChooser.getCalendarButton().setForeground(COLOR_TEXT);
+        dateChooser.getCalendarButton().setFocusPainted(false);
+        dateChooser.getCalendarButton().setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        // Sửa lỗi: Ép kiểu an toàn về JTextField
+        Component editorComponent = dateChooser.getDateEditor().getUiComponent();
+        if (editorComponent instanceof JTextField) {
+            JTextField dateTextField = (JTextField) editorComponent;
+            dateTextField.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(COLOR_BUTTON, 1),
+                    BorderFactory.createEmptyBorder(5, 8, 5, 8)
+            ));
+            dateTextField.setBackground(Color.WHITE);
+            dateTextField.setForeground(COLOR_BUTTON);
+            dateTextField.setFont(new Font("Arial", Font.PLAIN, 12));
+            dateTextField.setCaretColor(COLOR_BUTTON);
+        }
     }
 
     // Getter methods
@@ -291,12 +347,20 @@ public class ThongKeView extends JPanel {
         return btnXuatExcel;
     }
 
-    public JTextField getTxtDateFrom() {
-        return txtDateFrom;
+    public Date getDateFrom() {
+        return dateChooserFrom.getDate();
     }
 
-    public JTextField getTxtDateTo() {
-        return txtDateTo;
+    public Date getDateTo() {
+        return dateChooserTo.getDate();
+    }
+
+    public JDateChooser getDateChooserFrom() {
+        return dateChooserFrom;
+    }
+
+    public JDateChooser getDateChooserTo() {
+        return dateChooserTo;
     }
 
     public JTable getTblKhachHang() {

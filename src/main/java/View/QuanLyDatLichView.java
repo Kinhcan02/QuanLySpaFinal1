@@ -65,7 +65,8 @@ public class QuanLyDatLichView extends JPanel {
     // Selected appointment
     private DatLich selectedAppointment;
     private Integer maGiuongCu; // THÊM FIELD NÀY
-
+    private final Color COLOR_SELECTED_HIGHLIGHT = new Color(0x25, 0x7A, 0xB8); // Xanh dương đậm cho highlight
+    private final Color COLOR_SELECTED_TEXT = Color.WHITE;
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
     private final Color COLOR_PRIMARY = new Color(0x4D, 0x8A, 0x57);
     private final Color COLOR_SECONDARY = new Color(0x6c, 0x75, 0x7d);
@@ -81,7 +82,7 @@ public class QuanLyDatLichView extends JPanel {
         loadData();
         loadNhanVienChoDichVu();
         this.phanCongNhanVien = new HashMap<>();
-
+        initListDichVuRenderer();
     }
 
     private void initServices() {
@@ -391,6 +392,51 @@ public class QuanLyDatLichView extends JPanel {
         }
     }
 
+    // THÊM PHƯƠNG THỨC CẬP NHẬT HIỂN THỊ PHÂN CÔNG TRONG DANH SÁCH DỊCH VỤ
+    public void capNhatHienThiPhanCong() {
+        // Cập nhật hiển thị trong list dịch vụ
+        for (int i = 0; i < listModelDichVu.size(); i++) {
+            DichVu dichVu = listModelDichVu.getElementAt(i);
+            // Không cần làm gì ở đây vì chúng ta sẽ xử lý trong renderer
+        }
+        listDichVu.repaint(); // Vẽ lại để cập nhật hiển thị
+    }
+
+// THÊM RENDERER TÙY CHỈNH CHO LIST DỊCH VỤ
+    private void initListDichVuRenderer() {
+        listDichVu.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+                if (value instanceof DichVu) {
+                    DichVu dichVu = (DichVu) value;
+                    StringBuilder displayText = new StringBuilder();
+                    displayText.append("<html>");
+                    displayText.append(dichVu.getTenDichVu());
+
+                    // Thêm thông tin nhân viên phân công nếu có
+                    NhanVien nhanVienPhanCong = phanCongNhanVien.get(dichVu);
+                    if (nhanVienPhanCong != null && nhanVienPhanCong.getMaNhanVien() != null) {
+                        displayText.append(" <br><font size='2' color='blue'><b>NV: ")
+                                .append(nhanVienPhanCong.getHoTen())
+                                .append(" - ")
+                                .append(nhanVienPhanCong.getChucVu() != null ? nhanVienPhanCong.getChucVu() : "")
+                                .append("</b></font>");
+                    } else {
+                        displayText.append(" <br><font size='2' color='gray'><i>Chưa phân công NV</i></font>");
+                    }
+
+                    displayText.append("</html>");
+                    label.setText(displayText.toString());
+                }
+
+                return label;
+            }
+        });
+    }
+
     // THÊM PHƯƠNG THỨC ĐỂ LẤY VÀ THIẾT LẬP PHÂN CÔNG NHÂN VIÊN
     public Map<DichVu, NhanVien> getPhanCongNhanVien() {
         return phanCongNhanVien;
@@ -402,6 +448,7 @@ public class QuanLyDatLichView extends JPanel {
 
     public void themPhanCongNhanVien(DichVu dichVu, NhanVien nhanVien) {
         this.phanCongNhanVien.put(dichVu, nhanVien);
+        capNhatHienThiPhanCong(); // CẬP NHẬT HIỂN THỊ NGAY LẬP TỨC
     }
 
     public void xoaPhanCongNhanVien(DichVu dichVu) {
@@ -482,6 +529,26 @@ public class QuanLyDatLichView extends JPanel {
         return btn;
     }
 
+// Phương thức để làm nổi bật lịch được chọn và cập nhật timeline
+    public void highlightSelectedAppointment(DatLich appointment) {
+        this.selectedAppointment = appointment;
+        updateTimeline(); // Cập nhật để áp dụng highlight
+
+        // Cập nhật form với thông tin lịch được chọn (nếu cần)
+        if (appointment != null) {
+            System.out.println("Đã chọn và highlight lịch: " + appointment.getMaLich() + " - "
+                    + getTenKhachHang(appointment.getMaKhachHang()));
+        }
+    }
+
+    public void setSelectedAppointment(DatLich appointment) {
+        this.selectedAppointment = appointment;
+        // Tự động cập nhật timeline để áp dụng highlight
+        if (appointment != null) {
+            updateTimeline();
+        }
+    }
+
     public void updateTimeline() {
         timelinePanel.removeAll();
 
@@ -498,7 +565,18 @@ public class QuanLyDatLichView extends JPanel {
                 appointments.sort((a, b) -> a.getGioDat().compareTo(b.getGioDat()));
 
                 for (DatLich appointment : appointments) {
-                    timelinePanel.add(createAppointmentPanel(appointment));
+                    JPanel appointmentPanel = createAppointmentPanel(appointment);
+
+                    // Làm nổi bật lịch đang được chọn
+                    if (selectedAppointment != null
+                            && selectedAppointment.getMaLich().equals(appointment.getMaLich())) {
+                        appointmentPanel.setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(Color.YELLOW, 3),
+                                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+                        ));
+                    }
+
+                    timelinePanel.add(appointmentPanel);
                     timelinePanel.add(Box.createRigidArea(new Dimension(0, 5)));
                 }
             }
@@ -524,8 +602,12 @@ public class QuanLyDatLichView extends JPanel {
     }
 
     private void showAppointmentDetails(DatLich appointment) {
+        // Tự động highlight lịch được click để xem chi tiết
+        highlightSelectedAppointment(appointment);
+
         StringBuilder details = new StringBuilder();
         details.append("Chi tiết lịch hẹn:\n");
+        details.append("Mã lịch: ").append(appointment.getMaLich()).append("\n");
         details.append("Khách hàng: ").append(getTenKhachHang(appointment.getMaKhachHang())).append("\n");
         KhachHang kh = khachHangService.getKhachHangById(appointment.getMaKhachHang());
         if (kh != null) {
@@ -557,28 +639,38 @@ public class QuanLyDatLichView extends JPanel {
         details.append("\nGhi chú: ").append(appointment.getGhiChu() != null ? appointment.getGhiChu() : "Không có");
 
         JOptionPane.showMessageDialog(this, details.toString(),
-                "Chi tiết lịch hẹn",
+                "Chi tiết lịch hẹn #" + appointment.getMaLich(),
                 JOptionPane.INFORMATION_MESSAGE
         );
     }
 
-    // CẬP NHẬT PHƯƠNG THỨC HIỂN THỊ TRONG TIMELINE
     private JPanel createAppointmentPanel(DatLich appointment) {
         JPanel panel = new JPanel(new BorderLayout(10, 5));
-        panel.setBackground(new Color(0x8C, 0xC9, 0x80));
+
+        // KIỂM TRA XEM LỊCH NÀY CÓ ĐANG ĐƯỢC CHỌN KHÔNG
+        boolean isSelected = selectedAppointment != null
+                && selectedAppointment.getMaLich().equals(appointment.getMaLich());
+
+        // SET MÀU NỀN DỰA TRÊN TRẠNG THÁI CHỌN
+        if (isSelected) {
+            panel.setBackground(COLOR_SELECTED_HIGHLIGHT);
+        } else {
+            panel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        }
+
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_PRIMARY, 2),
+                BorderFactory.createLineBorder(isSelected ? COLOR_SELECTED_HIGHLIGHT.darker() : COLOR_PRIMARY, 2),
                 BorderFactory.createEmptyBorder(12, 12, 12, 12)
         ));
         panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Time and status panel - LEFT
         JPanel leftPanel = new JPanel(new GridLayout(2, 1, 0, 5));
-        leftPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        leftPanel.setBackground(panel.getBackground());
 
         JLabel lblTime = new JLabel(appointment.getGioDat().format(DateTimeFormatter.ofPattern("HH:mm")));
         lblTime.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTime.setForeground(Color.WHITE);
+        lblTime.setForeground(isSelected ? COLOR_SELECTED_TEXT : Color.WHITE);
         lblTime.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel lblStatus = new JLabel(appointment.getTrangThai());
@@ -586,21 +678,25 @@ public class QuanLyDatLichView extends JPanel {
         lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
 
         // Color code status với màu sắc đẹp hơn
-        switch (appointment.getTrangThai()) {
-            case "Đã xác nhận":
-                lblStatus.setForeground(new Color(0x2E, 0xCC, 0x71)); // Xanh lá sáng
-                break;
-            case "Đã hủy":
-                lblStatus.setForeground(new Color(0xE7, 0x4C, 0x3C)); // Đỏ
-                break;
-            case "Hoàn thành":
-                lblStatus.setForeground(new Color(0x34, 0x98, 0xDB)); // Xanh dương
-                break;
-            case "Đang thực hiện":
-                lblStatus.setForeground(new Color(0xF3, 0x9C, 0x12)); // Vàng cam
-                break;
-            default: // Chờ xác nhận
-                lblStatus.setForeground(new Color(0xF1, 0xC4, 0x0F)); // Vàng
+        if (isSelected) {
+            lblStatus.setForeground(Color.YELLOW); // Màu vàng nổi bật khi được chọn
+        } else {
+            switch (appointment.getTrangThai()) {
+                case "Đã xác nhận":
+                    lblStatus.setForeground(new Color(0x2E, 0xCC, 0x71)); // Xanh lá sáng
+                    break;
+                case "Đã hủy":
+                    lblStatus.setForeground(new Color(0xE7, 0x4C, 0x3C)); // Đỏ
+                    break;
+                case "Hoàn thành":
+                    lblStatus.setForeground(new Color(0x34, 0x98, 0xDB)); // Xanh dương
+                    break;
+                case "Đang thực hiện":
+                    lblStatus.setForeground(new Color(0xF3, 0x9C, 0x12)); // Vàng cam
+                    break;
+                default: // Chờ xác nhận
+                    lblStatus.setForeground(new Color(0xF1, 0xC4, 0x0F)); // Vàng
+            }
         }
 
         leftPanel.add(lblTime);
@@ -608,12 +704,12 @@ public class QuanLyDatLichView extends JPanel {
 
         // Customer and service info - CENTER
         JPanel centerPanel = new JPanel(new BorderLayout(0, 8));
-        centerPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        centerPanel.setBackground(panel.getBackground());
 
         String customerName = getTenKhachHang(appointment.getMaKhachHang());
         JLabel lblCustomer = new JLabel(customerName);
         lblCustomer.setFont(new Font("Arial", Font.BOLD, 14));
-        lblCustomer.setForeground(Color.WHITE);
+        lblCustomer.setForeground(isSelected ? COLOR_SELECTED_TEXT : Color.WHITE);
 
         // Service names với hiển thị thông tin nhân viên
         StringBuilder services = new StringBuilder();
@@ -637,54 +733,64 @@ public class QuanLyDatLichView extends JPanel {
 
         JLabel lblServices = new JLabel("<html><div style='width: 200px;'>" + services.toString() + "</div></html>");
         lblServices.setFont(new Font("Arial", Font.PLAIN, 12));
-        lblServices.setForeground(new Color(0xEC, 0xF0, 0xF1));
+        lblServices.setForeground(isSelected ? new Color(0xEC, 0xF0, 0xF1) : new Color(0xEC, 0xF0, 0xF1));
 
         centerPanel.add(lblCustomer, BorderLayout.NORTH);
         centerPanel.add(lblServices, BorderLayout.CENTER);
 
         // Bed info - RIGHT (nếu có)
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+        rightPanel.setBackground(panel.getBackground());
 
         if (appointment.getMaGiuong() != null) {
             String tenGiuong = getTenGiuong(appointment.getMaGiuong());
             JLabel lblGiuong = new JLabel("Giường: " + tenGiuong);
             lblGiuong.setFont(new Font("Arial", Font.ITALIC, 11));
-            lblGiuong.setForeground(new Color(0xEC, 0xF0, 0xF1));
+            lblGiuong.setForeground(isSelected ? new Color(0xEC, 0xF0, 0xF1) : new Color(0xEC, 0xF0, 0xF1));
             rightPanel.add(lblGiuong, BorderLayout.NORTH);
         }
 
         // Thêm hiển thị số lượng người vào panel bên phải
         JLabel lblSoLuongNguoi = new JLabel("Số người: " + appointment.getSoLuongNguoi());
         lblSoLuongNguoi.setFont(new Font("Arial", Font.ITALIC, 11));
-        lblSoLuongNguoi.setForeground(new Color(0xEC, 0xF0, 0xF1));
+        lblSoLuongNguoi.setForeground(isSelected ? new Color(0xEC, 0xF0, 0xF1) : new Color(0xEC, 0xF0, 0xF1));
         rightPanel.add(lblSoLuongNguoi, BorderLayout.CENTER);
 
         panel.add(leftPanel, BorderLayout.WEST);
         panel.add(centerPanel, BorderLayout.CENTER);
         panel.add(rightPanel, BorderLayout.EAST);
 
-        // Add hover effect
-        panel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                panel.setBackground(COLOR_PRIMARY);
-                leftPanel.setBackground(COLOR_PRIMARY);
-                centerPanel.setBackground(COLOR_PRIMARY);
-                rightPanel.setBackground(COLOR_PRIMARY);
-            }
+        // Add hover effect - CHỈ ÁP DỤNG KHI KHÔNG ĐƯỢC CHỌN
+        if (!isSelected) {
+            panel.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    panel.setBackground(COLOR_PRIMARY);
+                    leftPanel.setBackground(COLOR_PRIMARY);
+                    centerPanel.setBackground(COLOR_PRIMARY);
+                    rightPanel.setBackground(COLOR_PRIMARY);
+                }
 
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                panel.setBackground(new Color(0x8C, 0xC9, 0x80));
-                leftPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-                centerPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-                rightPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    panel.setBackground(new Color(0x8C, 0xC9, 0x80));
+                    leftPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+                    centerPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+                    rightPanel.setBackground(new Color(0x8C, 0xC9, 0x80));
+                }
 
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                setSelectedAppointment(appointment);
-                showAppointmentDetails(appointment);
-            }
-        });
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    setSelectedAppointment(appointment);
+                    highlightSelectedAppointment(appointment);
+                    showAppointmentDetails(appointment);
+                }
+            });
+        } else {
+            // Khi đã được chọn, vẫn cho phép click để xem chi tiết
+            panel.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseClicked(java.awt.event.MouseEvent evt) {
+                    showAppointmentDetails(appointment);
+                }
+            });
+        }
 
         return panel;
     }
@@ -820,7 +926,6 @@ public class QuanLyDatLichView extends JPanel {
     public void setMaGiuongCu(Integer maGiuongCu) {
         this.maGiuongCu = maGiuongCu;
     }
-    
 
     public JComboBox<Giuong> getCbGiuong() {
         return cbGiuong;
@@ -892,10 +997,6 @@ public class QuanLyDatLichView extends JPanel {
 
     public DatLich getSelectedAppointment() {
         return selectedAppointment;
-    }
-
-    public void setSelectedAppointment(DatLich appointment) {
-        this.selectedAppointment = appointment;
     }
 
     // Thêm getter cho spinner số lượng người
