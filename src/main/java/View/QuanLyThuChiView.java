@@ -49,7 +49,7 @@ public class QuanLyThuChiView extends JPanel {
         pnTitle.setBackground(COLOR_BUTTON);
         pnTitle.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
 
-        JLabel lblTitle = new JLabel("QUẢN LÝ THU CHI - SPA/BEAUTY");
+        JLabel lblTitle = new JLabel("QUẢN LÝ THU CHI");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 28));
         lblTitle.setForeground(COLOR_TEXT);
         pnTitle.add(lblTitle);

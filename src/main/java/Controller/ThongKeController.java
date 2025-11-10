@@ -310,37 +310,38 @@ public class ThongKeController {
         }
 
         try {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Lưu báo cáo Excel");
-            fileChooser.setSelectedFile(new File("BaoCaoThongKe_"
-                    + new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date()) + ".xlsx"));
+            // Tạo đường dẫn động đến thư mục resources/thongke
+            String projectRoot = System.getProperty("user.dir");
+            String resourcesPath = projectRoot + File.separator + "src" + File.separator + "main"
+                    + File.separator + "resources" + File.separator + "thongke";
 
-            fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-                    "Excel Files (*.xlsx)", "xlsx"));
-
-            if (fileChooser.showSaveDialog(view) == JFileChooser.APPROVE_OPTION) {
-                File file = fileChooser.getSelectedFile();
-                if (!file.getName().toLowerCase().endsWith(".xlsx")) {
-                    file = new File(file.getAbsolutePath() + ".xlsx");
-                }
-
-                Workbook workbook = new XSSFWorkbook();
-                createExcelSheets(workbook);
-
-                FileOutputStream outputStream = new FileOutputStream(file);
-                workbook.write(outputStream);
-                workbook.close();
-                outputStream.close();
-
-                // Mở file Excel
-                if (Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().open(file);
-                }
-
-                JOptionPane.showMessageDialog(view,
-                        "Đã xuất báo cáo Excel thành công!\n"
-                        + "File: " + file.getName());
+            // Tạo thư mục nếu chưa tồn tại
+            File resourcesDir = new File(resourcesPath);
+            if (!resourcesDir.exists()) {
+                resourcesDir.mkdirs();
             }
+
+            // Tạo tên file với timestamp
+            String fileName = "BaoCaoThongKe_" + new SimpleDateFormat("ddMMyyyy_HHmmss").format(new Date()) + ".xlsx";
+            File file = new File(resourcesDir, fileName);
+
+            Workbook workbook = new XSSFWorkbook();
+            createExcelSheets(workbook);
+
+            FileOutputStream outputStream = new FileOutputStream(file);
+            workbook.write(outputStream);
+            workbook.close();
+            outputStream.close();
+
+            // Mở file Excel
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(file);
+            }
+
+            JOptionPane.showMessageDialog(view,
+                    "Đã xuất báo cáo Excel thành công!\n"
+            );
+
         } catch (Exception ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(view,
