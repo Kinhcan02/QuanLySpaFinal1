@@ -14,10 +14,6 @@ public class Auth {
         return dangNhap && "ADMIN".equalsIgnoreCase(loaiNguoiDung);
     }
     
-    public static boolean isThuNgan() {
-        return dangNhap && "THUNGAN".equalsIgnoreCase(loaiNguoiDung);
-    }
-    
     public static boolean isNhanVien() {
         return dangNhap && "NHANVIEN".equalsIgnoreCase(loaiNguoiDung);
     }

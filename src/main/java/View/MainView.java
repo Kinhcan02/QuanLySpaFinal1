@@ -19,13 +19,14 @@ import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 public class MainView extends JFrame {
 
+    private AuthController authController;
     private QuanLyDatLichView quanLyDatLichView;
     private QuanLyDatLichController quanLyDatLichController;
     private JDesktopPane desktopPane;
     private JButton btnThongBao, btnDatLich, btnQuanLyNguyenLieu,
             btnDatDichVu, btnQuanLyNhanVien, btnQuanLyCaLam,
             btnQuanLyKhachHang, btnQuanLyDichVu, btnThongKe,
-            btnQuanLyTaiKhoan, btnThoat, btnQuanLyThuChi, btnQuanLyLuong;
+            btnQuanLyTaiKhoan, btnThoat, btnQuanLyThuChi, btnQuanLyLuong, btnDangXuat;
     private JLabel lblUserInfo, lblVersion;
     private QuanLyDichVuView quanLyDichVuView;
     private QuanLyDichVuController quanLyDichVuController;
@@ -57,7 +58,8 @@ public class MainView extends JFrame {
     private JButton btnNguyenLieu, btnNhapNguyenLieu;
     private JPanel submenuNguyenLieuPanel;
 
-    public MainView() {
+    public MainView(AuthController authController) {
+        this.authController = authController; // NHẬN CONTROLLER
         mainViewController = new MainViewController(this);
         initUI();
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -167,10 +169,12 @@ public class MainView extends JFrame {
         btnQuanLyCaLam = createMenuButton("QUẢN LÝ CA LÀM");
         btnQuanLyKhachHang = createMenuButton("QUẢN LÝ KHÁCH HÀNG");
         btnQuanLyDichVu = createMenuButton("QUẢN LÝ DỊCH VỤ");
-        btnThongKe = createMenuButton("THỐNG KÊ");
         btnQuanLyTaiKhoan = createMenuButton("QUẢN LÝ TÀI KHOẢN");
         btnQuanLyThuChi = createMenuButton("QUẢN LÝ THU CHI");
         btnQuanLyLuong = createMenuButton("QUẢN LÝ LƯƠNG");
+        btnThongKe = createMenuButton("THỐNG KÊ");
+        btnDangXuat = createMenuButton("ĐĂNG XUẤT");
+
         // Thêm các component vào navPanel theo đúng thứ tự
         navPanel.add(btnThongBao);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -197,6 +201,8 @@ public class MainView extends JFrame {
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         navPanel.add(btnQuanLyLuong);
         navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        navPanel.add(btnDangXuat);
         // Separator
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setBackground(COLOR_MENU_LIGHT);
@@ -358,14 +364,14 @@ public class MainView extends JFrame {
         btnQuanLyCaLam.addActionListener(mainViewController);
         btnQuanLyKhachHang.addActionListener(mainViewController);
         btnQuanLyDichVu.addActionListener(mainViewController);
-        btnThongKe.addActionListener(e -> showThongKe());
         btnQuanLyTaiKhoan.addActionListener(mainViewController);
         btnThoat.addActionListener(mainViewController);
         btnDatLich.addActionListener(e -> showQuanLyDatLich());
         btnQuanLyThuChi.addActionListener(mainViewController);
+        btnThongKe.addActionListener(e -> showThongKe());
         // Nút mở rộng menu Nguyên liệu
         btnQuanLyNguyenLieu.addActionListener(e -> toggleNguyenLieuMenu());
-
+        btnDangXuat.addActionListener(mainViewController);
         // Submenu Nguyên liệu
         btnNguyenLieu.addActionListener(e -> showQuanLyNguyenLieu());
         btnNhapNguyenLieu.addActionListener(e -> showQuanLyNhapNguyenLieu());
@@ -967,6 +973,10 @@ public class MainView extends JFrame {
         return btnQuanLyLuong;
     }
 
+    public JButton getBtnDangXuat() {
+        return btnDangXuat;
+    }
+
     public void capNhatThongTinNguoiDung(String tenDangNhap, String vaiTro) {
         String vaiTroText = "";
 
@@ -992,14 +1002,48 @@ public class MainView extends JFrame {
     }
 
     public static void khoiChayUngDung() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new MainView().setVisible(true);
-                System.out.println("Ứng dụng Quản Lý SPA đã khởi chạy thành công!");
-            }
+    SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+            // Khởi động từ AuthController để đảm bảo luồng đăng nhập đúng
+            AuthController authController = new AuthController();
+            authController.khoiDong();
+            System.out.println("Ứng dụng Quản Lý SPA đã khởi chạy thành công!");
+        }
+    });
+}
+
+     public void dangXuat() {
+    
+    // Đóng tất cả internal frames
+    JInternalFrame[] frames = desktopPane.getAllFrames();
+    for (JInternalFrame frame : frames) {
+        try {
+            frame.dispose();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Clear desktop pane
+    desktopPane.removeAll();
+    desktopPane.revalidate();
+    desktopPane.repaint();
+
+    // Dispose main view
+    dispose();
+
+    // Gọi controller để xử lý đăng xuất
+    if (authController != null) {
+        authController.xuLyDangXuat();
+    } else {
+        // Fallback: hiển thị lại màn hình đăng nhập
+        SwingUtilities.invokeLater(() -> {
+            AuthController newAuthController = new AuthController();
+            newAuthController.khoiDong();
         });
     }
+}
 
     public static void main(String[] args) {
         System.out.println("Vui lòng sử dụng phương thức khoiChayUngDung() từ lớp Login");

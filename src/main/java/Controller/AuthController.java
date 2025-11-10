@@ -28,12 +28,21 @@ public class AuthController {
     }
 
     public void xuLyDangXuat() {
-        authService.dangXuat();
+
+        // Clear thông tin đăng nhập
+        Auth.clear();
+
         if (mainView != null) {
-            mainView.dispose();
+            mainView.setVisible(false);
             mainView = null;
+        } else {
         }
-        loginView.hienThiManHinhDangNhap();
+
+        // Hiển thị lại màn hình đăng nhập
+        if (loginView != null) {
+            loginView.hienThiManHinhDangNhap();
+        } else {
+        }
     }
 
     public void xuLyThoat() {
@@ -47,7 +56,7 @@ public class AuthController {
         loginView.dongManHinh();
 
         // Tạo và hiển thị MainView với thông tin người dùng
-        this.mainView = new MainView(); // <-- GÁN CHO BIẾN INSTANCE
+        this.mainView = new MainView(this); // TRUYỀN CONTROLLER VÀO ĐÂY
         mainView.setVisible(true);
         // Thiết lập quyền truy cập dựa trên vai trò
         phanQuyenChoMainView();
@@ -63,8 +72,7 @@ public class AuthController {
         // Phân quyền theo vai trò
         if ("NHANVIEN".equalsIgnoreCase(vaiTro)) {
             phanQuyenNhanVien();
-        } else if ("THUNGAN".equalsIgnoreCase(vaiTro)) {
-            phanQuyenThuNgan();
+
         } else if ("ADMIN".equalsIgnoreCase(vaiTro)) {
             phanQuyenAdmin();
         }
@@ -74,7 +82,7 @@ public class AuthController {
         // Nhân viên chỉ được đặt dịch vụ và xem thông tin cá nhân
         mainView.getBtnDatDichVu().setEnabled(true);
         mainView.getBtnQuanLyNhanVien().setEnabled(false);
-        mainView.getBtnQuanLyKhachHang().setEnabled(false);
+        mainView.getBtnQuanLyKhachHang().setEnabled(true);
         mainView.getBtnQuanLyDichVu().setEnabled(false);
         mainView.getBtnThongKe().setEnabled(false);
         mainView.getBtnQuanLyTaiKhoan().setEnabled(false);
@@ -87,21 +95,6 @@ public class AuthController {
         mainView.getBtnQuanLyTaiKhoan().setToolTipText("Không có quyền truy cập");
     }
 
-    private void phanQuyenThuNgan() {
-        // Thu ngân được đặt dịch vụ, quản lý khách hàng, thống kê
-        mainView.getBtnDatDichVu().setEnabled(true);
-        mainView.getBtnQuanLyNhanVien().setEnabled(false);
-        mainView.getBtnQuanLyKhachHang().setEnabled(true);
-        mainView.getBtnQuanLyDichVu().setEnabled(false);
-        mainView.getBtnThongKe().setEnabled(true);
-        mainView.getBtnQuanLyTaiKhoan().setEnabled(false);
-
-        // Thay đổi tooltip để hiển thị không có quyền
-        mainView.getBtnQuanLyNhanVien().setToolTipText("Không có quyền truy cập");
-        mainView.getBtnQuanLyDichVu().setToolTipText("Không có quyền truy cập");
-        mainView.getBtnQuanLyTaiKhoan().setToolTipText("Không có quyền truy cập");
-    }
-
     private void phanQuyenAdmin() {
         // Admin có toàn quyền
         mainView.getBtnDatDichVu().setEnabled(true);
@@ -110,6 +103,8 @@ public class AuthController {
         mainView.getBtnQuanLyDichVu().setEnabled(true);
         mainView.getBtnThongKe().setEnabled(true);
         mainView.getBtnQuanLyTaiKhoan().setEnabled(true);
+        mainView.getBtnDangXuat().setEnabled(true);
+        mainView.getBtnThoat().setEnabled(true);
     }
 
     public void khoiDong() {
