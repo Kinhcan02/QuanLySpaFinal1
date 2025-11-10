@@ -1,83 +1,80 @@
 package View;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-public class ThongBaoView extends JInternalFrame {
+public class ThongBaoView extends JPanel {
     private JList<String> listThongBao;
     private DefaultListModel<String> listModel;
     private JButton btnDong, btnXemTatCa, btnDanhDauDaDoc;
     private JLabel lblBadge;
-    private JPanel mainPanel;
 
-    // Màu sắc giống QuanLyTaiKhoanView
-    private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
+    // Màu sắc giống QuanLyCaLamView
+    private final Color COLOR_BACKGROUND = new Color(0xF0, 0xF8, 0xF0);
     private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);
     private final Color COLOR_TEXT = Color.WHITE;
+    private final Color COLOR_BORDER = new Color(0x4D, 0x8A, 0x57);
 
     public ThongBaoView() {
-        super("Thông Báo", true, true, true, true);
         initComponents();
         setupUI();
     }
 
     private void initComponents() {
-        // Kích thước bằng QuanLyTaiKhoanView
-        setSize(1200, 750);
-        
-        mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBackground(COLOR_BACKGROUND);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        setLayout(new BorderLayout(10, 10));
+        setBackground(COLOR_BACKGROUND);
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Panel tiêu đề giống QuanLyTaiKhoanView
+        // Panel tiêu đề
         JPanel headerPanel = createTitlePanel();
-
-        // Danh sách thông báo với kích thước lớn hơn
+        
+        // Danh sách thông báo
         listModel = new DefaultListModel<>();
         listThongBao = new JList<>(listModel);
-        listThongBao.setFont(new Font("Arial", Font.PLAIN, 14));
+        listThongBao.setFont(new Font("Arial", Font.PLAIN, 12));
         listThongBao.setBackground(Color.WHITE);
         listThongBao.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        listThongBao.setSelectionBackground(COLOR_BUTTON);
+        listThongBao.setSelectionForeground(COLOR_TEXT);
 
         JScrollPane scrollPane = new JScrollPane(listThongBao);
-        scrollPane.setPreferredSize(new Dimension(1150, 600)); // Kích thước lớn
+        scrollPane.setPreferredSize(new Dimension(800, 400));
         scrollPane.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(COLOR_BUTTON, 2), 
+            BorderFactory.createLineBorder(COLOR_BORDER, 1),
             "Thông báo hệ thống",
-            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-            javax.swing.border.TitledBorder.DEFAULT_POSITION,
-            new Font("Arial", Font.BOLD, 14),
-            COLOR_BUTTON
+            TitledBorder.DEFAULT_JUSTIFICATION,
+            TitledBorder.DEFAULT_POSITION,
+            new Font("Arial", Font.BOLD, 12),
+            COLOR_BORDER
         ));
 
         // Panel nút bấm
         JPanel buttonPanel = createButtonPanel();
 
         // Thêm components vào main panel
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        setContentPane(mainPanel);
+        add(headerPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private JPanel createTitlePanel() {
         JPanel pnTitle = new JPanel(new BorderLayout());
         pnTitle.setBackground(COLOR_BUTTON);
-        pnTitle.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        pnTitle.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
 
         JLabel lblTitle = new JLabel("HỆ THỐNG THÔNG BÁO");
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 24));
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 16));
         lblTitle.setForeground(COLOR_TEXT);
 
-        // Tạo badge và thêm vào góc phải
+        // Tạo badge
         lblBadge = new JLabel("0");
         lblBadge.setForeground(Color.WHITE);
         lblBadge.setBackground(Color.RED);
         lblBadge.setOpaque(true);
-        lblBadge.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        lblBadge.setFont(new Font("Arial", Font.BOLD, 14));
+        lblBadge.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+        lblBadge.setFont(new Font("Arial", Font.BOLD, 12));
         lblBadge.setVisible(false);
         lblBadge.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -92,9 +89,9 @@ public class ThongBaoView extends JInternalFrame {
     }
 
     private JPanel createButtonPanel() {
-        JPanel pnButton = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
+        JPanel pnButton = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         pnButton.setBackground(COLOR_BACKGROUND);
-        pnButton.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        pnButton.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
         btnDanhDauDaDoc = createStyledButton("Đánh dấu đã đọc", COLOR_BUTTON);
         btnXemTatCa = createStyledButton("Xem chi tiết", COLOR_BUTTON);
@@ -111,9 +108,12 @@ public class ThongBaoView extends JInternalFrame {
         JButton button = new JButton(text);
         button.setBackground(backgroundColor);
         button.setForeground(COLOR_TEXT);
-        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setFont(new Font("Arial", Font.BOLD, 12));
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(backgroundColor.darker(), 1),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+        ));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         button.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -130,31 +130,7 @@ public class ThongBaoView extends JInternalFrame {
     }
 
     private void setupUI() {
-        setFrameIcon(null);
-        setDefaultCloseOperation(JInternalFrame.HIDE_ON_CLOSE);
-        
-        // Thêm listener để xử lý khi đóng
-        addInternalFrameListener(new javax.swing.event.InternalFrameAdapter() {
-            @Override
-            public void internalFrameClosing(javax.swing.event.InternalFrameEvent e) {
-                // Chỉ ẩn đi thay vì đóng hoàn toàn
-                setVisible(false);
-            }
-        });
-    }
-
-    public void hienThi() {
-        setVisible(true);
-        toFront();
-        try {
-            setSelected(true);
-        } catch (java.beans.PropertyVetoException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void anDi() {
-        setVisible(false);
+        // Các thiết lập giao diện khác nếu cần
     }
 
     public void capNhatDanhSachThongBao(String[] thongBao) {
@@ -194,24 +170,6 @@ public class ThongBaoView extends JInternalFrame {
         SwingUtilities.invokeLater(() -> {
             lblBadge.setVisible(false);
         });
-    }
-
-    public void showInternalFrame(JInternalFrame internalFrame) {
-        Container parent = getParent();
-        if (parent instanceof JDesktopPane) {
-            JDesktopPane desktopPane = (JDesktopPane) parent;
-            desktopPane.add(internalFrame);
-            internalFrame.setVisible(true);
-            try {
-                internalFrame.setSelected(true);
-            } catch (java.beans.PropertyVetoException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public boolean isDangHienThi() {
-        return isVisible();
     }
 
     // GETTER METHODS

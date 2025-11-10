@@ -735,7 +735,6 @@ public void inHoaDonPDFDetail(DatLich datLich, KhachHang khachHang, Giuong giuon
         doc.add(new Paragraph("---------------------------------------------", fontNormal));
         doc.add(new Paragraph(" "));
         doc.add(new Paragraph("Ngày lập: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()), fontNormal));
-        doc.add(new Paragraph("Nhân viên lập: " + tenNV, fontNormal));
         doc.add(new Paragraph("Khách hàng: " + khachHang.getHoTen(), fontNormal));
 
         // Thêm thông tin liên hệ khách hàng

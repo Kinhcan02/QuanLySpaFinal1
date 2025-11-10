@@ -877,10 +877,6 @@ private boolean inHoaDonPDF() {
         // Thông tin hóa đơn - GIỐNG QUẢN LÝ ĐẶT LỊCH
         doc.add(new Paragraph("Ngày lập: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()), fontNormal));
         
-        // Lấy thông tin nhân viên từ combobox
-        String selectedNhanVien = (String) view.getCboNhanVien().getSelectedItem();
-        String tenNhanVienLap = Auth.tenDangNhap;
-        doc.add(new Paragraph("Nhân viên lập: " + tenNhanVienLap, fontNormal));
         
         doc.add(new Paragraph("Khách hàng: " + getTenKhachHangHienTai(), fontNormal));
 

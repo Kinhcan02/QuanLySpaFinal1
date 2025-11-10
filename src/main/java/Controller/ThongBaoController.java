@@ -2,7 +2,6 @@ package Controller;
 
 import View.ThongBaoView;
 import Service.ThongBaoService;
-import Service.DatLichService;
 import Model.ThongBao;
 import javax.swing.*;
 import java.awt.*;
@@ -15,14 +14,12 @@ import java.util.logging.Logger;
 public class ThongBaoController {
     private ThongBaoView thongBaoView;
     private ThongBaoService thongBaoService;
-    private DatLichService datLichService;
     private Timer thongBaoTimer;
     private static final Logger logger = Logger.getLogger(ThongBaoController.class.getName());
 
     public ThongBaoController(ThongBaoView thongBaoView) {
         this.thongBaoView = thongBaoView;
         this.thongBaoService = new ThongBaoService();
-        this.datLichService = new DatLichService();
         initController();
         setupThongBaoTimer();
     }
@@ -31,10 +28,13 @@ public class ThongBaoController {
         thongBaoView.getBtnDong().addActionListener(e -> dongThongBao());
         thongBaoView.getBtnXemTatCa().addActionListener(e -> xemTatCaThongBao());
         thongBaoView.getBtnDanhDauDaDoc().addActionListener(e -> danhDauDaDoc());
+        
+        // Tải thông báo ngay khi khởi tạo
+        kiemTraThongBaoMoi();
     }
 
     private void setupThongBaoTimer() {
-        thongBaoTimer = new Timer();
+        thongBaoTimer = new Timer(true); // Daemon thread
         thongBaoTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -61,8 +61,10 @@ public class ThongBaoController {
                             icon = "🎂 ";
                         } else if ("DAT_LICH".equals(tb.getLoaiThongBao())) {
                             icon = "⏰ ";
+                        } else if ("CANH_BAO".equals(tb.getLoaiThongBao())) {
+                            icon = "⚠️ ";
                         }
-                        return icon + tb.getNoiDung();
+                        return icon + tb.getNoiDung() + " (" + tb.getThoiGian().toString() + ")";
                     })
                     .toArray(String[]::new);
                 
@@ -74,34 +76,40 @@ public class ThongBaoController {
                 
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Lỗi khi kiểm tra thông báo", e);
-                // Hiển thị thông báo lỗi nhẹ nhàng
+                // Hiển thị thông báo lỗi trong danh sách
                 thongBaoView.hienThiThongBao("⚠️ Lỗi khi tải thông báo: " + e.getMessage());
             }
         });
     }
 
-    // Các phương thức khác giữ nguyên...
-    public void hienThiThongBao() {
-        thongBaoView.hienThi();
-        thongBaoView.anBadge();
-    }
-
     private void dongThongBao() {
-        thongBaoView.anDi();
+        // Ẩn panel thông báo hoặc thực hiện hành động đóng
+        Container parent = thongBaoView.getParent();
+        if (parent != null) {
+            if (parent instanceof JTabbedPane) {
+                // Nếu nằm trong JTabbedPane, chuyển sang tab khác
+                JTabbedPane tabbedPane = (JTabbedPane) parent;
+                tabbedPane.setSelectedIndex(0);
+            } else if (parent instanceof JPanel) {
+                // Ẩn panel
+                thongBaoView.setVisible(false);
+            }
+        }
     }
 
     private void xemTatCaThongBao() {
         try {
             List<ThongBao> tatCaThongBao = thongBaoService.getAllThongBao();
             
-            JInternalFrame internalFrame = new JInternalFrame(
-                    "Tất Cả Thông Báo",
-                    true, true, true, true
-            );
-
+            // Tạo dialog để hiển thị tất cả thông báo
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Tất Cả Thông Báo");
+            dialog.setModal(true);
+            dialog.setSize(600, 400);
+            dialog.setLocationRelativeTo(thongBaoView);
+            
             JPanel panel = new JPanel(new BorderLayout());
-            panel.setBackground(new Color(0x8C, 0xC9, 0x80));
-            panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
             if (tatCaThongBao.isEmpty()) {
                 JLabel lblEmpty = new JLabel("Không có thông báo nào", JLabel.CENTER);
@@ -122,14 +130,21 @@ public class ThongBaoController {
                 JTable table = new JTable(data, columnNames);
                 table.setFont(new Font("Arial", Font.PLAIN, 12));
                 table.setRowHeight(25);
+                table.setEnabled(false); // Chỉ để xem
                 
                 JScrollPane scrollPane = new JScrollPane(table);
                 panel.add(scrollPane, BorderLayout.CENTER);
             }
+            
+            // Nút đóng
+            JButton btnClose = new JButton("Đóng");
+            btnClose.addActionListener(e -> dialog.dispose());
+            JPanel buttonPanel = new JPanel(new FlowLayout());
+            buttonPanel.add(btnClose);
+            panel.add(buttonPanel, BorderLayout.SOUTH);
 
-            internalFrame.setContentPane(panel);
-            internalFrame.setSize(600, 400);
-            thongBaoView.showInternalFrame(internalFrame);
+            dialog.setContentPane(panel);
+            dialog.setVisible(true);
             
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Lỗi khi xem tất cả thông báo", e);
@@ -144,22 +159,45 @@ public class ThongBaoController {
         switch (loai) {
             case "SINH_NHAT": return "🎂 Sinh nhật";
             case "DAT_LICH": return "⏰ Lịch hẹn";
+            case "CANH_BAO": return "⚠️ Cảnh báo";
             default: return "ℹ️ Hệ thống";
         }
     }
 
     private void danhDauDaDoc() {
-        thongBaoView.xoaTatCaThongBao();
-        thongBaoView.hienThiThongBao("Đã đánh dấu tất cả thông báo là đã đọc");
-        JOptionPane.showMessageDialog(thongBaoView, 
-            "Đã đánh dấu tất cả thông báo là đã đọc", 
-            "Thông báo", 
-            JOptionPane.INFORMATION_MESSAGE);
+        try {
+            // Gọi service để đánh dấu đã đọc (nếu có chức năng này)
+            // thongBaoService.danhDauDaDoc();
+            
+            // Xóa thông báo khỏi view
+            thongBaoView.xoaTatCaThongBao();
+            
+            // Hiển thị thông báo xác nhận
+            thongBaoView.hienThiThongBao("✓ Đã đánh dấu tất cả thông báo là đã đọc");
+            
+            JOptionPane.showMessageDialog(thongBaoView, 
+                "Đã đánh dấu tất cả thông báo là đã đọc", 
+                "Thông báo", 
+                JOptionPane.INFORMATION_MESSAGE);
+                
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Lỗi khi đánh dấu đã đọc", e);
+            JOptionPane.showMessageDialog(thongBaoView, 
+                "Lỗi khi đánh dấu đã đọc: " + e.getMessage(), 
+                "Lỗi", 
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void dungTimer() {
         if (thongBaoTimer != null) {
             thongBaoTimer.cancel();
+            thongBaoTimer = null;
         }
+    }
+    
+    // Phương thức để dọn dẹp tài nguyên
+    public void cleanup() {
+        dungTimer();
     }
 }
