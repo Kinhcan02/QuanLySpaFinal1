@@ -155,7 +155,7 @@ public class QuanLyNhanVienView extends JPanel {
         pnForm.add(createStyledLabel("Chức vụ:"), gbc);
 
         gbc.gridx = 1;
-        cboChucVu = new JComboBox<>(new String[]{"Quản lý", "Nhân viên", "Kỹ thuật viên", "Lễ tân", "Thu ngân"});
+        cboChucVu = new JComboBox<>(new String[]{"Quản lý", "Nhân viên"});
         styleComboBox(cboChucVu);
         pnForm.add(cboChucVu, gbc);
 

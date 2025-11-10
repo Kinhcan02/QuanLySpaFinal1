@@ -88,7 +88,6 @@ public class QuanLyTaiKhoanController {
         cboVaiTroFilter.removeAllItems();
         cboVaiTroFilter.addItem("Tất cả");
         cboVaiTroFilter.addItem("Admin");
-        cboVaiTroFilter.addItem("ThuNgan");
         cboVaiTroFilter.addItem("NhanVien");
     }
     
@@ -113,7 +112,6 @@ public class QuanLyTaiKhoanController {
             // Load vai trò
             cboVaiTro.addItem("-- Chọn vai trò --");
             cboVaiTro.addItem("Admin");
-            cboVaiTro.addItem("ThuNgan");
             cboVaiTro.addItem("NhanVien");
 
             // Load nhân viên
@@ -245,7 +243,6 @@ public class QuanLyTaiKhoanController {
 
             // Load vai trò
             cboVaiTro.addItem("Admin");
-            cboVaiTro.addItem("ThuNgan");
             cboVaiTro.addItem("NhanVien");
             cboVaiTro.setSelectedItem(taiKhoan.getVaiTro());
 
