@@ -2,6 +2,7 @@ package Controller;
 
 import Model.*;
 import Service.*;
+import ShareInfo.Auth;
 import View.DatDichVuView;
 import View.KhachHangDialog;
 
@@ -821,10 +822,21 @@ private void handleDoiDiem() {
 private boolean inHoaDonPDF() {
     FileOutputStream fos = null;
     try {
+        // Tạo đường dẫn động đến thư mục bill
+        String projectDir = System.getProperty("user.dir");
+        String billDir = projectDir + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "bill";
+        
+        // Tạo thư mục nếu chưa tồn tại
+        File directory = new File(billDir);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        
         // Tạo tên file
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         String fileName = "HoaDon_DichVu_" + sdf.format(new Date()) + ".pdf";
-        fos = new FileOutputStream(fileName);
+        String filePath = billDir + File.separator + fileName;
+        fos = new FileOutputStream(filePath);
 
         Document doc = new Document();
         PdfWriter writer = PdfWriter.getInstance(doc, fos);
@@ -867,10 +879,7 @@ private boolean inHoaDonPDF() {
         
         // Lấy thông tin nhân viên từ combobox
         String selectedNhanVien = (String) view.getCboNhanVien().getSelectedItem();
-        String tenNhanVienLap = "Nhân viên lễ tân";
-        if (selectedNhanVien != null && !selectedNhanVien.equals("-- Chọn nhân viên --")) {
-            tenNhanVienLap = selectedNhanVien.split(" - ")[0];
-        }
+        String tenNhanVienLap = Auth.tenDangNhap;
         doc.add(new Paragraph("Nhân viên lập: " + tenNhanVienLap, fontNormal));
         
         doc.add(new Paragraph("Khách hàng: " + getTenKhachHangHienTai(), fontNormal));
@@ -956,7 +965,10 @@ private boolean inHoaDonPDF() {
                         + "&accountName=" + URLEncoder.encode(accountName, StandardCharsets.UTF_8);
 
                 BufferedImage qrBufferedImage = ImageIO.read(new URL(qrUrl));
-                String qrPath = "VietQR_DichVu_" + System.currentTimeMillis() + ".png";
+                
+                // Lưu QR code vào thư mục bill
+                String qrFileName = "VietQR_DichVu_" + System.currentTimeMillis() + ".png";
+                String qrPath = billDir + File.separator + qrFileName;
                 ImageIO.write(qrBufferedImage, "PNG", new File(qrPath));
 
                 com.itextpdf.text.Image qrImage = com.itextpdf.text.Image.getInstance(qrPath);
@@ -990,9 +1002,9 @@ private boolean inHoaDonPDF() {
         doc.close();
 
         // Mở file PDF - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        JOptionPane.showMessageDialog(view, "Đã in hóa đơn ra file: " + fileName);
+        JOptionPane.showMessageDialog(view, "Đã in hóa đơn ra file: " + filePath);
         try {
-            Desktop.getDesktop().open(new File(fileName));
+            Desktop.getDesktop().open(new File(filePath));
         } catch (Exception e) {
             System.err.println("Không thể mở file PDF: " + e.getMessage());
         }
