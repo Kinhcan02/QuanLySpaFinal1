@@ -18,12 +18,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PhanTramDichVuController {
+
     private final PhanTramDichVuView view;
     private final PhanTramDichVuService phanTramService;
     private final NhanVienService nhanVienService;
     private final LoaiDichVuService loaiDichVuService;
     private Integer currentMaNhanVien;
-    
+
     // Map để lưu trữ mapping giữa tên và mã
     private Map<String, Integer> nhanVienMap;
     private Map<String, Integer> loaiDichVuMap;
@@ -40,7 +41,7 @@ public class PhanTramDichVuController {
         this.loaiDichVuService = new LoaiDichVuService();
         this.nhanVienMap = new HashMap<>();
         this.loaiDichVuMap = new HashMap<>();
-        
+
         initController();
         loadComboBoxData();
         if (maNhanVien != null) {
@@ -107,38 +108,36 @@ public class PhanTramDichVuController {
 
     private void loadComboBoxData() {
         try {
-            // Load danh sách nhân viên
+            // Load danh sách nhân viên - sử dụng Map với key là "Mã NV - Tên NV"
             List<NhanVien> nhanViens = nhanVienService.getAllNhanVien();
-            view.getCboNhanVien().removeAllItems();
             nhanVienMap.clear();
-            
+
             for (NhanVien nv : nhanViens) {
-                String tenNhanVien = nv.getHoTen();
-                view.getCboNhanVien().addItem(tenNhanVien);
-                nhanVienMap.put(tenNhanVien, nv.getMaNhanVien());
+                // Sử dụng format "Mã NV - Tên NV" để đảm bảo duy nhất
+                String key = nv.getMaNhanVien() + " - " + nv.getHoTen();
+                nhanVienMap.put(key, nv.getMaNhanVien());
             }
 
             // Load danh sách loại dịch vụ
             List<LoaiDichVu> loaiDichVus = loaiDichVuService.getAllLoaiDichVu();
             view.getCboLoaiDichVu().removeAllItems();
             loaiDichVuMap.clear();
-            
+
             for (LoaiDichVu ldv : loaiDichVus) {
                 String tenLoaiDichVu = ldv.getTenLoaiDV();
                 view.getCboLoaiDichVu().addItem(tenLoaiDichVu);
                 loaiDichVuMap.put(tenLoaiDichVu, ldv.getMaLoaiDV());
             }
-            
-            // Nếu có currentMaNhanVien, tự động chọn nhân viên đó
+
+            // Nếu có currentMaNhanVien, tự động hiển thị "Mã NV - Tên NV"
             if (currentMaNhanVien != null) {
                 String tenNhanVien = getTenNhanVien(currentMaNhanVien);
                 if (tenNhanVien != null && !tenNhanVien.equals("N/A")) {
-                    view.getCboNhanVien().setSelectedItem(tenNhanVien);
-                    // Disable combobox nhân viên nếu chỉ xem của 1 nhân viên cụ thể
-                    view.getCboNhanVien().setEnabled(false);
+                    String displayText = currentMaNhanVien + " - " + tenNhanVien;
+                    view.getTxtNhanVien().setText(displayText);
                 }
             }
-            
+
         } catch (Exception e) {
             showError("Lỗi khi tải dữ liệu combobox: " + e.getMessage());
         }
@@ -173,7 +172,7 @@ public class PhanTramDichVuController {
 
             Object[] row = {
                 pt.getMaPhanTram(),
-                tenNhanVien,
+                pt.getMaNhanVien() + " - " + tenNhanVien, // Hiển thị cả mã và tên
                 tenLoaiDichVu,
                 String.format("%.1f%%", pt.getTiLePhanTram())
             };
@@ -208,7 +207,9 @@ public class PhanTramDichVuController {
     private void themPhanTramDichVu() {
         try {
             PhanTramDichVu pt = layThongTinPhanTramTuForm();
-            if (pt == null) return;
+            if (pt == null) {
+                return;
+            }
 
             if (phanTramService.addPhanTramDichVu(pt)) {
                 showSuccess("Thêm phần trăm dịch vụ thành công!");
@@ -236,7 +237,9 @@ public class PhanTramDichVuController {
 
             int maPhanTram = Integer.parseInt(maPTStr);
             PhanTramDichVu pt = layThongTinPhanTramTuForm();
-            if (pt == null) return;
+            if (pt == null) {
+                return;
+            }
 
             pt.setMaPhanTram(maPhanTram);
 
@@ -266,10 +269,10 @@ public class PhanTramDichVuController {
 
             int maPhanTram = Integer.parseInt(maPTStr);
             int confirm = JOptionPane.showConfirmDialog(
-                view,
-                "Bạn có chắc chắn muốn xóa phần trăm dịch vụ này?",
-                "Xác nhận xóa",
-                JOptionPane.YES_NO_OPTION
+                    view,
+                    "Bạn có chắc chắn muốn xóa phần trăm dịch vụ này?",
+                    "Xác nhận xóa",
+                    JOptionPane.YES_NO_OPTION
             );
 
             if (confirm == JOptionPane.YES_OPTION) {
@@ -294,7 +297,7 @@ public class PhanTramDichVuController {
         try {
             String tuKhoa = view.getTxtTimKiem().getText().trim().toLowerCase();
             List<PhanTramDichVu> ketQua;
-            
+
             if (currentMaNhanVien != null) {
                 ketQua = phanTramService.getPhanTramByNhanVien(currentMaNhanVien);
             } else {
@@ -306,11 +309,12 @@ public class PhanTramDichVuController {
                 ketQua = ketQua.stream()
                         .filter(pt -> {
                             String tenNV = getTenNhanVien(pt.getMaNhanVien()).toLowerCase();
+                            String maVaTen = pt.getMaNhanVien() + " - " + tenNV;
                             String tenLoaiDV = getTenLoaiDichVu(pt.getMaLoaiDV()).toLowerCase();
                             String tiLe = String.format("%.1f", pt.getTiLePhanTram());
-                            return tenNV.contains(keyword) || 
-                                   tenLoaiDV.contains(keyword) || 
-                                   tiLe.contains(keyword);
+                            return maVaTen.toLowerCase().contains(keyword)
+                                    || tenLoaiDV.contains(keyword)
+                                    || tiLe.contains(keyword);
                         })
                         .toList();
             }
@@ -329,16 +333,16 @@ public class PhanTramDichVuController {
         if (selectedRow >= 0) {
             DefaultTableModel model = view.getModel();
             view.getTxtMaPhanTram().setText(model.getValueAt(selectedRow, 0).toString());
-            
+
             // Lấy thông tin từ bảng
-            String tenNhanVien = model.getValueAt(selectedRow, 1).toString();
+            String maVaTenNhanVien = model.getValueAt(selectedRow, 1).toString();
             String tenLoaiDichVu = model.getValueAt(selectedRow, 2).toString();
             String tiLeStr = model.getValueAt(selectedRow, 3).toString();
-            
-            // Set selected item cho combobox
-            view.getCboNhanVien().setSelectedItem(tenNhanVien);
+
+            // Set selected item cho textfield và combobox
+            view.getTxtNhanVien().setText(maVaTenNhanVien);
             view.getCboLoaiDichVu().setSelectedItem(tenLoaiDichVu);
-            
+
             // Xử lý tỉ lệ phần trăm (bỏ ký tự %)
             if (tiLeStr.endsWith("%")) {
                 tiLeStr = tiLeStr.substring(0, tiLeStr.length() - 1);
@@ -349,12 +353,12 @@ public class PhanTramDichVuController {
 
     private PhanTramDichVu layThongTinPhanTramTuForm() {
         try {
-            String tenNhanVien = (String) view.getCboNhanVien().getSelectedItem();
+            String nhanVienText = view.getTxtNhanVien().getText().trim();
             String tenLoaiDichVu = (String) view.getCboLoaiDichVu().getSelectedItem();
             String tiLePhanTramStr = view.getTxtTiLePhanTram().getText().trim();
 
             // Validation
-            if (tenNhanVien == null || tenNhanVien.isEmpty()) {
+            if (nhanVienText == null || nhanVienText.isEmpty()) {
                 showError("Vui lòng chọn nhân viên!");
                 return null;
             }
@@ -369,12 +373,31 @@ public class PhanTramDichVuController {
                 return null;
             }
 
-            // Lấy mã từ map
-            Integer maNhanVien = nhanVienMap.get(tenNhanVien);
+            // Lấy mã nhân viên từ text (format: "Mã NV - Tên NV")
+            Integer maNhanVien = null;
+            if (currentMaNhanVien != null) {
+                // Nếu đang filter theo nhân viên cụ thể, sử dụng currentMaNhanVien
+                maNhanVien = currentMaNhanVien;
+            } else {
+                // Nếu không filter, phân tích từ text field
+                if (nhanVienText.contains("-")) {
+                    try {
+                        String maStr = nhanVienText.split("-")[0].trim();
+                        maNhanVien = Integer.parseInt(maStr);
+                    } catch (Exception e) {
+                        showError("Định dạng nhân viên không hợp lệ!");
+                        return null;
+                    }
+                } else {
+                    // Fallback: tìm trong map (có thể không chính xác nếu trùng tên)
+                    maNhanVien = nhanVienMap.get(nhanVienText);
+                }
+            }
+
             Integer maLoaiDV = loaiDichVuMap.get(tenLoaiDichVu);
 
             if (maNhanVien == null) {
-                showError("Không tìm thấy nhân viên: " + tenNhanVien);
+                showError("Không tìm thấy mã nhân viên từ: " + nhanVienText);
                 return null;
             }
 
@@ -404,8 +427,9 @@ public class PhanTramDichVuController {
                     String maPTStr = view.getTxtMaPhanTram().getText().trim();
                     // Nếu đang thêm mới hoặc sửa bản ghi khác
                     if (maPTStr.isEmpty() || existing.getMaPhanTram() != Integer.parseInt(maPTStr)) {
-                        showError("Đã tồn tại phần trăm dịch vụ cho nhân viên '" + tenNhanVien + 
-                                "' và loại dịch vụ '" + tenLoaiDichVu + "'");
+                        String tenNhanVienChinhXac = getTenNhanVien(maNhanVien);
+                        showError("Đã tồn tại phần trăm dịch vụ cho nhân viên '" + tenNhanVienChinhXac
+                                + "' (Mã NV: " + maNhanVien + ") và loại dịch vụ '" + tenLoaiDichVu + "'");
                         return null;
                     }
                 }
@@ -425,26 +449,24 @@ public class PhanTramDichVuController {
         view.getTxtMaPhanTram().setText("");
         view.getTxtTiLePhanTram().setText("");
         view.getTxtTimKiem().setText("");
-        
+
         // Reset combobox nhưng vẫn giữ nhân viên nếu đang filter
         if (view.getCboLoaiDichVu().getItemCount() > 0) {
             view.getCboLoaiDichVu().setSelectedIndex(0);
         }
-        
-        // Chỉ reset combobox nhân viên nếu không đang filter theo nhân viên cụ thể
+
+        // Chỉ reset textfield nhân viên nếu không đang filter theo nhân viên cụ thể
         if (currentMaNhanVien == null) {
-            if (view.getCboNhanVien().getItemCount() > 0) {
-                view.getCboNhanVien().setSelectedIndex(0);
-            }
-            view.getCboNhanVien().setEnabled(true);
+            view.getTxtNhanVien().setText("");
         } else {
-            // Nếu đang filter theo nhân viên, vẫn giữ nhân viên đó được chọn
+            // Nếu đang filter theo nhân viên, vẫn giữ nhân viên đó được hiển thị
             String tenNhanVien = getTenNhanVien(currentMaNhanVien);
             if (tenNhanVien != null && !tenNhanVien.equals("N/A")) {
-                view.getCboNhanVien().setSelectedItem(tenNhanVien);
+                String displayText = currentMaNhanVien + " - " + tenNhanVien;
+                view.getTxtNhanVien().setText(displayText);
             }
         }
-        
+
         view.getTblPhanTram().clearSelection();
     }
 
@@ -459,12 +481,12 @@ public class PhanTramDichVuController {
     private void showInfo(String message) {
         JOptionPane.showMessageDialog(view, message, "Thông tin", JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
     // Getter để có thể truy cập từ bên ngoài nếu cần
     public Integer getCurrentMaNhanVien() {
         return currentMaNhanVien;
     }
-    
+
     public void setCurrentMaNhanVien(Integer maNhanVien) {
         this.currentMaNhanVien = maNhanVien;
         if (maNhanVien != null) {

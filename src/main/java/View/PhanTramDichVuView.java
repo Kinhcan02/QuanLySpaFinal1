@@ -9,7 +9,8 @@ public class PhanTramDichVuView extends JPanel {
     private DefaultTableModel model;
     private JTextField txtTimKiem;
     private JButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem;
-    private JComboBox<String> cboNhanVien, cboLoaiDichVu;
+    private JTextField txtNhanVien; // Đổi từ JComboBox thành JTextField
+    private JComboBox<String> cboLoaiDichVu;
     private JTextField txtTiLePhanTram;
     private JTextField txtMaPhanTram;
 
@@ -109,9 +110,9 @@ public class PhanTramDichVuView extends JPanel {
 
         gbc.gridx = 3;
         gbc.gridwidth = 3;
-        cboNhanVien = new JComboBox<>();
-        styleComboBox(cboNhanVien);
-        pnForm.add(cboNhanVien, gbc);
+        txtNhanVien = createStyledTextField(20); // Đổi thành JTextField
+        txtNhanVien.setEditable(false); // Không cho chỉnh sửa vì chỉ hiển thị
+        pnForm.add(txtNhanVien, gbc);
 
         // Dòng 2: Loại dịch vụ và Tỉ lệ phần trăm
         gbc.gridwidth = 1;
@@ -271,7 +272,7 @@ public class PhanTramDichVuView extends JPanel {
         return button;
     }
 
-    // Getter methods
+    // Getter methods - Cập nhật getter cho txtNhanVien
     public JTable getTblPhanTram() { return tblPhanTram; }
     public DefaultTableModel getModel() { return model; }
     public JTextField getTxtTimKiem() { return txtTimKiem; }
@@ -280,7 +281,7 @@ public class PhanTramDichVuView extends JPanel {
     public JButton getBtnXoa() { return btnXoa; }
     public JButton getBtnLamMoi() { return btnLamMoi; }
     public JButton getBtnTimKiem() { return btnTimKiem; }
-    public JComboBox<String> getCboNhanVien() { return cboNhanVien; }
+    public JTextField getTxtNhanVien() { return txtNhanVien; } // Đổi từ getCboNhanVien()
     public JComboBox<String> getCboLoaiDichVu() { return cboLoaiDichVu; }
     public JTextField getTxtTiLePhanTram() { return txtTiLePhanTram; }
     public JTextField getTxtMaPhanTram() { return txtMaPhanTram; }
