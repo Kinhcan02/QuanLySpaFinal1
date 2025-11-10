@@ -221,20 +221,20 @@ public class QuanLyNhapNguyenLieuController {
         try {
             // Tạo dialog với 2 lựa chọn
             JPanel panel = new JPanel(new GridLayout(0, 1));
-
+            
             JRadioButton rbDaCo = new JRadioButton("Nguyên liệu đã có");
             JRadioButton rbChuaCo = new JRadioButton("Nguyên liệu chưa có");
             ButtonGroup group = new ButtonGroup();
             group.add(rbDaCo);
             group.add(rbChuaCo);
-
             panel.add(new JLabel("Chọn loại nguyên liệu:"));
             panel.add(rbDaCo);
             panel.add(rbChuaCo);
-
+            rbDaCo.setBackground(COLOR_BACKGROUND);
+            rbChuaCo.setBackground(COLOR_BACKGROUND);
             Object[] message = {"Chọn loại nguyên liệu:", panel};
             boolean confirmed = showCustomInputDialog(message, "Chọn loại nguyên liệu");
-
+            
             if (confirmed) {
                 if (rbDaCo.isSelected()) {
                     themNguyenLieuDaCo();

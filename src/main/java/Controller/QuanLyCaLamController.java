@@ -112,8 +112,8 @@ public class QuanLyCaLamController {
             String gioBatDau = caLam.getGioBatDau().format(timeFormatter);
             String gioKetThuc = caLam.getGioKetThuc().format(timeFormatter);
             String soGioLam = String.format("%.1f", caLam.getSoGioLam());
-            String soGioTangCa = caLam.getSoGioTangCa() != null ? 
-                String.format("%.1f", caLam.getSoGioTangCa()) : "0";
+            String soGioTangCa = caLam.getSoGioTangCa() != null
+                    ? String.format("%.1f", caLam.getSoGioTangCa()) : "0";
             String tienTip = formatCurrency(caLam.getTienTip());
 
             model.addRow(new Object[]{
@@ -126,7 +126,9 @@ public class QuanLyCaLamController {
     private void themCaLam() {
         try {
             CaLam caLam = getCaLamFromForm();
-            if (caLam == null) return;
+            if (caLam == null) {
+                return;
+            }
 
             if (caLamService.addCaLam(caLam)) {
                 showMessage("Thêm ca làm thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
@@ -149,7 +151,9 @@ public class QuanLyCaLamController {
 
         try {
             CaLam caLam = getCaLamFromForm();
-            if (caLam == null) return;
+            if (caLam == null) {
+                return;
+            }
 
             // Get original CaLam to preserve ID
             LocalDate selectedDate = view.getSelectedDate();
@@ -177,10 +181,10 @@ public class QuanLyCaLamController {
         }
 
         int confirm = JOptionPane.showConfirmDialog(
-            view,
-            "Bạn có chắc chắn muốn xóa ca làm này?",
-            "Xác nhận xóa",
-            JOptionPane.YES_NO_OPTION
+                view,
+                "Bạn có chắc chắn muốn xóa ca làm này?",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION
         );
 
         if (confirm == JOptionPane.YES_OPTION) {
@@ -213,29 +217,29 @@ public class QuanLyCaLamController {
             LocalDate selectedDate = view.getSelectedDate();
             List<CaLam> caLams = caLamService.getCaLamByNgay(selectedDate);
             CaLam caLam = caLams.get(selectedRow);
-            
+
             String tenNhanVien = getTenNhanVien(caLam.getMaNhanVien());
             String currentTip = formatCurrency(caLam.getTienTip());
 
             String tienTipStr = JOptionPane.showInputDialog(
-                view,
-                "Nhân viên: " + tenNhanVien + 
-                "\nNgày làm: " + caLam.getNgayLam() +
-                "\nTip hiện tại: " + currentTip +
-                "\n\nNhập số tiền tip mới (sẽ cộng dồn):",
-                "Thêm Tip",
-                JOptionPane.QUESTION_MESSAGE
+                    view,
+                    "Nhân viên: " + tenNhanVien
+                    + "\nNgày làm: " + caLam.getNgayLam()
+                    + "\nTip hiện tại: " + currentTip
+                    + "\n\nNhập số tiền tip mới (sẽ cộng dồn):",
+                    "Thêm Tip",
+                    JOptionPane.QUESTION_MESSAGE
             );
 
             if (tienTipStr != null && !tienTipStr.trim().isEmpty()) {
                 BigDecimal tienTipMoi = new BigDecimal(tienTipStr.trim());
-                
+
                 // Cộng dồn tip mới vào tip hiện tại
                 BigDecimal tienTipTong = caLam.getTienTip().add(tienTipMoi);
 
                 if (caLamService.updateTienTip(caLam.getMaCa(), tienTipTong)) {
-                    showMessage("Thêm tip thành công!\nTổng tip hiện tại: " + formatCurrency(tienTipTong), 
-                               "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    showMessage("Thêm tip thành công!\nTổng tip hiện tại: " + formatCurrency(tienTipTong),
+                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
                     loadDataForSelectedDate();
                 } else {
                     showMessage("Thêm tip thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -346,7 +350,13 @@ public class QuanLyCaLamController {
             view.getTxtGioKetThuc().setText(caLam.getGioKetThuc().format(timeFormatter));
             view.getTxtSoGioLam().setText(String.format("%.2f", caLam.getSoGioLam()));
             view.getTxtSoGioTangCa().setText(String.format("%.2f", caLam.getSoGioTangCa()));
-            view.getTxtTienTip().setText(caLam.getTienTip().toString());
+            BigDecimal tienTip = caLam.getTienTip();
+            // Loại bỏ phần thập phân nếu là số nguyên
+            if (tienTip.stripTrailingZeros().scale() <= 0) {
+                view.getTxtTienTip().setText(tienTip.toBigInteger().toString());
+            } else {
+                view.getTxtTienTip().setText(tienTip.toString());
+            }
         } catch (Exception e) {
             showMessage("Lỗi khi điền form: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -367,7 +377,9 @@ public class QuanLyCaLamController {
     }
 
     private String formatCurrency(BigDecimal amount) {
-        if (amount == null) return "0";
+        if (amount == null) {
+            return "0";
+        }
         return String.format("%,.0f VND", amount);
     }
 
