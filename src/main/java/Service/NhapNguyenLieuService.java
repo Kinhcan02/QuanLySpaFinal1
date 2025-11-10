@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class NhapNguyenLieuService {
+
     private final NhapNguyenLieuRepository repository;
     private static final Logger logger = Logger.getLogger(NhapNguyenLieuService.class.getName());
 
@@ -22,6 +23,15 @@ public class NhapNguyenLieuService {
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Lỗi khi lấy danh sách nhập nguyên liệu", e);
             throw new RuntimeException("Không thể lấy danh sách nhập nguyên liệu", e);
+        }
+    }
+
+    public List<NhapNguyenLieu> getNhapNguyenLieuByThangNam(int thang, int nam) {
+        try {
+            return repository.getByThangNam(thang, nam);
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Lỗi khi lấy nhập nguyên liệu theo tháng năm: " + thang + "/" + nam, e);
+            throw new RuntimeException("Không thể lấy nhập nguyên liệu theo tháng năm", e);
         }
     }
 
@@ -117,12 +127,12 @@ public class NhapNguyenLieuService {
         if (nhapNL == null) {
             throw new IllegalArgumentException("Nhập nguyên liệu không được null");
         }
-        
+
         // SỬA LẠI: CHO PHÉP MaNguyenLieu = null hoặc = 0
         if (nhapNL.getMaNguyenLieu() != null && nhapNL.getMaNguyenLieu() <= 0) {
             throw new IllegalArgumentException("Mã nguyên liệu không hợp lệ");
         }
-        
+
         if (nhapNL.getSoLuong() <= 0) {
             throw new IllegalArgumentException("Số lượng nhập phải lớn hơn 0");
         }

@@ -12,43 +12,14 @@ public class ThuNhapRepository implements IThuNhapRepository {
     @Override
     public List<ThuNhap> getAllThuNhap() {
         List<ThuNhap> list = new ArrayList<>();
-        // Access sử dụng TOP thay vì LIMIT và có cú pháp hơi khác
-        String sql = "SELECT * FROM ThuNhap ORDER BY NgayTinhThuNhap DESC";
+        String sql = "SELECT * FROM ThuNhap ORDER BY Nam DESC, Thang DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             
             while (rs.next()) {
-                ThuNhap tn = new ThuNhap();
-                tn.setMaThu(rs.getInt("MaThu"));
-                
-                // Access sử dụng java.sql.Date tương tự MySQL
-                java.sql.Date ngay = rs.getDate("NgayTinhThuNhap");
-                if (ngay != null) {
-                    tn.setNgayThu(ngay.toLocalDate());
-                } else {
-                    tn.setNgayThu(LocalDate.now());
-                }
-                
-                // Kiểm tra và lấy cột số tiền
-                if (hasColumn(rs, "TongDoanhThuDichVu")) {
-                    tn.setSoTien(rs.getBigDecimal("TongDoanhThuDichVu"));
-                } else if (hasColumn(rs, "SoTien")) {
-                    tn.setSoTien(rs.getBigDecimal("SoTien"));
-                } else {
-                    tn.setSoTien(BigDecimal.ZERO);
-                }
-                
-                // Kiểm tra và lấy cột nội dung
-                if (hasColumn(rs, "GhiChu")) {
-                    tn.setNoiDung(rs.getString("GhiChu"));
-                } else if (hasColumn(rs, "NoiDung")) {
-                    tn.setNoiDung(rs.getString("NoiDung"));
-                } else {
-                    tn.setNoiDung("Thu nhập dịch vụ");
-                }
-                
+                ThuNhap tn = mapResultSetToThuNhap(rs);
                 list.add(tn);
             }
         } catch (SQLException e) {
@@ -57,57 +28,20 @@ public class ThuNhapRepository implements IThuNhapRepository {
         return list;
     }
     
-    // Phương thức kiểm tra cột tồn tại trong ResultSet
-    private boolean hasColumn(ResultSet rs, String columnName) {
-        try {
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columns = rsmd.getColumnCount();
-            for (int i = 1; i <= columns; i++) {
-                if (columnName.equalsIgnoreCase(rsmd.getColumnName(i))) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (SQLException e) {
-            return false;
-        }
-    }
-    
     @Override
-    public List<ThuNhap> getThuNhapByDateRange(LocalDate fromDate, LocalDate toDate) {
+    public List<ThuNhap> getThuNhapByThangNam(int thang, int nam) {
         List<ThuNhap> list = new ArrayList<>();
-        // Access sử dụng BETWEEN tương tự MySQL
-        String sql = "SELECT * FROM ThuNhap WHERE NgayTinhThuNhap BETWEEN ? AND ? ORDER BY NgayTinhThuNhap DESC";
+        String sql = "SELECT * FROM ThuNhap WHERE Thang = ? AND Nam = ?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setDate(1, java.sql.Date.valueOf(fromDate));
-            stmt.setDate(2, java.sql.Date.valueOf(toDate));
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
             
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                ThuNhap tn = new ThuNhap();
-                tn.setMaThu(rs.getInt("MaThu"));
-                
-                java.sql.Date ngay = rs.getDate("NgayTinhThuNhap");
-                if (ngay != null) {
-                    tn.setNgayThu(ngay.toLocalDate());
-                }
-                
-                // Sử dụng các cột thực tế trong database Access
-                if (hasColumn(rs, "TongDoanhThuDichVu")) {
-                    tn.setSoTien(rs.getBigDecimal("TongDoanhThuDichVu"));
-                } else {
-                    tn.setSoTien(BigDecimal.ZERO);
-                }
-                
-                if (hasColumn(rs, "GhiChu")) {
-                    tn.setNoiDung(rs.getString("GhiChu"));
-                } else {
-                    tn.setNoiDung("Thu nhập dịch vụ");
-                }
-                
+                ThuNhap tn = mapResultSetToThuNhap(rs);
                 list.add(tn);
             }
             rs.close();
@@ -118,59 +52,98 @@ public class ThuNhapRepository implements IThuNhapRepository {
     }
     
     @Override
-    public boolean addThuNhap(ThuNhap thuNhap) {
-        // Access: Không cần chỉ định tất cả các cột nếu có identity column
-        String sql = "INSERT INTO ThuNhap (NgayTinhThuNhap, TongDoanhThuDichVu, GhiChu, Thang, Nam) VALUES (?, ?, ?, ?, ?)";
+    public List<ThuNhap> getThuNhapByNam(int nam) {
+        List<ThuNhap> list = new ArrayList<>();
+        String sql = "SELECT * FROM ThuNhap WHERE Nam = ? ORDER BY Thang DESC";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setDate(1, java.sql.Date.valueOf(thuNhap.getNgayThu()));
-            stmt.setBigDecimal(2, thuNhap.getSoTien());
-            stmt.setString(3, thuNhap.getNoiDung());
-            stmt.setInt(4, thuNhap.getNgayThu().getMonthValue());
-            stmt.setInt(5, thuNhap.getNgayThu().getYear());
+            stmt.setInt(1, nam);
             
-            return stmt.executeUpdate() > 0;
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                ThuNhap tn = mapResultSetToThuNhap(rs);
+                list.add(tn);
+            }
+            rs.close();
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        return list;
+    }
+    
+    @Override
+    public ThuNhap getThuNhapById(int maThu) {
+        String sql = "SELECT * FROM ThuNhap WHERE MaThu = ?";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, maThu);
+            
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToThuNhap(rs);
+            }
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    @Override
+    public boolean addThuNhap(ThuNhap thuNhap) {
+        String sql = "INSERT INTO ThuNhap (Thang, Nam, TongDoanhThuDichVu, TongLuongNhanVien, ThuNhapThuc, NgayTinhThuNhap, GhiChu) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+        try (Connection conn = DataConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+            stmt.setInt(1, thuNhap.getThang());
+            stmt.setInt(2, thuNhap.getNam());
+            stmt.setBigDecimal(3, thuNhap.getTongDoanhThuDichVu());
+            stmt.setBigDecimal(4, thuNhap.getTongLuongNhanVien());
+            stmt.setBigDecimal(5, thuNhap.getThuNhapThuc());
+            stmt.setDate(6, java.sql.Date.valueOf(thuNhap.getNgayTinhThuNhap()));
+            stmt.setString(7, thuNhap.getGhiChu());
+            
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        thuNhap.setMaThu(generatedKeys.getInt(1));
+                    }
+                }
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
     
     @Override
     public boolean updateThuNhap(ThuNhap thuNhap) {
-        String sql = "UPDATE ThuNhap SET NgayTinhThuNhap=?, TongDoanhThuDichVu=?, GhiChu=?, Thang=?, Nam=? WHERE MaThu=?";
+        String sql = "UPDATE ThuNhap SET Thang=?, Nam=?, TongDoanhThuDichVu=?, TongLuongNhanVien=?, ThuNhapThuc=?, NgayTinhThuNhap=?, GhiChu=? WHERE MaThu=?";
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setDate(1, java.sql.Date.valueOf(thuNhap.getNgayThu()));
-            stmt.setBigDecimal(2, thuNhap.getSoTien());
-            stmt.setString(3, thuNhap.getNoiDung());
-            stmt.setInt(4, thuNhap.getNgayThu().getMonthValue());
-            stmt.setInt(5, thuNhap.getNgayThu().getYear());
-            stmt.setInt(6, thuNhap.getMaThu());
+            stmt.setInt(1, thuNhap.getThang());
+            stmt.setInt(2, thuNhap.getNam());
+            stmt.setBigDecimal(3, thuNhap.getTongDoanhThuDichVu());
+            stmt.setBigDecimal(4, thuNhap.getTongLuongNhanVien());
+            stmt.setBigDecimal(5, thuNhap.getThuNhapThuc());
+            stmt.setDate(6, java.sql.Date.valueOf(thuNhap.getNgayTinhThuNhap()));
+            stmt.setString(7, thuNhap.getGhiChu());
+            stmt.setInt(8, thuNhap.getMaThu());
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
-    }
-    
-    @Override
-    public List<ThuNhap> getThuNhapByMonth(int month, int year) {
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-        return getThuNhapByDateRange(startDate, endDate);
-    }
-    
-    @Override
-    public List<ThuNhap> getThuNhapByYear(int year) {
-        LocalDate startDate = LocalDate.of(year, 1, 1);
-        LocalDate endDate = LocalDate.of(year, 12, 31);
-        return getThuNhapByDateRange(startDate, endDate);
     }
     
     @Override
@@ -189,19 +162,22 @@ public class ThuNhapRepository implements IThuNhapRepository {
     }
     
     @Override
-    public BigDecimal getTongThuNhap(LocalDate fromDate, LocalDate toDate) {
-        String sql = "SELECT SUM(TongDoanhThuDichVu) as TongThu FROM ThuNhap WHERE NgayTinhThuNhap BETWEEN ? AND ?";
+    public BigDecimal getTongDoanhThuThang(int thang, int nam) {
+        LocalDate startDate = LocalDate.of(nam, thang, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+        
+        String sql = "SELECT SUM(TongTien) as TongDoanhThu FROM HoaDon WHERE NgayLap BETWEEN ? AND ?";
         BigDecimal result = BigDecimal.ZERO;
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setDate(1, java.sql.Date.valueOf(fromDate));
-            stmt.setDate(2, java.sql.Date.valueOf(toDate));
+            stmt.setDate(1, java.sql.Date.valueOf(startDate));
+            stmt.setDate(2, java.sql.Date.valueOf(endDate));
             
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                result = rs.getBigDecimal("TongThu");
+                result = rs.getBigDecimal("TongDoanhThu");
                 if (result == null) {
                     result = BigDecimal.ZERO;
                 }
@@ -214,19 +190,30 @@ public class ThuNhapRepository implements IThuNhapRepository {
     }
     
     @Override
-    public BigDecimal getTongThuNhapByHoaDon(LocalDate fromDate, LocalDate toDate) {
-        String sql = "SELECT SUM(TongTien) as TongThu FROM HoaDon WHERE NgayLap BETWEEN ? AND ?";
+    public BigDecimal getTongLuongThang(int thang, int nam) {
+        // Lấy lương mới nhất của mỗi nhân viên trong tháng và tính tổng
+        String sql = "SELECT SUM(luong_moi_nhat.TongLuong) as TongLuong " +
+                     "FROM ( " +
+                     "    SELECT MaNhanVien, MAX(NgayTinhLuong) as NgayMoiNhat " +
+                     "    FROM TinhLuongNhanVien " +
+                     "    WHERE Thang = ? AND Nam = ? " +
+                     "    GROUP BY MaNhanVien " +
+                     ") as latest " +
+                     "JOIN TinhLuongNhanVien as luong_moi_nhat " +
+                     "ON latest.MaNhanVien = luong_moi_nhat.MaNhanVien " +
+                     "AND latest.NgayMoiNhat = luong_moi_nhat.NgayTinhLuong";
+        
         BigDecimal result = BigDecimal.ZERO;
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setDate(1, java.sql.Date.valueOf(fromDate));
-            stmt.setDate(2, java.sql.Date.valueOf(toDate));
+            stmt.setInt(1, thang);
+            stmt.setInt(2, nam);
             
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                result = rs.getBigDecimal("TongThu");
+                result = rs.getBigDecimal("TongLuong");
                 if (result == null) {
                     result = BigDecimal.ZERO;
                 }
@@ -234,45 +221,50 @@ public class ThuNhapRepository implements IThuNhapRepository {
             rs.close();
         } catch (SQLException e) {
             e.printStackTrace();
-            return BigDecimal.ZERO;
         }
         return result;
     }
     
-    // Thêm phương thức để lấy thu nhập theo ID (hữu ích cho Access)
-    public ThuNhap getThuNhapById(int maThu) {
-        String sql = "SELECT * FROM ThuNhap WHERE MaThu = ?";
+    @Override
+    public BigDecimal getTongThuNhapByNam(int nam) {
+        String sql = "SELECT SUM(ThuNhapThuc) as TongThuNhap FROM ThuNhap WHERE Nam = ?";
+        BigDecimal result = BigDecimal.ZERO;
         
         try (Connection conn = DataConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setInt(1, maThu);
-            ResultSet rs = stmt.executeQuery();
+            stmt.setInt(1, nam);
             
+            ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                ThuNhap tn = new ThuNhap();
-                tn.setMaThu(rs.getInt("MaThu"));
-                
-                java.sql.Date ngay = rs.getDate("NgayTinhThuNhap");
-                if (ngay != null) {
-                    tn.setNgayThu(ngay.toLocalDate());
+                result = rs.getBigDecimal("TongThuNhap");
+                if (result == null) {
+                    result = BigDecimal.ZERO;
                 }
-                
-                if (hasColumn(rs, "TongDoanhThuDichVu")) {
-                    tn.setSoTien(rs.getBigDecimal("TongDoanhThuDichVu"));
-                }
-                
-                if (hasColumn(rs, "GhiChu")) {
-                    tn.setNoiDung(rs.getString("GhiChu"));
-                }
-                
-                rs.close();
-                return tn;
             }
             rs.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null;
+        return result;
+    }
+    
+    private ThuNhap mapResultSetToThuNhap(ResultSet rs) throws SQLException {
+        ThuNhap tn = new ThuNhap();
+        tn.setMaThu(rs.getInt("MaThu"));
+        tn.setThang(rs.getInt("Thang"));
+        tn.setNam(rs.getInt("Nam"));
+        tn.setTongDoanhThuDichVu(rs.getBigDecimal("TongDoanhThuDichVu"));
+        tn.setTongLuongNhanVien(rs.getBigDecimal("TongLuongNhanVien"));
+        tn.setThuNhapThuc(rs.getBigDecimal("ThuNhapThuc"));
+        
+        java.sql.Date ngay = rs.getDate("NgayTinhThuNhap");
+        if (ngay != null) {
+            tn.setNgayTinhThuNhap(ngay.toLocalDate());
+        }
+        
+        tn.setGhiChu(rs.getString("GhiChu"));
+        
+        return tn;
     }
 }

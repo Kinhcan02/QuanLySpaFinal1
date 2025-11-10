@@ -1,87 +1,73 @@
 package Service;
 
-import Repository.IThuNhapRepository;
+import Repository.ThuNhapRepository;
 import Model.ThuNhap;
-import java.util.List;
-import java.time.LocalDate;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class ThuNhapService {
-
-    private IThuNhapRepository thuNhapRepository;
-
-    public ThuNhapService(IThuNhapRepository thuNhapRepository) {
-        this.thuNhapRepository = thuNhapRepository;
+    private ThuNhapRepository thuNhapRepository;
+    
+    public ThuNhapService() {
+        this.thuNhapRepository = new ThuNhapRepository();
     }
-
+    
     public List<ThuNhap> getAllThuNhap() {
         return thuNhapRepository.getAllThuNhap();
     }
-
-    public List<ThuNhap> getThuNhapByDateRange(LocalDate fromDate, LocalDate toDate) {
-        if (fromDate == null || toDate == null) {
-            throw new IllegalArgumentException("Ngày bắt đầu và kết thúc không được null");
-        }
-        return thuNhapRepository.getThuNhapByDateRange(fromDate, toDate);
-    }
-
+    
     public List<ThuNhap> getThuNhapByThangNam(int thang, int nam) {
-        if (thang < 1 || thang > 12) {
-            throw new IllegalArgumentException("Tháng phải từ 1 đến 12");
-        }
-        return thuNhapRepository.getThuNhapByMonth(thang, nam);
+        return thuNhapRepository.getThuNhapByThangNam(thang, nam);
     }
-
-    public List<ThuNhap> getThuNhapByNam(int nam) {
-        return thuNhapRepository.getThuNhapByYear(nam);
+    
+    public ThuNhap getThuNhapById(int maThu) {
+        return thuNhapRepository.getThuNhapById(maThu);
     }
-
+    
     public boolean themThuNhap(ThuNhap thuNhap) {
-        if (thuNhap == null || !thuNhap.isValid()) {
-            return false;
-        }
         return thuNhapRepository.addThuNhap(thuNhap);
     }
-
+    
     public boolean suaThuNhap(ThuNhap thuNhap) {
-        if (thuNhap == null || !thuNhap.isValid() || thuNhap.getMaThu() == null) {
-            return false;
-        }
         return thuNhapRepository.updateThuNhap(thuNhap);
     }
-
+    
     public boolean xoaThuNhap(int maThu) {
-        if (maThu <= 0) {
-            return false;
-        }
         return thuNhapRepository.deleteThuNhap(maThu);
     }
-
-    public BigDecimal tinhTongThuNhap(LocalDate fromDate, LocalDate toDate) {
-        if (fromDate == null || toDate == null) {
-            return BigDecimal.ZERO;
+    
+    public ThuNhap tinhToanThuNhapThang(int thang, int nam) {
+        BigDecimal tongDoanhThu = thuNhapRepository.getTongDoanhThuThang(thang, nam);
+        BigDecimal tongLuong = thuNhapRepository.getTongLuongThang(thang, nam);
+        
+        // Tính thu nhập thực = Tổng doanh thu - Tổng lương
+        BigDecimal thuNhapThuc = tongDoanhThu.subtract(tongLuong);
+        if (thuNhapThuc.compareTo(BigDecimal.ZERO) < 0) {
+            thuNhapThuc = BigDecimal.ZERO;
         }
-        return thuNhapRepository.getTongThuNhap(fromDate, toDate);
+        
+        return new ThuNhap(0, thang, nam, tongDoanhThu, tongLuong, 
+                          thuNhapThuc, java.time.LocalDate.now(), "Tính toán tự động");
     }
-
-    public BigDecimal tinhTongThuNhapTuHoaDon(LocalDate fromDate, LocalDate toDate) {
-        try {
-            return thuNhapRepository.getTongThuNhapByHoaDon(fromDate, toDate);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return BigDecimal.ZERO;
+    
+    public List<ThuNhap> getThuNhapByNam(int nam) {
+        return thuNhapRepository.getThuNhapByNam(nam);
+    }
+    
+    public BigDecimal getTongThuNhapByNam(int nam) {
+        return thuNhapRepository.getTongThuNhapByNam(nam);
+    }
+     public BigDecimal getTongThuNhapByThang(int thang, int nam) {
+        List<ThuNhap> thuNhapThang = thuNhapRepository.getThuNhapByThangNam(thang, nam);
+        return thuNhapThang.stream()
+                .map(ThuNhap::getThuNhapThuc)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    // Phương thức format tiền tệ
+    public String formatTienTe(BigDecimal amount) {
+        if (amount == null) {
+            return "0 VND";
         }
-    }
-
-    public BigDecimal tinhTongThuThangHienTai() {
-        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
-        LocalDate endOfMonth = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
-        return tinhTongThuNhap(startOfMonth, endOfMonth);
-    }
-
-    public BigDecimal tinhTongThuNamHienTai() {
-        LocalDate startOfYear = LocalDate.now().withDayOfYear(1);
-        LocalDate endOfYear = LocalDate.now().withDayOfYear(LocalDate.now().lengthOfYear());
-        return tinhTongThuNhap(startOfYear, endOfYear);
+        return String.format("%,.0f VND", amount);
     }
 }

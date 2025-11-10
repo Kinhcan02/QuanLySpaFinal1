@@ -1,482 +1,401 @@
 package Controller;
 
 import View.QuanLyThuChiView;
+import View.QuanLyThuNhapPanel;
+import View.QuanLyChiTieuPanel;
+import View.TongQuanThuChiPanel;
 import Service.ThuNhapService;
 import Service.ChiTieuService;
 import Model.ThuNhap;
 import Model.ChiTieu;
-import Repository.ThuNhapRepository;
-import Repository.ChiTieuRepository;
+import java.awt.Component;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.math.BigDecimal;
-import javax.swing.JOptionPane;
+import java.time.LocalDate;
+import java.util.List;
 import javax.swing.table.DefaultTableModel;
 
 public class QuanLyThuChiController {
-    private QuanLyThuChiView view;
+    private QuanLyThuChiView mainView;
     private ThuNhapService thuNhapService;
     private ChiTieuService chiTieuService;
+    
+    // Các controller con
+    private QuanLyThuNhapController thuNhapController;
+    private QuanLyChiTieuController chiTieuController;
+    private TongQuanThuChiController tongQuanController;
 
-    public QuanLyThuChiController(QuanLyThuChiView view) {
-        this.view = view;
-        this.thuNhapService = new ThuNhapService(new ThuNhapRepository());
-        this.chiTieuService = new ChiTieuService(new ChiTieuRepository());
+    public QuanLyThuChiController(QuanLyThuChiView mainView) {
+        this.mainView = mainView;
+        this.thuNhapService = new ThuNhapService();
+        this.chiTieuService = new ChiTieuService();
         
-        initController();
-        loadData();
+        initControllers();
+        initEventHandlers();
+        refreshAllData();
     }
 
-    private void initController() {
-        // Thu nhập events
-        view.getBtnThemThu().addActionListener(e -> themThuNhap());
-        view.getBtnSuaThu().addActionListener(e -> suaThuNhap());
-        view.getBtnXoaThu().addActionListener(e -> xoaThuNhap());
-        view.getBtnLamMoiThu().addActionListener(e -> clearThuNhapFields());
-        view.getBtnTimKiemThu().addActionListener(e -> timKiemThuNhap());
-        
-        // Chi tiêu events
-        view.getBtnThemChi().addActionListener(e -> themChiTieu());
-        view.getBtnSuaChi().addActionListener(e -> suaChiTieu());
-        view.getBtnXoaChi().addActionListener(e -> xoaChiTieu());
-        view.getBtnLamMoiChi().addActionListener(e -> clearChiTieuFields());
-        view.getBtnTimKiemChi().addActionListener(e -> timKiemChiTieu());
-        
-        // Tổng quan events
-        view.getBtnXemBaoCao().addActionListener(e -> xemBaoCao());
-        
-        // Table selection events
-        view.getTblThuNhap().getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                selectThuNhapRow();
-            }
-        });
-        
-        view.getTblChiTieu().getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                selectChiTieuRow();
-            }
-        });
+    private void initControllers() {
+        // Khởi tạo các controller cho từng panel
+        thuNhapController = new QuanLyThuNhapController(mainView.getThuNhapPanel());
+        chiTieuController = new QuanLyChiTieuController(mainView.getChiTieuPanel());
+        tongQuanController = new TongQuanThuChiController(mainView.getTongQuanPanel(),chiTieuController );
     }
 
-    private void loadData() {
-        loadThuNhap();
-        loadChiTieu();
-        updateTongQuan();
-    }
-
-    private void loadThuNhap() {
-        DefaultTableModel model = view.getModelThuNhap();
-        model.setRowCount(0);
-        
-        java.util.List<ThuNhap> list = thuNhapService.getAllThuNhap();
-        for (ThuNhap tn : list) {
-            model.addRow(new Object[]{
-                tn.getMaThu(),
-                tn.getNgayThu(),
-                String.format("%,.0f VND", tn.getSoTien()),
-                tn.getNoiDung(),
-                "Phát sinh"
+    private void initEventHandlers() {
+        // Xử lý sự kiện khi chuyển tab - sử dụng JTabbedPane trực tiếp từ view
+        JTabbedPane tabbedPane = getTabbedPaneFromView();
+        if (tabbedPane != null) {
+            tabbedPane.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    int selectedIndex = tabbedPane.getSelectedIndex();
+                    onTabChanged(selectedIndex);
+                }
             });
         }
-        
-        // Update total - SỬA LỖI Ở ĐÂY
-        BigDecimal tongThu = thuNhapService.tinhTongThuNhap(LocalDate.now().withDayOfMonth(1), LocalDate.now());
-        view.getLblTongThu().setText(String.format("%,.0f VND", tongThu));
-        
-        // Update từ hóa đơn
-        BigDecimal tongThuHoaDon = thuNhapService.tinhTongThuNhapTuHoaDon(LocalDate.now().withDayOfMonth(1), LocalDate.now());
-        view.getLblTongThuHoaDon().setText(String.format("%,.0f VND", tongThuHoaDon));
     }
 
-    private void loadChiTieu() {
-        DefaultTableModel model = view.getModelChiTieu();
-        model.setRowCount(0);
-        
-        java.util.List<ChiTieu> list = chiTieuService.getAllChiTieu();
-        for (ChiTieu ct : list) {
-            model.addRow(new Object[]{
-                ct.getMaChi(),
-                ct.getNgayChi(),
-                String.format("%,.0f VND", ct.getSoTien()),
-                ct.getMucDich(),
-                "Phát sinh"
-            });
-        }
-        
-        // Update total - SỬA LỖI Ở ĐÂY
-        BigDecimal tongChi = chiTieuService.tinhTongChiTieu(LocalDate.now().withDayOfMonth(1), LocalDate.now());
-        view.getLblTongChi().setText(String.format("%,.0f VND", tongChi));
-        
-        // Update từ nguyên liệu
-        BigDecimal tongChiNguyenLieu = chiTieuService.tinhTongChiTuNguyenLieu(LocalDate.now().withDayOfMonth(1), LocalDate.now());
-        view.getLblTongChiNguyenLieu().setText(String.format("%,.0f VND", tongChiNguyenLieu));
-    }
-
-    private void themThuNhap() {
+    private JTabbedPane getTabbedPaneFromView() {
+        // Tìm JTabbedPane trong view bằng reflection hoặc kiểm tra component
         try {
-            // Chuyển đổi từ java.util.Date sang LocalDate
-            Date selectedDate = view.getDateNgayThu().getDate();
-            LocalDate ngayThu = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            
-            String soTienText = view.getTxtSoTienThu().getText().replaceAll("[^\\d]", "");
-            if (soTienText.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Vui lòng nhập số tiền!");
-                return;
-            }
-            
-            BigDecimal soTien = new BigDecimal(soTienText);
-            String noiDung = view.getTxtNoiDungThu().getText();
-
-            if (noiDung.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Vui lòng nhập nội dung!");
-                return;
-            }
-
-            ThuNhap thuNhap = new ThuNhap(ngayThu, soTien, noiDung);
-            
-            if (thuNhapService.themThuNhap(thuNhap)) {
-                JOptionPane.showMessageDialog(view, "Thêm thu nhập thành công!");
-                loadThuNhap();
-                updateTongQuan();
-                clearThuNhapFields();
-            } else {
-                JOptionPane.showMessageDialog(view, "Thêm thu nhập thất bại!");
+            // Phương thức này giả sử rằng tabbedPane là component duy nhất trong view
+            Component[] components = mainView.getComponents();
+            for (Component comp : components) {
+                if (comp instanceof JTabbedPane) {
+                    return (JTabbedPane) comp;
+                }
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void onTabChanged(int tabIndex) {
+        switch (tabIndex) {
+            case 0: // Tab Thu nhập
+                refreshThuNhapData();
+                break;
+            case 1: // Tab Chi tiêu
+                refreshChiTieuData();
+                break;
+            case 2: // Tab Tổng quan
+                refreshTongQuanData();
+                break;
+        }
+    }
+
+    // Phương thức refresh dữ liệu thu nhập
+    private void refreshThuNhapData() {
+        try {
+            // Gọi service trực tiếp để load dữ liệu
+            List<ThuNhap> thuNhapList = thuNhapService.getAllThuNhap();
+            updateThuNhapTable(thuNhapList);
+            
+            // Cập nhật thống kê
+            int currentMonth = LocalDate.now().getMonthValue();
+            int currentYear = LocalDate.now().getYear();
+            updateThuNhapThongKe(currentMonth, currentYear);
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(mainView, "Lỗi khi tải dữ liệu thu nhập: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private void suaThuNhap() {
-        int selectedRow = view.getTblThuNhap().getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn thu nhập cần sửa!");
-            return;
-        }
-
+    // Phương thức refresh dữ liệu chi tiêu
+    private void refreshChiTieuData() {
         try {
-            int maThu = (int) view.getModelThuNhap().getValueAt(selectedRow, 0);
-            Date selectedDate = view.getDateNgayThu().getDate();
-            LocalDate ngayThu = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            // Gọi service trực tiếp để load dữ liệu
+            int currentMonth = LocalDate.now().getMonthValue();
+            int currentYear = LocalDate.now().getYear();
+            List<ChiTieu> chiTieuList = chiTieuService.getChiTieuByThangNam(currentMonth, currentYear);
+            updateChiTieuTable(chiTieuList);
             
-            String soTienText = view.getTxtSoTienThu().getText().replaceAll("[^\\d]", "");
-            if (soTienText.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Vui lòng nhập số tiền!");
-                return;
-            }
+            // Cập nhật thống kê
+            updateChiTieuThongKe(currentMonth, currentYear);
             
-            BigDecimal soTien = new BigDecimal(soTienText);
-            String noiDung = view.getTxtNoiDungThu().getText();
-
-            ThuNhap thuNhap = new ThuNhap(maThu, ngayThu, soTien, noiDung);
-            
-            if (thuNhapService.suaThuNhap(thuNhap)) {
-                JOptionPane.showMessageDialog(view, "Sửa thu nhập thành công!");
-                loadThuNhap();
-                updateTongQuan();
-                clearThuNhapFields();
-            } else {
-                JOptionPane.showMessageDialog(view, "Sửa thu nhập thất bại!");
-            }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi: " + e.getMessage());
-        }
-    }
-
-    private void xoaThuNhap() {
-        int selectedRow = view.getTblThuNhap().getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn thu nhập cần xóa!");
-            return;
-        }
-
-        int maThu = (int) view.getModelThuNhap().getValueAt(selectedRow, 0);
-        int confirm = JOptionPane.showConfirmDialog(view, "Bạn có chắc muốn xóa thu nhập này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-        
-        if (confirm == JOptionPane.YES_OPTION) {
-            if (thuNhapService.xoaThuNhap(maThu)) {
-                JOptionPane.showMessageDialog(view, "Xóa thu nhập thành công!");
-                loadThuNhap();
-                updateTongQuan();
-            } else {
-                JOptionPane.showMessageDialog(view, "Xóa thu nhập thất bại!");
-            }
-        }
-    }
-
-    private void themChiTieu() {
-        try {
-            // Chuyển đổi từ java.util.Date sang LocalDate
-            Date selectedDate = view.getDateNgayChi().getDate();
-            LocalDate ngayChi = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            
-            String soTienText = view.getTxtSoTienChi().getText().replaceAll("[^\\d]", "");
-            if (soTienText.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Vui lòng nhập số tiền!");
-                return;
-            }
-            
-            BigDecimal soTien = new BigDecimal(soTienText);
-            String mucDich = view.getTxtMucDichChi().getText();
-
-            if (mucDich.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Vui lòng nhập mục đích!");
-                return;
-            }
-
-            ChiTieu chiTieu = new ChiTieu(ngayChi, mucDich, soTien);
-            
-            if (chiTieuService.themChiTieu(chiTieu)) {
-                JOptionPane.showMessageDialog(view, "Thêm chi tiêu thành công!");
-                loadChiTieu();
-                updateTongQuan();
-                clearChiTieuFields();
-            } else {
-                JOptionPane.showMessageDialog(view, "Thêm chi tiêu thất bại!");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi: " + e.getMessage());
+            JOptionPane.showMessageDialog(mainView, "Lỗi khi tải dữ liệu chi tiêu: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private void suaChiTieu() {
-        int selectedRow = view.getTblChiTieu().getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn chi tiêu cần sửa!");
-            return;
-        }
-
+    // Phương thức refresh dữ liệu tổng quan
+    private void refreshTongQuanData() {
         try {
-            int maChi = (int) view.getModelChiTieu().getValueAt(selectedRow, 0);
-            Date selectedDate = view.getDateNgayChi().getDate();
-            LocalDate ngayChi = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            
-            String soTienText = view.getTxtSoTienChi().getText().replaceAll("[^\\d]", "");
-            if (soTienText.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Vui lòng nhập số tiền!");
-                return;
-            }
-            
-            BigDecimal soTien = new BigDecimal(soTienText);
-            String mucDich = view.getTxtMucDichChi().getText();
-
-            ChiTieu chiTieu = new ChiTieu(maChi, ngayChi, mucDich, soTien);
-            
-            if (chiTieuService.suaChiTieu(chiTieu)) {
-                JOptionPane.showMessageDialog(view, "Sửa chi tiêu thành công!");
-                loadChiTieu();
-                updateTongQuan();
-                clearChiTieuFields();
-            } else {
-                JOptionPane.showMessageDialog(view, "Sửa chi tiêu thất bại!");
+            // Kích hoạt thống kê tổng quan bằng cách trigger button
+            JButton btnThongKe = mainView.getTongQuanPanel().getBtnThongKeTongQuan();
+            if (btnThongKe != null) {
+                btnThongKe.doClick();
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi: " + e.getMessage());
+            JOptionPane.showMessageDialog(mainView, "Lỗi khi tải dữ liệu tổng quan: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
-    private void xoaChiTieu() {
-        int selectedRow = view.getTblChiTieu().getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn chi tiêu cần xóa!");
-            return;
-        }
-
-        int maChi = (int) view.getModelChiTieu().getValueAt(selectedRow, 0);
-        int confirm = JOptionPane.showConfirmDialog(view, "Bạn có chắc muốn xóa chi tiêu này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-        
-        if (confirm == JOptionPane.YES_OPTION) {
-            if (chiTieuService.xoaChiTieu(maChi)) {
-                JOptionPane.showMessageDialog(view, "Xóa chi tiêu thành công!");
-                loadChiTieu();
-                updateTongQuan();
-            } else {
-                JOptionPane.showMessageDialog(view, "Xóa chi tiêu thất bại!");
-            }
-        }
-    }
-
-    private void timKiemThuNhap() {
+ public BigDecimal getTongChiTheoNam(int nam) {
         try {
-            Date tuNgay = view.getDateTuNgayThu().getDate();
-            Date denNgay = view.getDateDenNgayThu().getDate();
+            return chiTieuService.tinhTongChiTieuNam(nam);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BigDecimal.ZERO;
+        }
+    }
+
+    // Thêm phương thức để lấy tổng chi theo tháng, năm
+    public BigDecimal getTongChiTheoThangNam(int thang, int nam) {
+        try {
+            return chiTieuService.tinhTongChiTieuThang(thang, nam);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BigDecimal.ZERO;
+        }
+    }
+    // Phương thức refresh toàn bộ dữ liệu
+    public void refreshAllData() {
+        refreshThuNhapData();
+        refreshChiTieuData();
+        refreshTongQuanData();
+    }
+
+    // Phương thức tính toán tổng quan cho một tháng/năm cụ thể
+    public void thongKeTheoThangNam(int thang, int nam) {
+        try {
+            // Cập nhật thống kê thu nhập
+            updateThuNhapThongKe(thang, nam);
             
-            if (tuNgay == null || denNgay == null) {
-                JOptionPane.showMessageDialog(view, "Vui lòng chọn khoảng thời gian!");
-                return;
-            }
+            // Cập nhật thống kê chi tiêu
+            updateChiTieuThongKe(thang, nam);
             
-            LocalDate fromDate = tuNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate toDate = denNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            // Cập nhật spinners trong tổng quan
+            mainView.getTongQuanPanel().getSpnThangTongQuan().setValue(thang);
+            mainView.getTongQuanPanel().getSpnNamTongQuan().setValue(nam);
             
-            java.util.List<ThuNhap> list = thuNhapService.getThuNhapByDateRange(fromDate, toDate);
+            // Trigger thống kê tổng quan
+            refreshTongQuanData();
             
-            DefaultTableModel model = view.getModelThuNhap();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(mainView, "Lỗi khi thống kê: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Cập nhật bảng thu nhập - ĐÃ SỬA: Bỏ cột "Thu khác"
+    private void updateThuNhapTable(List<ThuNhap> thuNhapList) {
+        try {
+            DefaultTableModel model = mainView.getThuNhapPanel().getModelThuNhap();
             model.setRowCount(0);
-            
-            for (ThuNhap tn : list) {
+
+            for (ThuNhap tn : thuNhapList) {
                 model.addRow(new Object[]{
                     tn.getMaThu(),
-                    tn.getNgayThu(),
-                    String.format("%,.0f VND", tn.getSoTien()),
-                    tn.getNoiDung(),
-                    "Phát sinh"
+                    tn.getThang(),
+                    tn.getNam(),
+                    String.format("%,.0f VND", tn.getTongDoanhThuDichVu()),
+                    String.format("%,.0f VND", tn.getTongLuongNhanVien()),
+                    String.format("%,.0f VND", tn.getThuNhapThuc()),
+                    tn.getNgayTinhThuNhap(),
+                    tn.getGhiChu()
                 });
             }
-            
-            // Update totals
-            BigDecimal tongThu = thuNhapService.tinhTongThuNhap(fromDate, toDate);
-            BigDecimal tongThuHoaDon = thuNhapService.tinhTongThuNhapTuHoaDon(fromDate, toDate);
-            
-            view.getLblTongThu().setText(String.format("%,.0f VND", tongThu));
-            view.getLblTongThuHoaDon().setText(String.format("%,.0f VND", tongThuHoaDon));
-            
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi tìm kiếm: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private void timKiemChiTieu() {
+    // Cập nhật thống kê thu nhập - ĐÃ SỬA: Bỏ "Thu khác"
+    private void updateThuNhapThongKe(int thang, int nam) {
         try {
-            Date tuNgay = view.getDateTuNgayChi().getDate();
-            Date denNgay = view.getDateDenNgayChi().getDate();
-            
-            if (tuNgay == null || denNgay == null) {
-                JOptionPane.showMessageDialog(view, "Vui lòng chọn khoảng thời gian!");
-                return;
+            List<ThuNhap> list = thuNhapService.getThuNhapByThangNam(thang, nam);
+            BigDecimal tongDoanhThu = BigDecimal.ZERO;
+            BigDecimal tongLuong = BigDecimal.ZERO;
+            BigDecimal tongThuNhapThuc = BigDecimal.ZERO;
+
+            for (ThuNhap tn : list) {
+                tongDoanhThu = tongDoanhThu.add(tn.getTongDoanhThuDichVu());
+                tongLuong = tongLuong.add(tn.getTongLuongNhanVien());
+                tongThuNhapThuc = tongThuNhapThuc.add(tn.getThuNhapThuc());
             }
-            
-            LocalDate fromDate = tuNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate toDate = denNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            
-            java.util.List<ChiTieu> list = chiTieuService.getChiTieuByDateRange(fromDate, toDate);
-            
-            DefaultTableModel model = view.getModelChiTieu();
+
+            mainView.getThuNhapPanel().getLblTongDoanhThu().setText(String.format("%,.0f VND", tongDoanhThu));
+            mainView.getThuNhapPanel().getLblTongLuong().setText(String.format("%,.0f VND", tongLuong));
+            mainView.getThuNhapPanel().getLblThuNhapThuc().setText(String.format("%,.0f VND", tongThuNhapThuc));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Cập nhật bảng chi tiêu
+    private void updateChiTieuTable(List<ChiTieu> chiTieuList) {
+        try {
+            DefaultTableModel model = mainView.getChiTieuPanel().getModelChiTieu();
             model.setRowCount(0);
-            
-            for (ChiTieu ct : list) {
+
+            for (ChiTieu ct : chiTieuList) {
                 model.addRow(new Object[]{
                     ct.getMaChi(),
                     ct.getNgayChi(),
                     String.format("%,.0f VND", ct.getSoTien()),
                     ct.getMucDich(),
-                    "Phát sinh"
+                    ct.getLoaiChi(),
+                    ct.getNgayTao()
                 });
             }
-            
-            // Update totals
-            BigDecimal tongChi = chiTieuService.tinhTongChiTieu(fromDate, toDate);
-            BigDecimal tongChiNguyenLieu = chiTieuService.tinhTongChiTuNguyenLieu(fromDate, toDate);
-            
-            view.getLblTongChi().setText(String.format("%,.0f VND", tongChi));
-            view.getLblTongChiNguyenLieu().setText(String.format("%,.0f VND", tongChiNguyenLieu));
-            
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi tìm kiếm: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private void xemBaoCao() {
+    // Cập nhật thống kê chi tiêu
+    private void updateChiTieuThongKe(int thang, int nam) {
         try {
-            Date tuNgay = view.getDateTuNgayTQ().getDate();
-            Date denNgay = view.getDateDenNgayTQ().getDate();
+            // Tính từng loại chi phí theo danh sách mới
+            BigDecimal chiNguyenLieu = chiTieuService.tinhTongNhapNguyenLieuThang(thang, nam);
+            BigDecimal chiDien = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Điện");
+            BigDecimal chiNuoc = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Nước");
+            BigDecimal chiVeSinh = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Vệ sinh");
+            BigDecimal chiWifi = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Wifi");
+            BigDecimal chiKhac = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Khác");
+
+            // Tổng chi = tổng tất cả chi phí
+            BigDecimal tongChi = chiNguyenLieu
+                .add(chiDien)
+                .add(chiNuoc)
+                .add(chiVeSinh)
+                .add(chiWifi)
+                .add(chiKhac);
+
+            // Cập nhật giao diện với các label mới
+            mainView.getChiTieuPanel().getLblTongChi().setText(String.format("%,.0f VND", tongChi));
+            mainView.getChiTieuPanel().getLblChiNguyenLieu().setText(String.format("%,.0f VND", chiNguyenLieu));
+            mainView.getChiTieuPanel().getLblChiDien().setText(String.format("%,.0f VND", chiDien));
+            mainView.getChiTieuPanel().getLblChiNuoc().setText(String.format("%,.0f VND", chiNuoc));
+            mainView.getChiTieuPanel().getLblChiVeSinh().setText(String.format("%,.0f VND", chiVeSinh));
+            mainView.getChiTieuPanel().getLblChiWifi().setText(String.format("%,.0f VND", chiWifi));
+            mainView.getChiTieuPanel().getLblChiKhac().setText(String.format("%,.0f VND", chiKhac));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Phương thức lấy báo cáo tổng quan - ĐÃ SỬA: Bỏ "Thu khác"
+    public String getBaoCaoTongQuan(int thang, int nam) {
+        try {
+            StringBuilder baoCao = new StringBuilder();
             
-            if (tuNgay == null || denNgay == null) {
-                JOptionPane.showMessageDialog(view, "Vui lòng chọn khoảng thời gian!");
-                return;
+            // Lấy dữ liệu thu nhập
+            List<ThuNhap> thuNhapList = thuNhapService.getThuNhapByThangNam(thang, nam);
+            BigDecimal tongThu = BigDecimal.ZERO;
+            BigDecimal tongLuong = BigDecimal.ZERO;
+            BigDecimal thuNhapThuc = BigDecimal.ZERO;
+            
+            for (ThuNhap tn : thuNhapList) {
+                tongThu = tongThu.add(tn.getTongDoanhThuDichVu());
+                tongLuong = tongLuong.add(tn.getTongLuongNhanVien());
+                thuNhapThuc = thuNhapThuc.add(tn.getThuNhapThuc());
             }
             
-            LocalDate fromDate = tuNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate toDate = denNgay.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            // Lấy dữ liệu chi tiêu
+            BigDecimal chiNguyenLieu = chiTieuService.tinhTongNhapNguyenLieuThang(thang, nam);
+            BigDecimal chiDien = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Điện");
+            BigDecimal chiNuoc = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Nước");
+            BigDecimal chiVeSinh = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Vệ sinh");
+            BigDecimal chiWifi = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Wifi");
+            BigDecimal chiKhac = chiTieuService.tinhTongChiTieuTheoLoai(thang, nam, "Khác");
             
-            BigDecimal tongThu = thuNhapService.tinhTongThuNhap(fromDate, toDate)
-                                .add(thuNhapService.tinhTongThuNhapTuHoaDon(fromDate, toDate));
-            BigDecimal tongChi = chiTieuService.tinhTongChiTieu(fromDate, toDate)
-                                .add(chiTieuService.tinhTongChiTuNguyenLieu(fromDate, toDate));
-            BigDecimal loiNhuan = tongThu.subtract(tongChi);
+            // Tổng chi = tổng tất cả chi phí
+            BigDecimal tongChi = chiNguyenLieu
+                .add(chiDien)
+                .add(chiNuoc)
+                .add(chiVeSinh)
+                .add(chiWifi)
+                .add(chiKhac);
             
-            view.getLblTongThuTongQuan().setText(String.format("%,.0f VND", tongThu));
-            view.getLblTongChiTongQuan().setText(String.format("%,.0f VND", tongChi));
-            view.getLblLoiNhuanTongQuan().setText(String.format("%,.0f VND", loiNhuan));
+            // Tính lợi nhuận
+            BigDecimal loiNhuan = thuNhapThuc.subtract(tongChi);
+            
+            // Tạo báo cáo
+            baoCao.append("BÁO CÁO TỔNG QUAN THÁNG ").append(thang).append("/").append(nam).append("\n\n");
+            
+            baoCao.append("=== THU NHẬP ===\n");
+            baoCao.append(String.format("Tổng doanh thu: %,d VND\n", tongThu.intValue()));
+            baoCao.append(String.format("Tổng lương: %,d VND\n", tongLuong.intValue()));
+            baoCao.append(String.format("Thu nhập thực: %,d VND\n\n", thuNhapThuc.intValue()));
+            
+            baoCao.append("=== CHI TIÊU ===\n");
+            baoCao.append(String.format("Tổng chi: %,d VND\n", tongChi.intValue()));
+            baoCao.append(String.format("- Nguyên liệu: %,d VND\n", chiNguyenLieu.intValue()));
+            baoCao.append(String.format("- Điện: %,d VND\n", chiDien.intValue()));
+            baoCao.append(String.format("- Nước: %,d VND\n", chiNuoc.intValue()));
+            baoCao.append(String.format("- Vệ sinh: %,d VND\n", chiVeSinh.intValue()));
+            baoCao.append(String.format("- Wifi: %,d VND\n", chiWifi.intValue()));
+            baoCao.append(String.format("- Khác: %,d VND\n\n", chiKhac.intValue()));
+            
+            baoCao.append("=== KẾT QUẢ ===\n");
+            baoCao.append(String.format("Lợi nhuận: %,d VND\n\n", loiNhuan.intValue()));
+            
+            // Phân tích
+            if (thuNhapThuc.compareTo(BigDecimal.ZERO) > 0) {
+                double tyLeChi = tongChi.multiply(BigDecimal.valueOf(100))
+                        .divide(thuNhapThuc, 1, BigDecimal.ROUND_HALF_UP).doubleValue();
+                double tyLeLoiNhuan = loiNhuan.multiply(BigDecimal.valueOf(100))
+                        .divide(thuNhapThuc, 1, BigDecimal.ROUND_HALF_UP).doubleValue();
+                
+                baoCao.append("=== PHÂN TÍCH ===\n");
+                baoCao.append(String.format("Tỷ lệ chi/thu nhập: %.1f%%\n", tyLeChi));
+                baoCao.append(String.format("Tỷ lệ lợi nhuận: %.1f%%\n", tyLeLoiNhuan));
+                
+                // Đánh giá
+                baoCao.append("\n=== ĐÁNH GIÁ ===\n");
+                if (loiNhuan.compareTo(BigDecimal.ZERO) > 0) {
+                    if (tyLeLoiNhuan > 20) {
+                        baoCao.append("✓ Kinh doanh rất hiệu quả\n");
+                    } else if (tyLeLoiNhuan > 10) {
+                        baoCao.append("✓ Kinh doanh hiệu quả\n");
+                    } else {
+                        baoCao.append("○ Kinh doanh có lãi\n");
+                    }
+                } else if (loiNhuan.compareTo(BigDecimal.ZERO) < 0) {
+                    baoCao.append("✗ Kinh doanh bị lỗ\n");
+                } else {
+                    baoCao.append("○ Kinh doanh hòa vốn\n");
+                }
+                
+                if (tyLeChi > 80) {
+                    baoCao.append("⚠ Chi phí quá cao, cần kiểm soát chặt chẽ\n");
+                } else if (tyLeChi > 60) {
+                    baoCao.append("⚠ Chi phí tương đối cao\n");
+                }
+            }
+            
+            return baoCao.toString();
             
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi xem báo cáo: " + e.getMessage());
+            return "Lỗi khi tạo báo cáo: " + e.getMessage();
         }
     }
 
-    private void selectThuNhapRow() {
-        int selectedRow = view.getTblThuNhap().getSelectedRow();
-        if (selectedRow != -1) {
-            DefaultTableModel model = view.getModelThuNhap();
-            LocalDate ngayThu = (LocalDate) model.getValueAt(selectedRow, 1);
-            
-            // Chuyển đổi LocalDate sang java.util.Date
-            Date date = java.sql.Date.valueOf(ngayThu);
-            view.getDateNgayThu().setDate(date);
-            
-            String soTienText = model.getValueAt(selectedRow, 2).toString().replaceAll("[^\\d]", "");
-            view.getTxtSoTienThu().setText(soTienText);
-            view.getTxtNoiDungThu().setText(model.getValueAt(selectedRow, 3).toString());
-        }
+    // Getter methods để truy cập các controller từ bên ngoài
+    public QuanLyThuNhapController getThuNhapController() {
+        return thuNhapController;
     }
 
-    private void selectChiTieuRow() {
-        int selectedRow = view.getTblChiTieu().getSelectedRow();
-        if (selectedRow != -1) {
-            DefaultTableModel model = view.getModelChiTieu();
-            LocalDate ngayChi = (LocalDate) model.getValueAt(selectedRow, 1);
-            
-            // Chuyển đổi LocalDate sang java.util.Date
-            Date date = java.sql.Date.valueOf(ngayChi);
-            view.getDateNgayChi().setDate(date);
-            
-            String soTienText = model.getValueAt(selectedRow, 2).toString().replaceAll("[^\\d]", "");
-            view.getTxtSoTienChi().setText(soTienText);
-            view.getTxtMucDichChi().setText(model.getValueAt(selectedRow, 3).toString());
-        }
+    public QuanLyChiTieuController getChiTieuController() {
+        return chiTieuController;
     }
 
-    private void updateTongQuan() {
-        LocalDate fromDate = getStartOfMonth();
-        LocalDate toDate = getEndOfMonth();
-        
-        BigDecimal tongThu = thuNhapService.tinhTongThuNhap(fromDate, toDate)
-                          .add(thuNhapService.tinhTongThuNhapTuHoaDon(fromDate, toDate));
-        BigDecimal tongChi = chiTieuService.tinhTongChiTieu(fromDate, toDate)
-                          .add(chiTieuService.tinhTongChiTuNguyenLieu(fromDate, toDate));
-        BigDecimal loiNhuan = tongThu.subtract(tongChi);
-        
-        view.getLblTongThuTongQuan().setText(String.format("%,.0f VND", tongThu));
-        view.getLblTongChiTongQuan().setText(String.format("%,.0f VND", tongChi));
-        view.getLblLoiNhuanTongQuan().setText(String.format("%,.0f VND", loiNhuan));
+    public TongQuanThuChiController getTongQuanController() {
+        return tongQuanController;
     }
 
-    private LocalDate getStartOfMonth() {
-        return LocalDate.now().withDayOfMonth(1);
-    }
-
-    private LocalDate getEndOfMonth() {
-        return LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
-    }
-
-    private void clearThuNhapFields() {
-        view.getTxtSoTienThu().setText("");
-        view.getTxtNoiDungThu().setText("");
-        view.getDateNgayThu().setDate(new Date());
-        view.getTblThuNhap().clearSelection();
-    }
-
-    private void clearChiTieuFields() {
-        view.getTxtSoTienChi().setText("");
-        view.getTxtMucDichChi().setText("");
-        view.getDateNgayChi().setDate(new Date());
-        view.getTblChiTieu().clearSelection();
+    public QuanLyThuChiView getMainView() {
+        return mainView;
     }
 }

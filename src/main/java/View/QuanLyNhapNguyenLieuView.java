@@ -9,13 +9,17 @@ public class QuanLyNhapNguyenLieuView extends JPanel {
     private JTable tblNhapNguyenLieu;
     private DefaultTableModel model;
     private JTextField txtTimKiem;
-    private JButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem, btnLoaiNguyenLieu;
-    private JComboBox<String> cboLoaiFilter;
+    private JButton btnThem, btnSua, btnXoa, btnLamMoi, btnTimKiem, btnLoaiNguyenLieu, btnLietKe;
+    private JComboBox<String> cboLoaiFilter, cboThang, cboNam;
 
     // Màu sắc
     private final Color COLOR_BACKGROUND = new Color(0x8C, 0xC9, 0x80);
     private final Color COLOR_BUTTON = new Color(0x4D, 0x8A, 0x57);
     private final Color COLOR_TEXT = Color.WHITE;
+    
+    // Cấu hình năm
+    private static final int BASE_YEAR = 2025; // Mốc cố định
+    private static final int YEARS_AHEAD = 5;  // Số năm tiếp theo
 
     public QuanLyNhapNguyenLieuView() {
         initUI();
@@ -64,6 +68,7 @@ public class QuanLyNhapNguyenLieuView extends JPanel {
         pnSearch.setBackground(COLOR_BACKGROUND);
         pnSearch.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Tìm kiếm theo tên
         JLabel lblTimKiem = new JLabel("Tìm kiếm:");
         lblTimKiem.setFont(new Font("Arial", Font.BOLD, 12));
         lblTimKiem.setForeground(Color.BLACK);
@@ -73,6 +78,7 @@ public class QuanLyNhapNguyenLieuView extends JPanel {
         txtTimKiem.setPreferredSize(new Dimension(200, 30));
         pnSearch.add(txtTimKiem);
 
+        // Lọc theo loại nguyên liệu
         JLabel lblLoai = new JLabel("Loại nguyên liệu:");
         lblLoai.setFont(new Font("Arial", Font.BOLD, 12));
         lblLoai.setForeground(Color.BLACK);
@@ -86,9 +92,54 @@ public class QuanLyNhapNguyenLieuView extends JPanel {
         btnTimKiem.setPreferredSize(new Dimension(100, 30));
         pnSearch.add(btnTimKiem);
 
+        // Thêm dòng mới cho tháng, năm
+        JPanel pnThoiGian = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        pnThoiGian.setBackground(COLOR_BACKGROUND);
+
+        JLabel lblThang = new JLabel("Tháng:");
+        lblThang.setFont(new Font("Arial", Font.BOLD, 12));
+        lblThang.setForeground(Color.BLACK);
+        pnThoiGian.add(lblThang);
+
+        cboThang = new JComboBox<>();
+        for (int i = 1; i <= 12; i++) {
+            cboThang.addItem(String.valueOf(i));
+        }
+        cboThang.setPreferredSize(new Dimension(80, 30));
+        pnThoiGian.add(cboThang);
+
+        JLabel lblNam = new JLabel("Năm:");
+        lblNam.setFont(new Font("Arial", Font.BOLD, 12));
+        lblNam.setForeground(Color.BLACK);
+        pnThoiGian.add(lblNam);
+
+        cboNam = new JComboBox<>();
+        updateYearComboBox(); // Cập nhật combobox năm
+        cboNam.setPreferredSize(new Dimension(80, 30));
+        pnThoiGian.add(cboNam);
+
+        btnLietKe = createStyledButton("Liệt kê", COLOR_BUTTON);
+        btnLietKe.setPreferredSize(new Dimension(100, 30));
+        pnThoiGian.add(btnLietKe);
+
+        // Nút loại nguyên liệu
         btnLoaiNguyenLieu = createStyledButton("Loại nguyên liệu", COLOR_BUTTON);
         btnLoaiNguyenLieu.setPreferredSize(new Dimension(140, 30));
-        pnSearch.add(btnLoaiNguyenLieu);
+        pnThoiGian.add(btnLoaiNguyenLieu);
+
+        // Thêm panel thời gian vào panel tìm kiếm
+        pnSearch.setLayout(new BorderLayout());
+        
+        JPanel pnTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        pnTop.setBackground(COLOR_BACKGROUND);
+        pnTop.add(lblTimKiem);
+        pnTop.add(txtTimKiem);
+        pnTop.add(lblLoai);
+        pnTop.add(cboLoaiFilter);
+        pnTop.add(btnTimKiem);
+        
+        pnSearch.add(pnTop, BorderLayout.NORTH);
+        pnSearch.add(pnThoiGian, BorderLayout.CENTER);
 
         return pnSearch;
     }
@@ -179,7 +230,59 @@ public class QuanLyNhapNguyenLieuView extends JPanel {
         return button;
     }
 
-    // Getter methods
+    // Phương thức cập nhật combobox năm
+    public void updateYearComboBox() {
+        int currentYear = java.time.Year.now().getValue();
+        
+        // Tính toán năm bắt đầu và kết thúc
+        int startYear = BASE_YEAR;
+        int endYear = Math.max(currentYear + YEARS_AHEAD, BASE_YEAR + YEARS_AHEAD);
+        
+        // Lấy năm đang chọn trước khi cập nhật
+        String selectedYear = (String) cboNam.getSelectedItem();
+        
+        cboNam.removeAllItems();
+        
+        // Thêm các năm từ BASE_YEAR đến endYear
+        for (int year = startYear; year <= endYear; year++) {
+            cboNam.addItem(String.valueOf(year));
+        }
+        
+        // Chọn lại năm đang chọn nếu còn hợp lệ, không thì chọn năm hiện tại
+        if (selectedYear != null) {
+            try {
+                int year = Integer.parseInt(selectedYear);
+                if (year >= startYear && year <= endYear) {
+                    cboNam.setSelectedItem(selectedYear);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                // Nếu có lỗi, chọn năm hiện tại
+            }
+        }
+        
+        // Chọn năm hiện tại nếu nó nằm trong khoảng, không thì chọn BASE_YEAR
+        if (currentYear >= BASE_YEAR && currentYear <= endYear) {
+            cboNam.setSelectedItem(String.valueOf(currentYear));
+        } else {
+            cboNam.setSelectedItem(String.valueOf(BASE_YEAR));
+        }
+    }
+
+    // Getter methods mới
+    public JComboBox<String> getCboThang() {
+        return cboThang;
+    }
+
+    public JComboBox<String> getCboNam() {
+        return cboNam;
+    }
+
+    public JButton getBtnLietKe() {
+        return btnLietKe;
+    }
+
+    // Getter methods cũ
     public JTable getTblNhapNguyenLieu() {
         return tblNhapNguyenLieu;
     }
