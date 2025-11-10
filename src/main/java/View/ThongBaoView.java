@@ -8,7 +8,7 @@ import java.awt.event.ActionListener;
 public class ThongBaoView extends JPanel {
     private JList<String> listThongBao;
     private DefaultListModel<String> listModel;
-    private JButton btnDong, btnXemTatCa, btnDanhDauDaDoc;
+    private JButton btnXemTatCa, btnDanhDauDaDoc;
     private JLabel lblBadge;
 
     // Màu sắc giống QuanLyCaLamView
@@ -95,11 +95,9 @@ public class ThongBaoView extends JPanel {
 
         btnDanhDauDaDoc = createStyledButton("Đánh dấu đã đọc", COLOR_BUTTON);
         btnXemTatCa = createStyledButton("Xem chi tiết", COLOR_BUTTON);
-        btnDong = createStyledButton("Đóng", COLOR_BUTTON);
 
         pnButton.add(btnDanhDauDaDoc);
         pnButton.add(btnXemTatCa);
-        pnButton.add(btnDong);
 
         return pnButton;
     }
@@ -173,7 +171,6 @@ public class ThongBaoView extends JPanel {
     }
 
     // GETTER METHODS
-    public JButton getBtnDong() { return btnDong; }
     public JButton getBtnXemTatCa() { return btnXemTatCa; }
     public JButton getBtnDanhDauDaDoc() { return btnDanhDauDaDoc; }
     public JList<String> getListThongBao() { return listThongBao; }

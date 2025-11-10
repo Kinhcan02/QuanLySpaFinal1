@@ -25,7 +25,6 @@ public class ThongBaoController {
     }
 
     private void initController() {
-        thongBaoView.getBtnDong().addActionListener(e -> dongThongBao());
         thongBaoView.getBtnXemTatCa().addActionListener(e -> xemTatCaThongBao());
         thongBaoView.getBtnDanhDauDaDoc().addActionListener(e -> danhDauDaDoc());
         
@@ -82,20 +81,7 @@ public class ThongBaoController {
         });
     }
 
-    private void dongThongBao() {
-        // Ẩn panel thông báo hoặc thực hiện hành động đóng
-        Container parent = thongBaoView.getParent();
-        if (parent != null) {
-            if (parent instanceof JTabbedPane) {
-                // Nếu nằm trong JTabbedPane, chuyển sang tab khác
-                JTabbedPane tabbedPane = (JTabbedPane) parent;
-                tabbedPane.setSelectedIndex(0);
-            } else if (parent instanceof JPanel) {
-                // Ẩn panel
-                thongBaoView.setVisible(false);
-            }
-        }
-    }
+
 
     private void xemTatCaThongBao() {
         try {
