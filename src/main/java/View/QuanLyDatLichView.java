@@ -24,6 +24,7 @@ import java.time.DayOfWeek;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.*;
+import View.KhachHangDialog;
 
 public class QuanLyDatLichView extends JPanel {
 
@@ -38,6 +39,7 @@ public class QuanLyDatLichView extends JPanel {
     private JLabel lblThangNam;
     private JButton btnThangTruoc, btnThangSau;
     private JButton btnHomNay;
+    private JButton btnThemKhachHang;
     private JButton btnHoanThanh;
     private LocalDate currentDate;
     private LocalDate selectedDate;
@@ -196,184 +198,194 @@ public class QuanLyDatLichView extends JPanel {
         return panel;
     }
 
-    private JPanel createFormPanel() {
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(COLOR_BACKGROUND);
-        formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin đặt lịch"));
-        formPanel.setVisible(true);
+private JPanel createFormPanel() {
+    JPanel formPanel = new JPanel(new GridBagLayout());
+    formPanel.setBackground(COLOR_BACKGROUND);
+    formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin đặt lịch"));
+    formPanel.setVisible(true);
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(2, 5, 2, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.insets = new Insets(2, 5, 2, 5);
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.anchor = GridBagConstraints.WEST;
 
-        // Row 0 - Khách hàng
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        JLabel lblKhachHang = new JLabel("Khách hàng *:");
-        lblKhachHang.setForeground(Color.WHITE);
-        formPanel.add(lblKhachHang, gbc);
+    // Row 0 - Khách hàng (ĐÃ SỬA - có nút thêm)
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    JLabel lblKhachHang = new JLabel("Khách hàng *:");
+    lblKhachHang.setForeground(Color.WHITE);
+    formPanel.add(lblKhachHang, gbc);
 
-        gbc.gridx = 1;
-        cbKhachHang = new JComboBox<>();
-        cbKhachHang.setFont(new Font("Arial", Font.PLAIN, 14));
-        formPanel.add(cbKhachHang, gbc);
+    gbc.gridx = 1;
+    JPanel khachHangPanel = new JPanel(new BorderLayout(5, 0));
+    khachHangPanel.setBackground(COLOR_BACKGROUND);
+    
+    cbKhachHang = new JComboBox<>();
+    cbKhachHang.setFont(new Font("Arial", Font.PLAIN, 14));
+    khachHangPanel.add(cbKhachHang, BorderLayout.CENTER);
 
-        // Row 1 - Số lượng người
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        JLabel lblSoLuongNguoi = new JLabel("Số lượng người:");
-        lblSoLuongNguoi.setForeground(Color.WHITE);
-        formPanel.add(lblSoLuongNguoi, gbc);
+    btnThemKhachHang = createStyledButton("+", COLOR_PRIMARY);
+    btnThemKhachHang.setPreferredSize(new Dimension(40, 25));
+    btnThemKhachHang.setToolTipText("Thêm khách hàng mới");
+    khachHangPanel.add(btnThemKhachHang, BorderLayout.EAST);
 
-        gbc.gridx = 1;
-        spinnerSoLuongNguoi = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
-        spinnerSoLuongNguoi.setFont(new Font("Arial", Font.PLAIN, 14));
-        formPanel.add(spinnerSoLuongNguoi, gbc);
+    formPanel.add(khachHangPanel, gbc);
 
-        // Row 2 - Dịch vụ (combobox + nút thêm)
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        JLabel lblDichVu = new JLabel("Dịch vụ:");
-        lblDichVu.setForeground(Color.WHITE);
-        formPanel.add(lblDichVu, gbc);
+    // Row 1 - Số lượng người
+    gbc.gridx = 0;
+    gbc.gridy = 1;
+    JLabel lblSoLuongNguoi = new JLabel("Số lượng người:");
+    lblSoLuongNguoi.setForeground(Color.WHITE);
+    formPanel.add(lblSoLuongNguoi, gbc);
 
-        gbc.gridx = 1;
-        JPanel dichVuPanel = new JPanel(new BorderLayout(5, 0));
-        cbDichVu = new JComboBox<>();
-        cbDichVu.setFont(new Font("Arial", Font.PLAIN, 14));
-        dichVuPanel.add(cbDichVu, BorderLayout.CENTER);
+    gbc.gridx = 1;
+    spinnerSoLuongNguoi = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
+    spinnerSoLuongNguoi.setFont(new Font("Arial", Font.PLAIN, 14));
+    formPanel.add(spinnerSoLuongNguoi, gbc);
 
-        btnThemDichVu = createStyledButton("+", COLOR_PRIMARY);
-        btnThemDichVu.setPreferredSize(new Dimension(40, 25));
-        dichVuPanel.add(btnThemDichVu, BorderLayout.EAST);
+    // Row 2 - Dịch vụ (combobox + nút thêm)
+    gbc.gridx = 0;
+    gbc.gridy = 2;
+    JLabel lblDichVu = new JLabel("Dịch vụ:");
+    lblDichVu.setForeground(Color.WHITE);
+    formPanel.add(lblDichVu, gbc);
 
-        formPanel.add(dichVuPanel, gbc);
+    gbc.gridx = 1;
+    JPanel dichVuPanel = new JPanel(new BorderLayout(5, 0));
+    cbDichVu = new JComboBox<>();
+    cbDichVu.setFont(new Font("Arial", Font.PLAIN, 14));
+    dichVuPanel.add(cbDichVu, BorderLayout.CENTER);
 
-        // Row 3 - Danh sách dịch vụ đã chọn
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        JLabel lblDSDichVu = new JLabel("DS dịch vụ:");
-        lblDSDichVu.setForeground(Color.WHITE);
-        formPanel.add(lblDSDichVu, gbc);
+    btnThemDichVu = createStyledButton("+", COLOR_PRIMARY);
+    btnThemDichVu.setPreferredSize(new Dimension(40, 25));
+    dichVuPanel.add(btnThemDichVu, BorderLayout.EAST);
 
-        gbc.gridx = 1;
-        JPanel listPanel = new JPanel(new BorderLayout());
-        listModelDichVu = new DefaultListModel<>();
-        listDichVu = new JList<>(listModelDichVu);
-        listDichVu.setFont(new Font("Arial", Font.PLAIN, 12));
-        listDichVu.setBackground(COLOR_LIST_BG);
-        listDichVu.setForeground(COLOR_LIST_FOREGROUND);
-        listDichVu.setSelectionBackground(COLOR_LIST_BG.darker());
-        listDichVu.setSelectionForeground(Color.WHITE);
-        listDichVu.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    formPanel.add(dichVuPanel, gbc);
 
-        JScrollPane scrollList = new JScrollPane(listDichVu);
-        scrollList.setPreferredSize(new Dimension(200, 80));
-        scrollList.setBorder(BorderFactory.createLineBorder(COLOR_PRIMARY, 1));
-        listPanel.add(scrollList, BorderLayout.CENTER);
+    // Row 3 - Danh sách dịch vụ đã chọn
+    gbc.gridx = 0;
+    gbc.gridy = 3;
+    JLabel lblDSDichVu = new JLabel("DS dịch vụ:");
+    lblDSDichVu.setForeground(Color.WHITE);
+    formPanel.add(lblDSDichVu, gbc);
 
-        btnXoaDichVu = createStyledButton("Xóa", new Color(0xE7, 0x4C, 0x3C));
-        btnXoaDichVu.setPreferredSize(new Dimension(60, 25));
-        listPanel.add(btnXoaDichVu, BorderLayout.EAST);
+    gbc.gridx = 1;
+    JPanel listPanel = new JPanel(new BorderLayout());
+    listModelDichVu = new DefaultListModel<>();
+    listDichVu = new JList<>(listModelDichVu);
+    listDichVu.setFont(new Font("Arial", Font.PLAIN, 12));
+    listDichVu.setBackground(COLOR_LIST_BG);
+    listDichVu.setForeground(COLOR_LIST_FOREGROUND);
+    listDichVu.setSelectionBackground(COLOR_LIST_BG.darker());
+    listDichVu.setSelectionForeground(Color.WHITE);
+    listDichVu.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        formPanel.add(listPanel, gbc);
+    JScrollPane scrollList = new JScrollPane(listDichVu);
+    scrollList.setPreferredSize(new Dimension(200, 80));
+    scrollList.setBorder(BorderFactory.createLineBorder(COLOR_PRIMARY, 1));
+    listPanel.add(scrollList, BorderLayout.CENTER);
 
-        // THÊM DÒNG MỚI: Nhân viên thực hiện dịch vụ
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        JLabel lblNhanVienDV = new JLabel("NV thực hiện:");
-        lblNhanVienDV.setForeground(Color.WHITE);
-        formPanel.add(lblNhanVienDV, gbc);
+    btnXoaDichVu = createStyledButton("Xóa", new Color(0xE7, 0x4C, 0x3C));
+    btnXoaDichVu.setPreferredSize(new Dimension(60, 25));
+    listPanel.add(btnXoaDichVu, BorderLayout.EAST);
 
-        gbc.gridx = 1;
-        JPanel nhanVienPanel = new JPanel(new BorderLayout(5, 0));
-        cbNhanVienDichVu = new JComboBox<>();
-        cbNhanVienDichVu.setFont(new Font("Arial", Font.PLAIN, 14));
-        nhanVienPanel.add(cbNhanVienDichVu, BorderLayout.CENTER);
+    formPanel.add(listPanel, gbc);
 
-        btnPhanCongNV = createStyledButton("Phân công", COLOR_PRIMARY);
-        btnPhanCongNV.setPreferredSize(new Dimension(100, 25));
-        nhanVienPanel.add(btnPhanCongNV, BorderLayout.EAST);
+    // THÊM DÒNG MỚI: Nhân viên thực hiện dịch vụ
+    gbc.gridx = 0;
+    gbc.gridy = 4;
+    JLabel lblNhanVienDV = new JLabel("NV thực hiện:");
+    lblNhanVienDV.setForeground(Color.WHITE);
+    formPanel.add(lblNhanVienDV, gbc);
 
-        formPanel.add(nhanVienPanel, gbc);
+    gbc.gridx = 1;
+    JPanel nhanVienPanel = new JPanel(new BorderLayout(5, 0));
+    cbNhanVienDichVu = new JComboBox<>();
+    cbNhanVienDichVu.setFont(new Font("Arial", Font.PLAIN, 14));
+    nhanVienPanel.add(cbNhanVienDichVu, BorderLayout.CENTER);
 
-        // Row 5 - Giường (tăng số thứ tự lên)
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        JLabel lblGiuong = new JLabel("Giường:");
-        lblGiuong.setForeground(Color.WHITE);
-        formPanel.add(lblGiuong, gbc);
+    btnPhanCongNV = createStyledButton("Phân công", COLOR_PRIMARY);
+    btnPhanCongNV.setPreferredSize(new Dimension(100, 25));
+    nhanVienPanel.add(btnPhanCongNV, BorderLayout.EAST);
 
-        gbc.gridx = 1;
-        cbGiuong = new JComboBox<>();
-        cbGiuong.setFont(new Font("Arial", Font.PLAIN, 14));
-        formPanel.add(cbGiuong, gbc);
+    formPanel.add(nhanVienPanel, gbc);
 
-        // Row 6 - Ngày đặt (tăng số thứ tự lên)
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        JLabel lblNgayDat = new JLabel("Ngày đặt *:");
-        lblNgayDat.setForeground(Color.WHITE);
-        formPanel.add(lblNgayDat, gbc);
+    // Row 5 - Giường (tăng số thứ tự lên)
+    gbc.gridx = 0;
+    gbc.gridy = 5;
+    JLabel lblGiuong = new JLabel("Giường:");
+    lblGiuong.setForeground(Color.WHITE);
+    formPanel.add(lblGiuong, gbc);
 
-        gbc.gridx = 1;
-        txtNgayDat = new JTextField();
-        txtNgayDat.setFont(new Font("Arial", Font.PLAIN, 14));
-        formPanel.add(txtNgayDat, gbc);
+    gbc.gridx = 1;
+    cbGiuong = new JComboBox<>();
+    cbGiuong.setFont(new Font("Arial", Font.PLAIN, 14));
+    formPanel.add(cbGiuong, gbc);
 
-        // Row 7 - Giờ đặt (tăng số thứ tự lên)
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        JLabel lblGioDat = new JLabel("Giờ đặt *:");
-        lblGioDat.setForeground(Color.WHITE);
-        formPanel.add(lblGioDat, gbc);
+    // Row 6 - Ngày đặt (tăng số thứ tự lên)
+    gbc.gridx = 0;
+    gbc.gridy = 6;
+    JLabel lblNgayDat = new JLabel("Ngày đặt *:");
+    lblNgayDat.setForeground(Color.WHITE);
+    formPanel.add(lblNgayDat, gbc);
 
-        gbc.gridx = 1;
-        txtGioDat = new JTextField();
-        txtGioDat.setFont(new Font("Arial", Font.PLAIN, 14));
-        formPanel.add(txtGioDat, gbc);
+    gbc.gridx = 1;
+    txtNgayDat = new JTextField();
+    txtNgayDat.setFont(new Font("Arial", Font.PLAIN, 14));
+    formPanel.add(txtNgayDat, gbc);
 
-        // Row 8 - Ghi chú (tăng số thứ tự lên)
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        JLabel lblGhiChu = new JLabel("Ghi chú:");
-        lblGhiChu.setForeground(Color.WHITE);
-        formPanel.add(lblGhiChu, gbc);
+    // Row 7 - Giờ đặt (tăng số thứ tự lên)
+    gbc.gridx = 0;
+    gbc.gridy = 7;
+    JLabel lblGioDat = new JLabel("Giờ đặt *:");
+    lblGioDat.setForeground(Color.WHITE);
+    formPanel.add(lblGioDat, gbc);
 
-        gbc.gridx = 1;
-        txtGhiChu = new JTextArea(3, 20);
-        txtGhiChu.setFont(new Font("Arial", Font.PLAIN, 14));
-        txtGhiChu.setLineWrap(true);
-        JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
-        formPanel.add(scrollGhiChu, gbc);
+    gbc.gridx = 1;
+    txtGioDat = new JTextField();
+    txtGioDat.setFont(new Font("Arial", Font.PLAIN, 14));
+    formPanel.add(txtGioDat, gbc);
 
-        // Button row (tăng số thứ tự lên)
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
+    // Row 8 - Ghi chú (tăng số thứ tự lên)
+    gbc.gridx = 0;
+    gbc.gridy = 8;
+    JLabel lblGhiChu = new JLabel("Ghi chú:");
+    lblGhiChu.setForeground(Color.WHITE);
+    formPanel.add(lblGhiChu, gbc);
 
-        JPanel formButtonPanel = new JPanel(new FlowLayout());
-        formButtonPanel.setBackground(COLOR_BACKGROUND);
+    gbc.gridx = 1;
+    txtGhiChu = new JTextArea(3, 20);
+    txtGhiChu.setFont(new Font("Arial", Font.PLAIN, 14));
+    txtGhiChu.setLineWrap(true);
+    JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
+    formPanel.add(scrollGhiChu, gbc);
 
-        btnThem = createStyledButton("Thêm mới", COLOR_PRIMARY);
-        btnSua = createStyledButton("Sửa", COLOR_PRIMARY);
-        btnXoa = createStyledButton("Xóa", new Color(0xE7, 0x4C, 0x3C));
-        btnXacNhan = createStyledButton("Xác nhận", new Color(0x2E, 0xCC, 0x71));
-        btnHuy = createStyledButton("Hủy lịch", new Color(0xE6, 0x7E, 0x22));
-        btnHoanThanh = createStyledButton("Hoàn thành", new Color(0x34, 0x98, 0xDB));
+    // Button row (tăng số thứ tự lên)
+    gbc.gridx = 0;
+    gbc.gridy = 9;
+    gbc.gridwidth = 2;
+    gbc.anchor = GridBagConstraints.CENTER;
 
-        formButtonPanel.add(btnThem);
-        formButtonPanel.add(btnSua);
-        formButtonPanel.add(btnXoa);
-        formButtonPanel.add(btnXacNhan);
-        formButtonPanel.add(btnHuy);
-        formButtonPanel.add(btnHoanThanh);
-        formPanel.add(formButtonPanel, gbc);
+    JPanel formButtonPanel = new JPanel(new FlowLayout());
+    formButtonPanel.setBackground(COLOR_BACKGROUND);
 
-        return formPanel;
-    }
+    btnThem = createStyledButton("Thêm mới", COLOR_PRIMARY);
+    btnSua = createStyledButton("Sửa", COLOR_PRIMARY);
+    btnXoa = createStyledButton("Xóa", new Color(0xE7, 0x4C, 0x3C));
+    btnXacNhan = createStyledButton("Xác nhận", new Color(0x2E, 0xCC, 0x71));
+    btnHuy = createStyledButton("Hủy lịch", new Color(0xE6, 0x7E, 0x22));
+    btnHoanThanh = createStyledButton("Hoàn thành", new Color(0x34, 0x98, 0xDB));
+
+    formButtonPanel.add(btnThem);
+    formButtonPanel.add(btnSua);
+    formButtonPanel.add(btnXoa);
+    formButtonPanel.add(btnXacNhan);
+    formButtonPanel.add(btnHuy);
+    formButtonPanel.add(btnHoanThanh);
+    formPanel.add(formButtonPanel, gbc);
+
+    return formPanel;
+}
 
     // THÊM PHƯƠNG THỨC LOAD NHÂN VIÊN
     public void loadNhanVienChoDichVu() {
@@ -921,6 +933,11 @@ public class QuanLyDatLichView extends JPanel {
 
     public Integer getMaGiuongCu() {
         return maGiuongCu;
+    }
+
+    // Thêm getter cho nút thêm khách hàng
+    public JButton getBtnThemKhachHang() {
+        return btnThemKhachHang;
     }
 
     public void setMaGiuongCu(Integer maGiuongCu) {
