@@ -440,107 +440,107 @@ public class DatDichVuController {
         }
     }
 
-private void handleDoiDiem() {
-    if (khachHangHienTai == null) {
-        JOptionPane.showMessageDialog(view, "Vui lòng chọn khách hàng trước khi đổi điểm",
-                "Thông báo", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
+    private void handleDoiDiem() {
+        if (khachHangHienTai == null) {
+            JOptionPane.showMessageDialog(view, "Vui lòng chọn khách hàng trước khi đổi điểm",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-    int diemHienCo = khachHangHienTai.getDiemTichLuy();
+        int diemHienCo = khachHangHienTai.getDiemTichLuy();
 
-    // KIỂM TRA TỐI THIỂU 10 ĐIỂM
-    if (diemHienCo < 10) {
-        JOptionPane.showMessageDialog(view,
-                "Cần tối thiểu 10 điểm để đổi 1 vé gọi đầu!\n"
-                + "Số điểm hiện có: " + diemHienCo + " điểm\n"
-                + "Còn thiếu: " + (10 - diemHienCo) + " điểm",
-                "Không đủ điểm", JOptionPane.WARNING_MESSAGE);
-        return;
-    }
+        // KIỂM TRA TỐI THIỂU 10 ĐIỂM
+        if (diemHienCo < 10) {
+            JOptionPane.showMessageDialog(view,
+                    "Cần tối thiểu 10 điểm để đổi 1 vé gọi đầu!\n"
+                    + "Số điểm hiện có: " + diemHienCo + " điểm\n"
+                    + "Còn thiếu: " + (10 - diemHienCo) + " điểm",
+                    "Không đủ điểm", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-    // TÍNH SỐ VÉ TỐI ĐA CÓ THỂ ĐỔI
-    int soVeToiDa = diemHienCo / 10;
+        // TÍNH SỐ VÉ TỐI ĐA CÓ THỂ ĐỔI
+        int soVeToiDa = diemHienCo / 10;
 
-    String input = JOptionPane.showInputDialog(
-            view,
-            "Số điểm hiện có: " + diemHienCo + " điểm\n"
-            + "Tỷ lệ đổi: 10 điểm = 1 vé gọi đầu\n"
-            + "Số vé tối đa có thể đổi: " + soVeToiDa + " vé\n"
-            + "Nhập số vé muốn đổi:",
-            "Đổi điểm tích lũy",
-            JOptionPane.QUESTION_MESSAGE
-    );
+        String input = JOptionPane.showInputDialog(
+                view,
+                "Số điểm hiện có: " + diemHienCo + " điểm\n"
+                + "Tỷ lệ đổi: 10 điểm = 1 vé gọi đầu\n"
+                + "Số vé tối đa có thể đổi: " + soVeToiDa + " vé\n"
+                + "Nhập số vé muốn đổi:",
+                "Đổi điểm tích lũy",
+                JOptionPane.QUESTION_MESSAGE
+        );
 
-    if (input != null && !input.trim().isEmpty()) {
-        try {
-            int soVeMuonDoi = Integer.parseInt(input.trim());
+        if (input != null && !input.trim().isEmpty()) {
+            try {
+                int soVeMuonDoi = Integer.parseInt(input.trim());
 
-            if (soVeMuonDoi <= 0) {
-                JOptionPane.showMessageDialog(view, "Số vé phải lớn hơn 0",
+                if (soVeMuonDoi <= 0) {
+                    JOptionPane.showMessageDialog(view, "Số vé phải lớn hơn 0",
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // TÍNH SỐ ĐIỂM CẦN ĐỔI
+                int diemCanDoi = soVeMuonDoi * 10;
+
+                if (diemCanDoi > diemHienCo) {
+                    JOptionPane.showMessageDialog(view,
+                            "Không đủ điểm để đổi!\n"
+                            + "Điểm cần: " + diemCanDoi + " điểm\n"
+                            + "Điểm hiện có: " + diemHienCo + " điểm\n"
+                            + "Số vé tối đa có thể đổi: " + soVeToiDa + " vé",
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Thêm dịch vụ "Vé gọi đầu" vào danh sách
+                DefaultTableModel model = view.getTableModel();
+                int stt = model.getRowCount() + 1;
+                model.addRow(new Object[]{
+                    stt,
+                    "Vé gọi đầu (đổi " + diemCanDoi + " điểm)",
+                    "0 phút",
+                    currencyFormat.format(0),
+                    soVeMuonDoi, // Số lượng vé
+                    getNhanVienInfoFromTable(),
+                    currencyFormat.format(0)
+                });
+
+                // Cập nhật điểm tích lũy TRONG DATABASE
+                int diemMoi = diemHienCo - diemCanDoi;
+                khachHangHienTai.setDiemTichLuy(diemMoi);
+
+                // QUAN TRỌNG: Cập nhật vào database
+                boolean updateSuccess = khachHangService.updateKhachHang(khachHangHienTai);
+
+                if (updateSuccess) {
+                    // Cập nhật trên giao diện
+                    view.getLblDiemTichLuy().setText(diemMoi + " điểm");
+
+                    JOptionPane.showMessageDialog(view,
+                            "Đổi điểm thành công!\n"
+                            + "Đã đổi " + diemCanDoi + " điểm để nhận " + soVeMuonDoi + " vé gọi đầu\n"
+                            + "Số điểm còn lại: " + diemMoi + " điểm",
+                            "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(view,
+                            "Lỗi khi cập nhật điểm tích lũy trong database!",
+                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    // Rollback: xóa dòng vừa thêm nếu cập nhật database thất bại
+                    model.removeRow(model.getRowCount() - 1);
+                }
+
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(view, "Số vé không hợp lệ",
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // TÍNH SỐ ĐIỂM CẦN ĐỔI
-            int diemCanDoi = soVeMuonDoi * 10;
-
-            if (diemCanDoi > diemHienCo) {
-                JOptionPane.showMessageDialog(view,
-                        "Không đủ điểm để đổi!\n"
-                        + "Điểm cần: " + diemCanDoi + " điểm\n"
-                        + "Điểm hiện có: " + diemHienCo + " điểm\n"
-                        + "Số vé tối đa có thể đổi: " + soVeToiDa + " vé",
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(view, "Lỗi khi đổi điểm: " + e.getMessage(),
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
             }
-
-            // Thêm dịch vụ "Vé gọi đầu" vào danh sách
-            DefaultTableModel model = view.getTableModel();
-            int stt = model.getRowCount() + 1;
-            model.addRow(new Object[]{
-                stt,
-                "Vé gọi đầu (đổi " + diemCanDoi + " điểm)",
-                "0 phút",
-                currencyFormat.format(0),
-                soVeMuonDoi, // Số lượng vé
-                getNhanVienInfoFromTable(),
-                currencyFormat.format(0)
-            });
-
-            // Cập nhật điểm tích lũy TRONG DATABASE
-            int diemMoi = diemHienCo - diemCanDoi;
-            khachHangHienTai.setDiemTichLuy(diemMoi);
-            
-            // QUAN TRỌNG: Cập nhật vào database
-            boolean updateSuccess = khachHangService.updateKhachHang(khachHangHienTai);
-            
-            if (updateSuccess) {
-                // Cập nhật trên giao diện
-                view.getLblDiemTichLuy().setText(diemMoi + " điểm");
-                
-                JOptionPane.showMessageDialog(view,
-                        "Đổi điểm thành công!\n"
-                        + "Đã đổi " + diemCanDoi + " điểm để nhận " + soVeMuonDoi + " vé gọi đầu\n"
-                        + "Số điểm còn lại: " + diemMoi + " điểm",
-                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(view,
-                        "Lỗi khi cập nhật điểm tích lũy trong database!",
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
-                // Rollback: xóa dòng vừa thêm nếu cập nhật database thất bại
-                model.removeRow(model.getRowCount() - 1);
-            }
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(view, "Số vé không hợp lệ",
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(view, "Lỗi khi đổi điểm: " + e.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
-}
 
     private void handleInHoaDon() {
         if (view.getTableModel().getRowCount() == 0) {
@@ -655,40 +655,40 @@ private void handleDoiDiem() {
             hoaDon.setGhiChu("Hóa đơn dịch vụ spa - Đã cập nhật - "
                     + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()));
 
-        // 3. Tạo danh sách chi tiết hóa đơn mới
-        List<ChiTietHoaDon> chiTietList = new ArrayList<>();
-        DefaultTableModel model = view.getTableModel();
+            // 3. Tạo danh sách chi tiết hóa đơn mới
+            List<ChiTietHoaDon> chiTietList = new ArrayList<>();
+            DefaultTableModel model = view.getTableModel();
 
-        for (int i = 0; i < model.getRowCount(); i++) {
-            String tenDichVu = model.getValueAt(i, 1).toString();
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String tenDichVu = model.getValueAt(i, 1).toString();
 
-            // Bỏ qua dịch vụ "Vé gọi đầu" khi lưu database
-            if (tenDichVu.contains("Vé gọi đầu")) {
-                continue;
+                // Bỏ qua dịch vụ "Vé gọi đầu" khi lưu database
+                if (tenDichVu.contains("Vé gọi đầu")) {
+                    continue;
+                }
+
+                int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
+
+                // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
+                String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
+                BigDecimal donGia = new BigDecimal(donGiaStr);
+
+                // Tìm mã dịch vụ theo tên
+                Integer maDichVu = getMaDichVuTheoTen(tenDichVu);
+                if (maDichVu != null) {
+                    ChiTietHoaDon chiTiet = new ChiTietHoaDon();
+                    chiTiet.setMaDichVu(maDichVu);
+                    chiTiet.setSoLuong(soLuong);
+                    chiTiet.setDonGia(donGia);
+
+                    // THÊM MÃ NHÂN VIÊN TỪ BẢNG
+                    String tenNhanVien = model.getValueAt(i, 5).toString();
+                    Integer maNhanVien = getMaNhanVienTheoTen(tenNhanVien);
+                    chiTiet.setMaNhanVien(maNhanVien);
+
+                    chiTietList.add(chiTiet);
+                }
             }
-
-            int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
-
-            // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
-            String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
-            BigDecimal donGia = new BigDecimal(donGiaStr);
-
-            // Tìm mã dịch vụ theo tên
-            Integer maDichVu = getMaDichVuTheoTen(tenDichVu);
-            if (maDichVu != null) {
-                ChiTietHoaDon chiTiet = new ChiTietHoaDon();
-                chiTiet.setMaDichVu(maDichVu);
-                chiTiet.setSoLuong(soLuong);
-                chiTiet.setDonGia(donGia);
-                
-                // THÊM MÃ NHÂN VIÊN TỪ BẢNG
-                String tenNhanVien = model.getValueAt(i, 5).toString();
-                Integer maNhanVien = getMaNhanVienTheoTen(tenNhanVien);
-                chiTiet.setMaNhanVien(maNhanVien);
-
-                chiTietList.add(chiTiet);
-            }
-        }
 
             // 4. Đặt danh sách chi tiết mới vào hóa đơn
             hoaDon.setChiTietHoaDon(chiTietList);
@@ -819,208 +819,207 @@ private void handleDoiDiem() {
     }
 
 // Phương thức in hóa đơn PDF chi tiết - ĐÃ SỬA ĐỂ GIỐNG VỚI QUẢN LÝ ĐẶT LỊCH
-private boolean inHoaDonPDF() {
-    FileOutputStream fos = null;
-    try {
-        // Tạo đường dẫn động đến thư mục bill
-        String projectDir = System.getProperty("user.dir");
-        String billDir = projectDir + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "bill";
-        
-        // Tạo thư mục nếu chưa tồn tại
-        File directory = new File(billDir);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
-        
-        // Tạo tên file
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        String fileName = "HoaDon_DichVu_" + sdf.format(new Date()) + ".pdf";
-        String filePath = billDir + File.separator + fileName;
-        fos = new FileOutputStream(filePath);
-
-        Document doc = new Document();
-        PdfWriter writer = PdfWriter.getInstance(doc, fos);
-        doc.open();
-
-        // Sử dụng font Unicode để hỗ trợ tiếng Việt
-        BaseFont baseFont = createBaseFont();
-
-        // Tạo fonts
-        Font fontNormal = new Font(baseFont, 12, Font.NORMAL);
-        Font fontBold = new Font(baseFont, 12, Font.BOLD);
-        Font fontTitle = new Font(baseFont, 18, Font.BOLD);
-        Font fontHeader = new Font(baseFont, 10, Font.BOLD);
-        Font fontSmall = new Font(baseFont, 10, Font.NORMAL);
-
-        // Tiêu đề - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        Paragraph title = new Paragraph("HOÁ ĐƠN DỊCH VỤ SPA", fontTitle);
-        title.setAlignment(Element.ALIGN_CENTER);
-        doc.add(title);
-        
-        // Thông tin cửa hàng - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        Paragraph storeInfo = new Paragraph("SWEET HOME", fontBold);
-        storeInfo.setAlignment(Element.ALIGN_CENTER);
-        doc.add(storeInfo);
-
-        Paragraph storeAddress = new Paragraph("43 Đ. Lý Tự Trọng, P, Ninh Kiều, Cần Thơ 94100, Việt Nam", fontSmall);
-        storeAddress.setAlignment(Element.ALIGN_CENTER);
-        doc.add(storeAddress);
-
-        Paragraph storePhone = new Paragraph("Điện thoại: 097 3791 643", fontSmall);
-        storePhone.setAlignment(Element.ALIGN_CENTER);
-        doc.add(storePhone);
-
-        doc.add(new Paragraph(" "));
-        doc.add(new Paragraph("---------------------------------------------", fontNormal));
-        doc.add(new Paragraph(" "));
-        
-        // Thông tin hóa đơn - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        doc.add(new Paragraph("Ngày lập: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()), fontNormal));
-        
-        
-        doc.add(new Paragraph("Khách hàng: " + getTenKhachHangHienTai(), fontNormal));
-
-        // Thêm thông tin liên hệ khách hàng - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        if (khachHangHienTai.getSoDienThoai() != null && !khachHangHienTai.getSoDienThoai().isEmpty()) {
-            doc.add(new Paragraph("SĐT: " + khachHangHienTai.getSoDienThoai(), fontNormal));
-        }
-
-        // Hiển thị điểm tích lũy hiện tại - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        doc.add(new Paragraph("Điểm tích lũy hiện tại: " + khachHangHienTai.getDiemTichLuy() + " điểm", fontNormal));
-        doc.add(new Paragraph("Lưu ý: Cần tối thiểu 10 điểm để đổi vé gọi đầu", fontSmall));
-        doc.add(new Paragraph("---------------------------------------------", fontNormal));
-
-        // Bảng dịch vụ - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        PdfPTable table = new PdfPTable(6);
-        table.setWidthPercentage(100);
-        float[] columnWidths = {0.8f, 3f, 2f, 1.5f, 2f, 2f};
-        table.setWidths(columnWidths);
-
-        // Header bảng - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        table.addCell(new Phrase("STT", fontHeader));
-        table.addCell(new Phrase("Tên dịch vụ", fontHeader));
-        table.addCell(new Phrase("Thời gian", fontHeader));
-        table.addCell(new Phrase("Số lượng", fontHeader));
-        table.addCell(new Phrase("Đơn giá", fontHeader));
-        table.addCell(new Phrase("Thành tiền", fontHeader));
-
-        // Thêm dữ liệu với số thứ tự - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        int stt = 1;
-        BigDecimal tongCong = BigDecimal.ZERO;
-        DefaultTableModel model = view.getTableModel();
-
-        for (int i = 0; i < model.getRowCount(); i++) {
-            String tenDichVu = model.getValueAt(i, 1).toString();
-            
-            // Bỏ qua dịch vụ "Vé gọi đầu" khi tính tổng tiền
-            if (tenDichVu.contains("Vé gọi đầu")) {
-                continue;
-            }
-            
-            String thoiGian = model.getValueAt(i, 2).toString();
-            int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
-            
-            // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
-            String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
-            BigDecimal donGia = new BigDecimal(donGiaStr);
-            
-            BigDecimal thanhTien = donGia.multiply(BigDecimal.valueOf(soLuong));
-            tongCong = tongCong.add(thanhTien);
-
-            // Thêm các cell với STT - GIỐNG QUẢN LÝ ĐẶT LỊCH
-            table.addCell(new Phrase(String.valueOf(stt++), fontNormal));
-            table.addCell(new Phrase(tenDichVu, fontNormal));
-            table.addCell(new Phrase(thoiGian, fontNormal));
-            table.addCell(new Phrase(String.valueOf(soLuong), fontNormal));
-            table.addCell(new Phrase(String.format("%,.0f", donGia) + " VND", fontNormal));
-            table.addCell(new Phrase(String.format("%,.0f", thanhTien.doubleValue()) + " VND", fontNormal));
-        }
-
-        doc.add(table);
-        doc.add(new Paragraph("---------------------------------------------", fontNormal));
-        doc.add(new Paragraph(String.format("Tổng cộng: %s VND", String.format("%,.0f", tongCong.doubleValue())), fontBold));
-
-        // Hiển thị điểm tích lũy được thưởng - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        int diemThuong = tongCong.divideToIntegralValue(BigDecimal.valueOf(100000)).intValue();
-        if (diemThuong > 0) {
-            doc.add(new Paragraph("Điểm tích lũy được thưởng: +" + diemThuong + " điểm", fontBold));
-        }
-
-        // Thêm QR Code thanh toán - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        if (tongCong.compareTo(BigDecimal.ZERO) > 0) {
-            try {
-                String bankBin = "970431";
-                String accountNumber = "0973791643";
-                String accountName = "NGUYEN DIEM THAO NGUYEN";
-                String addInfo = "Thanh toán dịch vụ SPA - " + getTenKhachHangHienTai();
-
-                String qrUrl = "https://img.vietqr.io/image/"
-                        + bankBin + "-" + accountNumber
-                        + "-compact.png?amount=" + tongCong
-                        + "&addInfo=" + URLEncoder.encode(addInfo, StandardCharsets.UTF_8)
-                        + "&accountName=" + URLEncoder.encode(accountName, StandardCharsets.UTF_8);
-
-                BufferedImage qrBufferedImage = ImageIO.read(new URL(qrUrl));
-                
-                // Lưu QR code vào thư mục bill
-                String qrFileName = "VietQR_DichVu_" + System.currentTimeMillis() + ".png";
-                String qrPath = billDir + File.separator + qrFileName;
-                ImageIO.write(qrBufferedImage, "PNG", new File(qrPath));
-
-                com.itextpdf.text.Image qrImage = com.itextpdf.text.Image.getInstance(qrPath);
-                qrImage.scaleToFit(120, 120);
-                qrImage.setAlignment(Element.ALIGN_CENTER);
-
-                doc.add(new Paragraph("\nMã QR thanh toán:", fontBold));
-                doc.add(qrImage);
-
-                doc.add(new Paragraph("Ngân hàng: EximBank", fontNormal));
-                doc.add(new Paragraph("Chủ tài khoản: " + accountName, fontNormal));
-                doc.add(new Paragraph("Số tài khoản: " + accountNumber, fontNormal));
-
-                // Xóa file QR tạm
-                new File(qrPath).delete();
-            } catch (Exception e) {
-                System.err.println("Không thể tạo QR thanh toán: " + e.getMessage());
-                doc.add(new Paragraph("\nQuý khách vui lòng thanh toán trực tiếp tại quầy.", fontNormal));
-            }
-        }
-
-        // Thêm ghi chú nếu có - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        String ghiChu = "Hóa đơn dịch vụ spa - " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date());
-        if (ghiChu != null && !ghiChu.trim().isEmpty()) {
-            doc.add(new Paragraph("\nGhi chú: " + ghiChu, fontNormal));
-        }
-
-        doc.add(new Paragraph("\nCảm ơn quý khách!", fontBold));
-        doc.add(new Paragraph("Hẹn gặp lại!", fontNormal));
-
-        doc.close();
-
-        // Mở file PDF - GIỐNG QUẢN LÝ ĐẶT LỊCH
-        JOptionPane.showMessageDialog(view, "Đã in hóa đơn ra file: " + filePath);
+    private boolean inHoaDonPDF() {
+        FileOutputStream fos = null;
         try {
-            Desktop.getDesktop().open(new File(filePath));
-        } catch (Exception e) {
-            System.err.println("Không thể mở file PDF: " + e.getMessage());
-        }
+            // Tạo đường dẫn động đến thư mục bill
+            String projectDir = System.getProperty("user.dir");
+            String billDir = projectDir + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "bill";
 
-        return true;
+            // Tạo thư mục nếu chưa tồn tại
+            File directory = new File(billDir);
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(view, "Lỗi khi in hóa đơn PDF: " + e.getMessage());
-        return false;
-    } finally {
-        if (fos != null) {
+            // Tạo tên file
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+            String fileName = "HoaDon_DichVu_" + sdf.format(new Date()) + ".pdf";
+            String filePath = billDir + File.separator + fileName;
+            fos = new FileOutputStream(filePath);
+
+            Document doc = new Document();
+            PdfWriter writer = PdfWriter.getInstance(doc, fos);
+            doc.open();
+
+            // Sử dụng font Unicode để hỗ trợ tiếng Việt
+            BaseFont baseFont = createBaseFont();
+
+            // Tạo fonts
+            Font fontNormal = new Font(baseFont, 12, Font.NORMAL);
+            Font fontBold = new Font(baseFont, 12, Font.BOLD);
+            Font fontTitle = new Font(baseFont, 18, Font.BOLD);
+            Font fontHeader = new Font(baseFont, 10, Font.BOLD);
+            Font fontSmall = new Font(baseFont, 10, Font.NORMAL);
+
+            // Tiêu đề - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            Paragraph title = new Paragraph("HOÁ ĐƠN DỊCH VỤ SPA", fontTitle);
+            title.setAlignment(Element.ALIGN_CENTER);
+            doc.add(title);
+
+            // Thông tin cửa hàng - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            Paragraph storeInfo = new Paragraph("SWEET HOME", fontBold);
+            storeInfo.setAlignment(Element.ALIGN_CENTER);
+            doc.add(storeInfo);
+
+            Paragraph storeAddress = new Paragraph("43 Đ. Lý Tự Trọng, P, Ninh Kiều, Cần Thơ 94100, Việt Nam", fontSmall);
+            storeAddress.setAlignment(Element.ALIGN_CENTER);
+            doc.add(storeAddress);
+
+            Paragraph storePhone = new Paragraph("Điện thoại: 097 3791 643", fontSmall);
+            storePhone.setAlignment(Element.ALIGN_CENTER);
+            doc.add(storePhone);
+
+            doc.add(new Paragraph(" "));
+            doc.add(new Paragraph("---------------------------------------------", fontNormal));
+            doc.add(new Paragraph(" "));
+
+            // Thông tin hóa đơn - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            doc.add(new Paragraph("Ngày lập: " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date()), fontNormal));
+
+            doc.add(new Paragraph("Khách hàng: " + getTenKhachHangHienTai(), fontNormal));
+
+            // Thêm thông tin liên hệ khách hàng - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            if (khachHangHienTai.getSoDienThoai() != null && !khachHangHienTai.getSoDienThoai().isEmpty()) {
+                doc.add(new Paragraph("SĐT: " + khachHangHienTai.getSoDienThoai(), fontNormal));
+            }
+
+            // Hiển thị điểm tích lũy hiện tại - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            doc.add(new Paragraph("Điểm tích lũy hiện tại: " + khachHangHienTai.getDiemTichLuy() + " điểm", fontNormal));
+            doc.add(new Paragraph("Lưu ý: Cần tối thiểu 10 điểm để đổi vé gọi đầu", fontSmall));
+            doc.add(new Paragraph("---------------------------------------------", fontNormal));
+
+            // Bảng dịch vụ - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            PdfPTable table = new PdfPTable(6);
+            table.setWidthPercentage(100);
+            float[] columnWidths = {0.8f, 3f, 2f, 1.5f, 2f, 2f};
+            table.setWidths(columnWidths);
+
+            // Header bảng - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            table.addCell(new Phrase("STT", fontHeader));
+            table.addCell(new Phrase("Tên dịch vụ", fontHeader));
+            table.addCell(new Phrase("Thời gian", fontHeader));
+            table.addCell(new Phrase("Số lượng", fontHeader));
+            table.addCell(new Phrase("Đơn giá", fontHeader));
+            table.addCell(new Phrase("Thành tiền", fontHeader));
+
+            // Thêm dữ liệu với số thứ tự - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            int stt = 1;
+            BigDecimal tongCong = BigDecimal.ZERO;
+            DefaultTableModel model = view.getTableModel();
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+                String tenDichVu = model.getValueAt(i, 1).toString();
+
+                // Bỏ qua dịch vụ "Vé gọi đầu" khi tính tổng tiền
+                if (tenDichVu.contains("Vé gọi đầu")) {
+                    continue;
+                }
+
+                String thoiGian = model.getValueAt(i, 2).toString();
+                int soLuong = Integer.parseInt(model.getValueAt(i, 4).toString());
+
+                // Lấy đơn giá từ chuỗi format (ví dụ: "100,000 VND")
+                String donGiaStr = model.getValueAt(i, 3).toString().replaceAll("[^\\d]", "");
+                BigDecimal donGia = new BigDecimal(donGiaStr);
+
+                BigDecimal thanhTien = donGia.multiply(BigDecimal.valueOf(soLuong));
+                tongCong = tongCong.add(thanhTien);
+
+                // Thêm các cell với STT - GIỐNG QUẢN LÝ ĐẶT LỊCH
+                table.addCell(new Phrase(String.valueOf(stt++), fontNormal));
+                table.addCell(new Phrase(tenDichVu, fontNormal));
+                table.addCell(new Phrase(thoiGian, fontNormal));
+                table.addCell(new Phrase(String.valueOf(soLuong), fontNormal));
+                table.addCell(new Phrase(String.format("%,.0f", donGia) + " VND", fontNormal));
+                table.addCell(new Phrase(String.format("%,.0f", thanhTien.doubleValue()) + " VND", fontNormal));
+            }
+
+            doc.add(table);
+            doc.add(new Paragraph("---------------------------------------------", fontNormal));
+            doc.add(new Paragraph(String.format("Tổng cộng: %s VND", String.format("%,.0f", tongCong.doubleValue())), fontBold));
+
+            // Hiển thị điểm tích lũy được thưởng - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            int diemThuong = tongCong.divideToIntegralValue(BigDecimal.valueOf(100000)).intValue();
+            if (diemThuong > 0) {
+                doc.add(new Paragraph("Điểm tích lũy được thưởng: +" + diemThuong + " điểm", fontBold));
+            }
+
+            // Thêm QR Code thanh toán - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            if (tongCong.compareTo(BigDecimal.ZERO) > 0) {
+                try {
+                    String bankBin = "970431";
+                    String accountNumber = "0973791643";
+                    String accountName = "NGUYEN DIEM THAO NGUYEN";
+                    String addInfo = "Thanh toán dịch vụ SPA - " + getTenKhachHangHienTai();
+
+                    String qrUrl = "https://img.vietqr.io/image/"
+                            + bankBin + "-" + accountNumber
+                            + "-compact.png?amount=" + tongCong
+                            + "&addInfo=" + URLEncoder.encode(addInfo, StandardCharsets.UTF_8)
+                            + "&accountName=" + URLEncoder.encode(accountName, StandardCharsets.UTF_8);
+
+                    BufferedImage qrBufferedImage = ImageIO.read(new URL(qrUrl));
+
+                    // Lưu QR code vào thư mục bill
+                    String qrFileName = "VietQR_DichVu_" + System.currentTimeMillis() + ".png";
+                    String qrPath = billDir + File.separator + qrFileName;
+                    ImageIO.write(qrBufferedImage, "PNG", new File(qrPath));
+
+                    com.itextpdf.text.Image qrImage = com.itextpdf.text.Image.getInstance(qrPath);
+                    qrImage.scaleToFit(120, 120);
+                    qrImage.setAlignment(Element.ALIGN_CENTER);
+
+                    doc.add(new Paragraph("\nMã QR thanh toán:", fontBold));
+                    doc.add(qrImage);
+
+                    doc.add(new Paragraph("Ngân hàng: EximBank", fontNormal));
+                    doc.add(new Paragraph("Chủ tài khoản: " + accountName, fontNormal));
+                    doc.add(new Paragraph("Số tài khoản: " + accountNumber, fontNormal));
+
+                    // Xóa file QR tạm
+                    new File(qrPath).delete();
+                } catch (Exception e) {
+                    System.err.println("Không thể tạo QR thanh toán: " + e.getMessage());
+                    doc.add(new Paragraph("\nQuý khách vui lòng thanh toán trực tiếp tại quầy.", fontNormal));
+                }
+            }
+
+            // Thêm ghi chú nếu có - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            String ghiChu = "Hóa đơn dịch vụ spa - " + new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date());
+            if (ghiChu != null && !ghiChu.trim().isEmpty()) {
+                doc.add(new Paragraph("\nGhi chú: " + ghiChu, fontNormal));
+            }
+
+            doc.add(new Paragraph("\nCảm ơn quý khách!", fontBold));
+            doc.add(new Paragraph("Hẹn gặp lại!", fontNormal));
+
+            doc.close();
+
+            // Mở file PDF - GIỐNG QUẢN LÝ ĐẶT LỊCH
+            JOptionPane.showMessageDialog(view, "Đã in hóa đơn ");
             try {
-                fos.close();
+                Desktop.getDesktop().open(new File(filePath));
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Không thể mở file PDF: " + e.getMessage());
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(view, "Lỗi khi in hóa đơn PDF: " + e.getMessage());
+            return false;
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
-}
 // Phương thức lấy thông tin nhân viên từ bảng dịch vụ
 
     private String getNhanVienInfoFromTable() {

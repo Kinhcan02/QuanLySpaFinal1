@@ -847,7 +847,7 @@ public void inHoaDonPDFDetail(DatLich datLich, KhachHang khachHang, Giuong giuon
         doc.close();
 
         // Mở file PDF
-        JOptionPane.showMessageDialog(view, "Đã in hóa đơn ra file: " + filePath);
+        JOptionPane.showMessageDialog(view, "Đã in hóa đơn ra file");
         try {
             Desktop.getDesktop().open(new File(filePath));
         } catch (Exception e) {
