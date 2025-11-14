@@ -226,7 +226,7 @@ public class QuanLyTaiKhoanController {
     
     private void showEditTaiKhoanForm(TaiKhoan taiKhoan) {
         try {
-            JDialog dialog = createDialog("Sửa Tài Khoản", 400, 400);
+            JDialog dialog = createDialog("Sửa Tài Khoản", 400, 300);
             JPanel mainPanel = createMainPanel();
 
             // Form nhập liệu với BorderLayout
@@ -247,7 +247,6 @@ public class QuanLyTaiKhoanController {
             cboVaiTro.setSelectedItem(taiKhoan.getVaiTro());
 
             // Load nhân viên
-            loadNhanVienToComboBox(cboNhanVien);
             
             // Chọn nhân viên hiện tại nếu có
             if (taiKhoan.getMaNhanVien() != 0 && taiKhoan.getMaNhanVien() != 0) {
@@ -264,9 +263,6 @@ public class QuanLyTaiKhoanController {
             basicInfoPanel.add(txtTenDangNhap);
             basicInfoPanel.add(createStyledLabel("Vai trò:"));
             basicInfoPanel.add(cboVaiTro);
-            basicInfoPanel.add(createStyledLabel("Nhân viên:"));
-            basicInfoPanel.add(cboNhanVien);
-
             // Thêm panel vào form chính
             formPanel.add(basicInfoPanel, BorderLayout.CENTER);
 
@@ -275,7 +271,7 @@ public class QuanLyTaiKhoanController {
             JButton btnCapNhat = createStyledButton("Cập nhật", COLOR_BUTTON);
             JButton btnHuy = createStyledButton("Hủy", new Color(149, 165, 166));
 
-            btnCapNhat.addActionListener(e -> handleCapNhatTaiKhoan(dialog, taiKhoan, txtTenDangNhap, cboVaiTro, cboNhanVien));
+            btnCapNhat.addActionListener(e -> handleCapNhatTaiKhoan(dialog, taiKhoan, txtTenDangNhap, cboVaiTro));
             btnHuy.addActionListener(e -> dialog.dispose());
 
             buttonPanel.add(btnCapNhat);
@@ -293,7 +289,7 @@ public class QuanLyTaiKhoanController {
     }
     
     private void handleCapNhatTaiKhoan(JDialog dialog, TaiKhoan taiKhoan, JTextField txtTenDangNhap,
-                                      JComboBox<String> cboVaiTro, JComboBox<String> cboNhanVien) {
+                                      JComboBox<String> cboVaiTro) {
         
         // Validate dữ liệu
         if (txtTenDangNhap.getText().trim().isEmpty()) {
@@ -305,13 +301,6 @@ public class QuanLyTaiKhoanController {
         taiKhoan.setTenDangNhap(txtTenDangNhap.getText().trim());
         taiKhoan.setVaiTro((String) cboVaiTro.getSelectedItem());
         
-        // Cập nhật mã nhân viên
-        Integer maNhanVienMoi = null;
-        if (cboNhanVien.getSelectedIndex() > 0) {
-            String selectedNhanVien = (String) cboNhanVien.getSelectedItem();
-            maNhanVienMoi = getMaNhanVienFromComboBox(selectedNhanVien);
-        }
-        taiKhoan.setMaNhanVien(maNhanVienMoi);
         
         // Cập nhật database
         boolean success = authService.capNhatTaiKhoan(taiKhoan);
