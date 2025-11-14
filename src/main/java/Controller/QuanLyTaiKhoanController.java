@@ -493,15 +493,12 @@ public class QuanLyTaiKhoanController {
         dialog.setVisible(true);
     }
     
-    private boolean hienThiXacNhan(String message) {
-        JDialog dialog = createConfirmationDialog(message);
-        final boolean[] result = {false};
-        
-        // Đợi dialog đóng
-        dialog.setVisible(true);
-        
-        return result[0];
-    }
+   private boolean hienThiXacNhan(String message) {
+    final boolean[] result = {false};
+    JDialog dialog = createConfirmationDialog(message, result);
+    dialog.setVisible(true);
+    return result[0];
+}
     
     private JDialog createCustomDialog(String message, String title, int messageType) {
         // Tạo custom button OK
@@ -570,78 +567,75 @@ public class QuanLyTaiKhoanController {
         return dialog;
     }
 
-    private JDialog createConfirmationDialog(String message) {
-        // Tạo custom buttons
-        JButton btnCo = createStyledButton("Có", COLOR_BUTTON);
-        JButton btnKhong = createStyledButton("Không", new Color(149, 165, 166));
-        
-        // Tạo panel chứa nội dung với màu nền xanh tràn viền
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(COLOR_BACKGROUND);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+   private JDialog createConfirmationDialog(String message, final boolean[] result) {
+    // Tạo custom buttons
+    JButton btnCo = createStyledButton("Có", COLOR_BUTTON);
+    JButton btnKhong = createStyledButton("Không", new Color(149, 165, 166));
+    
+    // Tạo panel chứa nội dung với màu nền xanh tràn viền
+    JPanel panel = new JPanel(new BorderLayout(10, 10));
+    panel.setBackground(COLOR_BACKGROUND);
+    panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Tạo icon và message
-        JLabel messageLabel = new JLabel(message);
-        messageLabel.setForeground(COLOR_TEXT);
-        messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+    // Tạo icon và message
+    JLabel messageLabel = new JLabel(message);
+    messageLabel.setForeground(COLOR_TEXT);
+    messageLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
-        // Icon question
-        Icon icon = UIManager.getIcon("OptionPane.questionIcon");
+    // Icon question
+    Icon icon = UIManager.getIcon("OptionPane.questionIcon");
 
-        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        contentPanel.setBackground(COLOR_BACKGROUND);
-        if (icon != null) {
-            JLabel iconLabel = new JLabel(icon);
-            contentPanel.add(iconLabel);
-        }
-        contentPanel.add(messageLabel);
+    JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+    contentPanel.setBackground(COLOR_BACKGROUND);
+    if (icon != null) {
+        JLabel iconLabel = new JLabel(icon);
+        contentPanel.add(iconLabel);
+    }
+    contentPanel.add(messageLabel);
 
-        panel.add(contentPanel, BorderLayout.CENTER);
+    panel.add(contentPanel, BorderLayout.CENTER);
 
-        // Panel chứa nút
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        buttonPanel.setBackground(COLOR_BACKGROUND);
-        buttonPanel.add(btnCo);
-        buttonPanel.add(btnKhong);
+    // Panel chứa nút
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
+    buttonPanel.setBackground(COLOR_BACKGROUND);
+    buttonPanel.add(btnCo);
+    buttonPanel.add(btnKhong);
 
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+    panel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Tạo JDialog
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), "Xác nhận", true);
-        dialog.setContentPane(panel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(view);
-        dialog.setResizable(false);
+    // Tạo JDialog
+    JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(view), "Xác nhận", true);
+    dialog.setContentPane(panel);
+    dialog.pack();
+    dialog.setLocationRelativeTo(view);
+    dialog.setResizable(false);
 
-        // Biến để lưu kết quả
-        final boolean[] result = {false};
+    // Xử lý sự kiện cho nút
+    btnCo.addActionListener(e -> {
+        result[0] = true;
+        dialog.dispose();
+    });
 
-        // Xử lý sự kiện cho nút
-        btnCo.addActionListener(e -> {
-            result[0] = true;
-            dialog.dispose();
-        });
+    btnKhong.addActionListener(e -> {
+        result[0] = false;
+        dialog.dispose();
+    });
 
-        btnKhong.addActionListener(e -> {
+    // Xử lý khi đóng cửa sổ
+    dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+    dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+        @Override
+        public void windowClosing(java.awt.event.WindowEvent e) {
             result[0] = false;
             dialog.dispose();
-        });
+        }
+    });
 
-        // Xử lý khi đóng cửa sổ
-        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                result[0] = false;
-                dialog.dispose();
-            }
-        });
+    // Đặt nút "Không" làm default button
+    dialog.getRootPane().setDefaultButton(btnKhong);
 
-        // Đặt nút "Không" làm default button
-        dialog.getRootPane().setDefaultButton(btnKhong);
-
-        return dialog;
-    }
+    return dialog;
+}
 
     // Các phương thức hỗ trợ tạo giao diện
     private JDialog createDialog(String title, int width, int height) {
